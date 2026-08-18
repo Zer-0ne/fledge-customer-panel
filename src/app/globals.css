@@ -1,26 +1,287 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@custom-variant dark (&:is(.dark *));
+
+/* Onboarding flow — question card entrance */
+@keyframes onboarding-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.onboarding-fade {
+  animation: onboarding-fade 0.28s ease-out both;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* OSM tiles dark filter — applied when app is in dark mode and OSM provider is active */
+.osm-dark-filter {
+  filter: invert(100%) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6);
 }
+
+/* Carousel — pause autoplay while hovering the card (user request) */
+.ad-carousel-pause-hover:hover {
+  animation-play-state: paused;
+}
+
+.ad-carousel-pause-hover:hover .ad-max-spin {
+  animation-play-state: paused;
+}
+/* ============================================================
+   Interactive 3D sponsor card (ad-style-preview)
+   Hover/tap flips the card 180° on Y; reduced-motion fades.
+   ============================================================ */
+
+/* preview typography — matches the Obsidian reference design */
+.font-display-hanken {
+  font-family: 'Hanken Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-mono-jb {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Obsidian glass surface — blurred dark glass with top edge highlight.
+   backdrop-filter is applied inline (lightningcss strips the unprefixed
+   property from stylesheets under the project's browser targets). */
+.ad-glass-surface {
+  background: rgba(19, 19, 19, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.ad-glass-surface::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  pointer-events: none;
+}
+
+/* Obsidian titanium edge */
+.ad-titanium-edge {
+  border: 1px solid rgba(142, 145, 146, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 20px 40px -15px rgba(0, 0, 0, 0.6);
+}
+
+/* MAXIMUM tier — travelling light around the border (no @property needed:
+   a large conic layer spins behind the 1.5px frame gap) */
+.ad-max-spin {
+  animation: ad-max-spin 7s linear infinite;
+  will-change: transform;
+}
+
+@keyframes ad-max-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-max-spin {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   Shared promotion slot — Premium & Boost render in ONE fixed
+   box (same width/height/aspect), so slides swap with zero
+   layout shift. Images never drive the box dimensions.
+   ============================================================ */
+.promotion-card-slot {
+  width: min(100%, 448px);
+  max-width: 448px;
+  aspect-ratio: var(--promotion-card-ratio, 4 / 5);
+  flex: 0 0 auto;
+  justify-self: start;
+  align-self: start;
+}
+
+.promotion-card-slot > * {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+}
+
+.promotion-card-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Boost hero image grows to fill the slot only while inside it
+   (outside the slot the card keeps its natural h-48/h-56 image) */
+.promotion-card-slot .ad-boost-image {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
+/* Carousel viewport + slides share the fixed slot dimensions */
+.promotion-carousel {
+  width: min(100%, 448px);
+  max-width: 448px;
+  overflow: hidden;
+}
+
+.promotion-carousel-slide {
+  width: 100%;
+  flex: 0 0 100%;
+}
+
+/* Standard/Active slim promotion — adaptive masonry tile: content-based height
+   (no aspect ratio), fills whatever width the masonry gives it (1 or 2 columns) */
+.standard-promotion {
+  width: 100%;
+  min-height: 108px;
+  height: auto;
+  align-self: start;
+}
+
+/* On mobile the Premium/Boost carousel centers inside its masonry tile */
+@media (max-width: 639px) {
+  .promotion-card-slot {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+

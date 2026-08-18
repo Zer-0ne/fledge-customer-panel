@@ -1,0 +1,3804 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/api/v1/health/live": {
+            "get": {
+                "description": "Returns 200 OK if API server process is alive.",
+                "operationId": "HealthController_live",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "API server is live"
+                    }
+                },
+                "summary": "Liveness Probe",
+                "tags": [
+                    "Health"
+                ]
+            }
+        },
+        "/api/v1/health/ready": {
+            "get": {
+                "description": "Checks connectivity to Database (Postgres) and Redis.",
+                "operationId": "HealthController_ready",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "All infrastructure dependencies are healthy"
+                    },
+                    "530": {
+                        "description": "Database or Redis service unavailable"
+                    }
+                },
+                "summary": "Readiness Probe",
+                "tags": [
+                    "Health"
+                ]
+            }
+        },
+        "/api/v1/auth/signup": {
+            "post": {
+                "description": "Create a new user account with email/phone and password.",
+                "operationId": "AuthController_signup",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "displayName",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "displayName": {
+                                        "type": "string",
+                                        "example": "Rahul Sharma"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "rahul@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+919876543210"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "StrongPass123!"
+                                    },
+                                    "deviceLabel": {
+                                        "type": "string",
+                                        "example": "Chrome / macOS"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User successfully created & tokens issued"
+                    },
+                    "400": {
+                        "description": "Validation failed or email/phone already in use"
+                    }
+                },
+                "summary": "Register User",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "description": "Authenticate user with email or phone and password.",
+                "operationId": "AuthController_login",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "identifier",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "identifier": {
+                                        "type": "string",
+                                        "example": "rahul@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "StrongPass123!"
+                                    },
+                                    "deviceLabel": {
+                                        "type": "string",
+                                        "example": "iPhone 15 Pro App"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful, returns access & refresh tokens"
+                    },
+                    "401": {
+                        "description": "Invalid credentials"
+                    }
+                },
+                "summary": "Password Login",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/otp/request": {
+            "post": {
+                "description": "Trigger OTP verification code sent via SMS/Email.",
+                "operationId": "AuthController_requestOtp",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "identifier"
+                                ],
+                                "properties": {
+                                    "identifier": {
+                                        "type": "string",
+                                        "example": "+919876543210"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "OTP sent successfully"
+                    }
+                },
+                "summary": "Request OTP",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/otp/login": {
+            "post": {
+                "description": "Authenticate using 6-digit OTP code.",
+                "operationId": "AuthController_otpLogin",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "identifier",
+                                    "code"
+                                ],
+                                "properties": {
+                                    "identifier": {
+                                        "type": "string",
+                                        "example": "+919876543210"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "deviceLabel": {
+                                        "type": "string",
+                                        "example": "Android App"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP Login successful"
+                    },
+                    "400": {
+                        "description": "Invalid or expired OTP"
+                    }
+                },
+                "summary": "OTP Login",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "description": "Issue a new access token using a valid refresh token.",
+                "operationId": "AuthController_refresh",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "refreshToken"
+                                ],
+                                "properties": {
+                                    "refreshToken": {
+                                        "type": "string",
+                                        "example": "sample_refresh_token_string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tokens rotated successfully"
+                    },
+                    "401": {
+                        "description": "Invalid or revoked refresh token"
+                    }
+                },
+                "summary": "Refresh Access Token",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "description": "Revoke the current active session.",
+                "operationId": "AuthController_logout",
+                "parameters": [],
+                "responses": {
+                    "204": {
+                        "description": "Session successfully invalidated"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Logout",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/bootstrap": {
+            "get": {
+                "description": "Get profile info, active permissions, and user status.",
+                "operationId": "AuthController_bootstrap",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "User state and permissions payload"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Bootstrap Session",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/sessions": {
+            "get": {
+                "description": "List all active login sessions for the logged in user.",
+                "operationId": "AuthController_sessions",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Array of active sessions"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List User Sessions",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/auth/sessions/{id}": {
+            "delete": {
+                "description": "Terminate a specific active session by ID.",
+                "operationId": "AuthController_revoke",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Session UUID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Session revoked successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Revoke Session",
+                "tags": [
+                    "Auth"
+                ]
+            }
+        },
+        "/api/v1/users/{id}/public": {
+            "get": {
+                "description": "Retrieve public user profile details by user ID.",
+                "operationId": "UsersController_publicProfile",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "User ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Public profile data"
+                    }
+                },
+                "summary": "Get Public Profile",
+                "tags": [
+                    "Users"
+                ]
+            }
+        },
+        "/api/v1/users/me": {
+            "get": {
+                "description": "Retrieve profile details of the authenticated user.",
+                "operationId": "UsersController_ownProfile",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Current user profile data"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get Current User Profile",
+                "tags": [
+                    "Users"
+                ]
+            },
+            "delete": {
+                "description": "Request permanent account deletion for current user.",
+                "operationId": "UsersController_deleteAccount",
+                "parameters": [],
+                "responses": {
+                    "204": {
+                        "description": "Account deletion initiated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete Account",
+                "tags": [
+                    "Users"
+                ]
+            }
+        },
+        "/api/v1/users/{id}/suspension": {
+            "put": {
+                "description": "Set suspension status for a user. Requires user.administer permission.",
+                "operationId": "UsersController_suspend",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Target User ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "suspended"
+                                ],
+                                "properties": {
+                                    "suspended": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "until": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true,
+                                        "example": "2026-12-31T23:59:59Z"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "User suspension status updated"
+                    },
+                    "403": {
+                        "description": "Forbidden - Missing admin permission"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Suspend / Unsuspend User (Admin)",
+                "tags": [
+                    "Users"
+                ]
+            }
+        },
+        "/api/v1/colleges": {
+            "get": {
+                "description": "Retrieve all registered colleges.",
+                "operationId": "RentalsController_colleges",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "List of colleges"
+                    }
+                },
+                "summary": "List Colleges",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            },
+            "post": {
+                "description": "Add a new college. Requires user.administer permission.",
+                "operationId": "RentalsController_createCollege",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "name",
+                                    "slug"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Delhi University"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "delhi-university"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "College created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create College (Admin)",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/colleges/{id}/campuses": {
+            "get": {
+                "description": "Get all campuses under a specific college.",
+                "operationId": "RentalsController_campuses",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "College ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of campuses for college"
+                    }
+                },
+                "summary": "List Campuses",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            },
+            "post": {
+                "description": "Add a new campus to a college.",
+                "operationId": "RentalsController_createCampus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "College ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "name",
+                                    "slug",
+                                    "latitude",
+                                    "longitude"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "North Campus"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "north-campus"
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "example": 28.689
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "example": 77.2105
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Campus created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create Campus (Admin)",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/properties": {
+            "post": {
+                "description": "Create a property owned or managed by the user.",
+                "operationId": "RentalsController_createProperty",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "name",
+                                    "exactAddress",
+                                    "approximateLocation"
+                                ],
+                                "properties": {
+                                    "campusId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Sunshine PG Residency"
+                                    },
+                                    "exactAddress": {
+                                        "type": "string",
+                                        "example": "123 University Road, Block B, Kamla Nagar"
+                                    },
+                                    "approximateLocation": {
+                                        "type": "object",
+                                        "required": [
+                                            "latitude",
+                                            "longitude"
+                                        ],
+                                        "properties": {
+                                            "latitude": {
+                                                "type": "number",
+                                                "example": 28.689
+                                            },
+                                            "longitude": {
+                                                "type": "number",
+                                                "example": 77.21
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Property created"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create Property",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            },
+            "get": {
+                "description": "Get all properties managed by current user.",
+                "operationId": "RentalsController_properties",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "List of managed properties"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Owned/Managed Properties",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/properties/{id}": {
+            "get": {
+                "description": "View public property info.",
+                "operationId": "RentalsController_property",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Property ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Property public details"
+                    }
+                },
+                "summary": "Get Public Property Details",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/properties/{id}/manage": {
+            "get": {
+                "description": "Full property detail for authorized managers.",
+                "operationId": "RentalsController_managedProperty",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Property ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get Property Management View",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/properties/{id}/exact-address": {
+            "get": {
+                "description": "Retrieve unmasked exact address for confirmed/authorized user.",
+                "operationId": "RentalsController_exactAddress",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Property ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get Exact Property Address",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/properties/{id}/units": {
+            "post": {
+                "description": "Create a room or unit inside a property.",
+                "operationId": "RentalsController_addUnit",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Property ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "label",
+                                    "bedrooms",
+                                    "bathrooms",
+                                    "capacity"
+                                ],
+                                "properties": {
+                                    "label": {
+                                        "type": "string",
+                                        "example": "Flat 201 - 2BHK"
+                                    },
+                                    "bedrooms": {
+                                        "type": "number",
+                                        "example": 2
+                                    },
+                                    "bathrooms": {
+                                        "type": "number",
+                                        "example": 2
+                                    },
+                                    "capacity": {
+                                        "type": "number",
+                                        "example": 4
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Add Unit to Property",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/properties/{id}/managers": {
+            "post": {
+                "description": "Assign another user as manager of this property.",
+                "operationId": "RentalsController_addManager",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Property ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "userId"
+                                ],
+                                "properties": {
+                                    "userId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "c0a80101-0000-0000-0000-000000000001"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Add Property Manager",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            },
+            "get": {
+                "description": "Get managers assigned to property.",
+                "operationId": "RentalsController_managers",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Property ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Property Managers",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/properties/{id}/managers/{userId}": {
+            "delete": {
+                "description": "Revoke manager permissions for user on property.",
+                "operationId": "RentalsController_removeManager",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Remove Property Manager",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/properties/{id}/listings": {
+            "post": {
+                "description": "Publish/Draft a new listing for a property.",
+                "operationId": "RentalsController_createListing",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "description": "Property ID",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "title",
+                                    "description",
+                                    "rentPaise",
+                                    "availableFrom"
+                                ],
+                                "properties": {
+                                    "unitId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Cozy 1 BHK near North Campus"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Fully furnished 1 BHK with high speed Wi-Fi and power backup."
+                                    },
+                                    "rentPaise": {
+                                        "type": "number",
+                                        "example": 1500000,
+                                        "description": "Rent in Paise (e.g., 1500000 = ₹15,000)"
+                                    },
+                                    "depositPaise": {
+                                        "type": "number",
+                                        "example": 3000000,
+                                        "description": "Deposit in Paise (e.g., 3000000 = ₹30,000)"
+                                    },
+                                    "availableFrom": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2026-08-01T00:00:00Z"
+                                    },
+                                    "expiresAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "rules": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "No Smoking",
+                                            "No pets"
+                                        ]
+                                    },
+                                    "amenityIds": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    },
+                                    "mediaIds": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create Rental Listing",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            },
+            "get": {
+                "description": "Get all listings for a given property.",
+                "operationId": "RentalsController_propertyListings",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Property Listings",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/listings/{id}/manage": {
+            "get": {
+                "description": "Get full info of listing for manager edit.",
+                "operationId": "RentalsController_managedListing",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get Managed Listing Details",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/listings": {
+            "get": {
+                "description": "Search published rental listings with geo, price, and filter options.",
+                "operationId": "RentalsController_search",
+                "parameters": [
+                    {
+                        "name": "cursor",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": 20,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "bedrooms",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "maxRentPaise",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "minRentPaise",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "radiusMeters",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "longitude",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "latitude",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "campusId",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Search Listings",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/listings/{id}": {
+            "get": {
+                "description": "View public detail of a rental listing.",
+                "operationId": "RentalsController_listing",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "summary": "Get Public Listing Details",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            },
+            "patch": {
+                "description": "Patch details of an existing listing.",
+                "operationId": "RentalsController_updateListing",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "rentPaise": {
+                                        "type": "number"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "published",
+                                            "paused",
+                                            "rented",
+                                            "expired",
+                                            "removed"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update Listing",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/listings/{id}/publish": {
+            "post": {
+                "description": "Set status of a draft/paused listing to published.",
+                "operationId": "RentalsController_publish",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Publish Listing",
+                "tags": [
+                    "Rentals & Properties"
+                ]
+            }
+        },
+        "/api/v1/roommate-posts": {
+            "get": {
+                "description": "Search roommate seeking posts by context filters.",
+                "operationId": "CommunityController_posts",
+                "parameters": [
+                    {
+                        "name": "locality",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "campusId",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "collegeId",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Roommate Posts",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            },
+            "post": {
+                "description": "Create a new post looking for roommates.",
+                "operationId": "CommunityController_createPost",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "title",
+                                    "body",
+                                    "expiresAt"
+                                ],
+                                "properties": {
+                                    "collegeId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Looking for 1 flatmate in 2BHK near North Campus"
+                                    },
+                                    "body": {
+                                        "type": "string",
+                                        "example": "Looking for a non-smoker student. Rent is 8k/month."
+                                    },
+                                    "budgetPaise": {
+                                        "type": "number",
+                                        "example": 800000
+                                    },
+                                    "expiresAt": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "moveInFrom": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "moveInTo": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
+                                    "preferences": {
+                                        "type": "object",
+                                        "example": {
+                                            "vegetarian": true,
+                                            "studentOnly": true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create Roommate Post",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            }
+        },
+        "/api/v1/roommate-posts/{id}": {
+            "patch": {
+                "description": "Update fields or status of a roommate post.",
+                "operationId": "CommunityController_updatePost",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update Roommate Post",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            }
+        },
+        "/api/v1/roommate-posts/{id}/interests": {
+            "post": {
+                "description": "Send roommate request/interest for a post.",
+                "operationId": "CommunityController_interestInPost",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Express Interest in Roommate Post",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            }
+        },
+        "/api/v1/roommate-interests": {
+            "get": {
+                "description": "Get all incoming and outgoing roommate interest requests.",
+                "operationId": "CommunityController_roommateInterests",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Roommate Interests",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            }
+        },
+        "/api/v1/roommate-interests/{id}": {
+            "patch": {
+                "description": "Accept, reject, or withdraw a roommate interest.",
+                "operationId": "CommunityController_updateRoommateInterest",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "accepted",
+                                            "rejected",
+                                            "withdrawn"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update Roommate Interest Status",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            }
+        },
+        "/api/v1/favorites": {
+            "get": {
+                "description": "Get user saved/favorite listings.",
+                "operationId": "CommunityController_favorites",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Favorites",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            }
+        },
+        "/api/v1/listings/{id}/favorite": {
+            "post": {
+                "description": "Save a listing to user favorites.",
+                "operationId": "CommunityController_favorite",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Favorite Listing",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            },
+            "delete": {
+                "description": "Remove listing from user favorites.",
+                "operationId": "CommunityController_unfavorite",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Unfavorite Listing",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            }
+        },
+        "/api/v1/listings/{id}/interests": {
+            "post": {
+                "description": "Send inquiry/interest for a rental listing.",
+                "operationId": "CommunityController_listingInterest",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Express Interest in Listing",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            }
+        },
+        "/api/v1/listing-interests": {
+            "get": {
+                "description": "Get listing interests created by or received by user.",
+                "operationId": "CommunityController_listingInterests",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Listing Interests",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            }
+        },
+        "/api/v1/listing-interests/{id}": {
+            "patch": {
+                "description": "Accept, reject, or withdraw a listing interest request.",
+                "operationId": "CommunityController_updateListingInterest",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "accepted",
+                                            "rejected",
+                                            "withdrawn"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update Listing Interest Status",
+                "tags": [
+                    "Community & Roommates"
+                ]
+            }
+        },
+        "/api/v1/conversations": {
+            "post": {
+                "description": "Initiate chat thread based on accepted interest context.",
+                "operationId": "ChatController_create",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "contextType",
+                                    "contextId"
+                                ],
+                                "properties": {
+                                    "contextType": {
+                                        "type": "string",
+                                        "enum": [
+                                            "listing_interest",
+                                            "roommate_interest"
+                                        ]
+                                    },
+                                    "contextId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create Conversation",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            },
+            "get": {
+                "description": "Get all chat conversations of current user.",
+                "operationId": "ChatController_list",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Conversations",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            }
+        },
+        "/api/v1/conversations/{id}/messages": {
+            "get": {
+                "description": "Retrieve message history for a conversation.",
+                "operationId": "ChatController_history",
+                "parameters": [
+                    {
+                        "name": "cursor",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "example": 30,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get Chat History",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            },
+            "post": {
+                "description": "Send a message in conversation.",
+                "operationId": "ChatController_send",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "clientId",
+                                    "body"
+                                ],
+                                "properties": {
+                                    "clientId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "description": "Client-generated UUID for idempotency"
+                                    },
+                                    "body": {
+                                        "type": "string",
+                                        "example": "Hi, is this flat available?"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Send Chat Message",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            }
+        },
+        "/api/v1/conversations/{id}/read/{messageId}": {
+            "patch": {
+                "description": "Mark messages up to messageId as read.",
+                "operationId": "ChatController_markRead",
+                "parameters": [
+                    {
+                        "name": "messageId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Mark Message Read",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            }
+        },
+        "/api/v1/users/{id}/block": {
+            "post": {
+                "description": "Block a user from contacting or sending chat messages.",
+                "operationId": "ChatController_block",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Block User",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            },
+            "delete": {
+                "description": "Unblock a previously blocked user.",
+                "operationId": "ChatController_unblock",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Unblock User",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            }
+        },
+        "/api/v1/reports": {
+            "post": {
+                "description": "Report suspicious or abusive content.",
+                "operationId": "ChatController_report",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "targetType",
+                                    "targetId",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "targetType": {
+                                        "type": "string",
+                                        "enum": [
+                                            "user",
+                                            "listing",
+                                            "roommate_post",
+                                            "message"
+                                        ]
+                                    },
+                                    "targetId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Spam listing"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Report Content / User",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            }
+        },
+        "/api/v1/moderation/reports/{id}/actions": {
+            "post": {
+                "description": "Take moderation action on reported item.",
+                "operationId": "ChatController_moderate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Moderate Report (Admin)",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            }
+        },
+        "/api/v1/conversations/{id}/contact-share": {
+            "post": {
+                "description": "Request permission to reveal phone/email.",
+                "operationId": "ChatController_contactShare",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Request Contact Share",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            }
+        },
+        "/api/v1/contact-share/{id}": {
+            "patch": {
+                "description": "Accept or reject contact share request.",
+                "operationId": "ChatController_resolveContactShare",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "accepted",
+                                            "rejected",
+                                            "cancelled"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Resolve Contact Share Request",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            },
+            "get": {
+                "description": "Retrieve unmasked contact details if request accepted.",
+                "operationId": "ChatController_sharedContact",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get Shared Contact Info",
+                "tags": [
+                    "Chat & Messaging"
+                ]
+            }
+        },
+        "/api/v1/media/uploads": {
+            "post": {
+                "description": "Request presigned S3 upload URL and record pending media asset.",
+                "operationId": "MediaController_pending",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "mimeType",
+                                    "sizeBytes",
+                                    "checksumSha256"
+                                ],
+                                "properties": {
+                                    "mimeType": {
+                                        "type": "string",
+                                        "enum": [
+                                            "image/jpeg",
+                                            "image/png",
+                                            "image/webp"
+                                        ],
+                                        "example": "image/jpeg"
+                                    },
+                                    "sizeBytes": {
+                                        "type": "number",
+                                        "example": 1048576
+                                    },
+                                    "checksumSha256": {
+                                        "type": "string",
+                                        "description": "Base64 SHA-256 checksum",
+                                        "example": "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU="
+                                    },
+                                    "visibility": {
+                                        "type": "string",
+                                        "enum": [
+                                            "private",
+                                            "listing",
+                                            "profile"
+                                        ],
+                                        "default": "private"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Returns media record with uploadUrl and s3Key"
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Request Presigned Media Upload",
+                "tags": [
+                    "Media"
+                ]
+            }
+        },
+        "/api/v1/media/{id}/complete": {
+            "post": {
+                "description": "Confirm file has been uploaded to S3 presigned URL.",
+                "operationId": "MediaController_complete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Confirm Media Upload Complete",
+                "tags": [
+                    "Media"
+                ]
+            }
+        },
+        "/api/v1/media/{id}/download": {
+            "get": {
+                "description": "Generate a presigned download URL for a media file.",
+                "operationId": "MediaController_download",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get Media Download URL",
+                "tags": [
+                    "Media"
+                ]
+            }
+        },
+        "/api/v1/media/{id}/moderation": {
+            "patch": {
+                "description": "Approve or reject uploaded media.",
+                "operationId": "MediaController_moderate",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "decision",
+                                    "safeReason"
+                                ],
+                                "properties": {
+                                    "decision": {
+                                        "type": "string",
+                                        "enum": [
+                                            "approved",
+                                            "rejected"
+                                        ]
+                                    },
+                                    "safeReason": {
+                                        "type": "string",
+                                        "example": "Appropriate image content"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Moderate Media Asset (Admin)",
+                "tags": [
+                    "Media"
+                ]
+            }
+        },
+        "/api/v1/media/{id}": {
+            "delete": {
+                "description": "Delete uploaded media file.",
+                "operationId": "MediaController_delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete Media Asset",
+                "tags": [
+                    "Media"
+                ]
+            }
+        },
+        "/api/v1/admin/ads/advertisers": {
+            "post": {
+                "description": "Create an advertiser account (Admin).",
+                "operationId": "AdsController_createAdvertiser",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "CoHo Stays"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "active",
+                                            "paused",
+                                            "disabled"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create Advertiser",
+                "tags": [
+                    "Ads"
+                ]
+            },
+            "get": {
+                "description": "List advertisers registered on platform.",
+                "operationId": "AdminController_advertiserList",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Advertisers",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/ads/advertisers/{id}": {
+            "patch": {
+                "description": "Update advertiser status or details.",
+                "operationId": "AdsController_updateAdvertiser",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update Advertiser",
+                "tags": [
+                    "Ads"
+                ]
+            },
+            "get": {
+                "description": "Get advertiser profile and statistics.",
+                "operationId": "AdminController_advertiserDetail",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get Advertiser Detail",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/ads/advertisers/{advertiserId}/campaigns": {
+            "post": {
+                "description": "Create a target ad campaign.",
+                "operationId": "AdsController_createCampaign",
+                "parameters": [
+                    {
+                        "name": "advertiserId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create Ad Campaign",
+                "tags": [
+                    "Ads"
+                ]
+            },
+            "get": {
+                "description": "Get campaigns owned by advertiser.",
+                "operationId": "AdminController_campaignList",
+                "parameters": [
+                    {
+                        "name": "advertiserId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Advertiser Campaigns",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/ads/advertisers/{advertiserId}/campaigns/{id}": {
+            "patch": {
+                "description": "Modify an ad campaign.",
+                "operationId": "AdsController_updateCampaign",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "advertiserId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update Ad Campaign",
+                "tags": [
+                    "Ads"
+                ]
+            }
+        },
+        "/api/v1/admin/ads/advertisers/{advertiserId}/campaigns/{campaignId}/creatives": {
+            "post": {
+                "description": "Add creative media and destination URL to campaign.",
+                "operationId": "AdsController_createCreative",
+                "parameters": [
+                    {
+                        "name": "campaignId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "advertiserId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create Ad Creative",
+                "tags": [
+                    "Ads"
+                ]
+            }
+        },
+        "/api/v1/admin/ads/advertisers/{advertiserId}/campaigns/{campaignId}/creatives/{id}": {
+            "patch": {
+                "description": "Update status or destination URL of creative.",
+                "operationId": "AdsController_updateCreative",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "campaignId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "advertiserId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update Ad Creative",
+                "tags": [
+                    "Ads"
+                ]
+            }
+        },
+        "/api/v1/admin/ads/advertisers/{advertiserId}/campaigns/{campaignId}/targets": {
+            "post": {
+                "description": "Set targeting criteria (college, campus, placement).",
+                "operationId": "AdsController_createTarget",
+                "parameters": [
+                    {
+                        "name": "campaignId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "advertiserId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Create Campaign Target",
+                "tags": [
+                    "Ads"
+                ]
+            }
+        },
+        "/api/v1/admin/ads/advertisers/{advertiserId}/campaigns/{campaignId}/targets/{id}": {
+            "delete": {
+                "description": "Remove target criteria from campaign.",
+                "operationId": "AdsController_deleteTarget",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "campaignId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "advertiserId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Delete Campaign Target",
+                "tags": [
+                    "Ads"
+                ]
+            }
+        },
+        "/api/v1/ads/select": {
+            "post": {
+                "description": "Fetch relevant ad for home, search, or listing placement.",
+                "operationId": "AdsController_select",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "placement"
+                                ],
+                                "properties": {
+                                    "placement": {
+                                        "type": "string",
+                                        "enum": [
+                                            "home",
+                                            "search",
+                                            "listing"
+                                        ]
+                                    },
+                                    "collegeId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "campusId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Select Ad for Placement",
+                "tags": [
+                    "Ads"
+                ]
+            }
+        },
+        "/api/v1/ads/events/impression": {
+            "post": {
+                "description": "Record ad impression event with signed token.",
+                "operationId": "AdsController_impression",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Track Ad Impression",
+                "tags": [
+                    "Ads"
+                ]
+            }
+        },
+        "/api/v1/ads/events/click": {
+            "post": {
+                "description": "Record ad click event and receive redirect target URL.",
+                "operationId": "AdsController_click",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Track Ad Click",
+                "tags": [
+                    "Ads"
+                ]
+            }
+        },
+        "/api/v1/notifications": {
+            "get": {
+                "description": "Retrieve notifications for authenticated user.",
+                "operationId": "NotificationsController_list",
+                "parameters": [
+                    {
+                        "name": "before",
+                        "required": false,
+                        "in": "query",
+                        "schema": {
+                            "format": "date-time",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List User Notifications",
+                "tags": [
+                    "Notifications"
+                ]
+            }
+        },
+        "/api/v1/notifications/{id}/read": {
+            "patch": {
+                "description": "Mark a notification as read by ID.",
+                "operationId": "NotificationsController_read",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Mark Notification Read",
+                "tags": [
+                    "Notifications"
+                ]
+            }
+        },
+        "/api/v1/notification-preferences": {
+            "get": {
+                "description": "View push notification preferences by category.",
+                "operationId": "NotificationsController_preferences",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Get Notification Preferences",
+                "tags": [
+                    "Notifications"
+                ]
+            }
+        },
+        "/api/v1/notification-preferences/{kind}": {
+            "put": {
+                "description": "Enable/disable push notifications for a given kind.",
+                "operationId": "NotificationsController_preference",
+                "parameters": [
+                    {
+                        "name": "kind",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "enum": [
+                                "listing_interest",
+                                "roommate_interest",
+                                "message"
+                            ],
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "pushEnabled"
+                                ],
+                                "properties": {
+                                    "pushEnabled": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update Notification Preference",
+                "tags": [
+                    "Notifications"
+                ]
+            }
+        },
+        "/api/v1/push-tokens": {
+            "put": {
+                "description": "Register FCM/APNS push token for device.",
+                "operationId": "NotificationsController_pushToken",
+                "parameters": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "token",
+                                    "platform"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    },
+                                    "platform": {
+                                        "type": "string",
+                                        "enum": [
+                                            "android",
+                                            "ios",
+                                            "web"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Register Push Token",
+                "tags": [
+                    "Notifications"
+                ]
+            }
+        },
+        "/api/v1/push-tokens/{id}": {
+            "delete": {
+                "description": "Unregister push token from device.",
+                "operationId": "NotificationsController_disableToken",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Disable Push Token",
+                "tags": [
+                    "Notifications"
+                ]
+            }
+        },
+        "/api/v1/admin/users": {
+            "get": {
+                "description": "Search and filter platform users.",
+                "operationId": "AdminController_userList",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Admin User List",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/users/{id}": {
+            "get": {
+                "description": "Get deep user details and activity profile.",
+                "operationId": "AdminController_userDetail",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Admin User Detail",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/users/{id}/sessions": {
+            "get": {
+                "description": "List sessions for a specific user.",
+                "operationId": "AdminController_userSessions",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Admin User Sessions",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/users/{id}/sessions/{sessionId}/revoke": {
+            "post": {
+                "description": "Force terminate a user session.",
+                "operationId": "AdminController_revokeUserSession",
+                "parameters": [
+                    {
+                        "name": "sessionId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Admin Revoke User Session",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/roles": {
+            "get": {
+                "description": "List system permissions and role definitions.",
+                "operationId": "AdminController_listRoles",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List RBAC Roles",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/reports": {
+            "get": {
+                "description": "List open/resolved reports submitted by users.",
+                "operationId": "AdminController_reportList",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Reports Queue",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/reports/{id}": {
+            "get": {
+                "description": "Get report details by ID.",
+                "operationId": "AdminController_reportDetail",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Report Details",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/audit-logs": {
+            "get": {
+                "description": "Query administrative audit logs.",
+                "operationId": "AdminController_auditList",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Audit Logs",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/dashboard": {
+            "get": {
+                "description": "High-level metrics for admin operations.",
+                "operationId": "AdminController_dashboard",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Admin Dashboard Stats",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/media": {
+            "get": {
+                "description": "List media items requiring moderation.",
+                "operationId": "AdminController_mediaList",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Admin Media Queue",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/media/{id}": {
+            "get": {
+                "description": "Get detail of media asset.",
+                "operationId": "AdminController_mediaDetail",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Admin Media Detail",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/ads/advertisers/{advertiserId}/campaigns/{id}/performance": {
+            "get": {
+                "description": "Get clicks, impressions, CTR and spent budget.",
+                "operationId": "AdminController_campaignPerformance",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "advertiserId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Campaign Performance Metrics",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/colleges/{id}": {
+            "patch": {
+                "description": "Modify name or slug of college.",
+                "operationId": "AdminController_updateCollege",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update College Info",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/colleges/{collegeId}/campuses/{id}": {
+            "patch": {
+                "description": "Modify name or slug of campus.",
+                "operationId": "AdminController_updateCampus",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "collegeId",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update Campus Info",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/listings": {
+            "get": {
+                "description": "List listings pending or requiring moderation.",
+                "operationId": "AdminController_listingModerationQueue",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Listing Moderation Queue",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/listings/{id}/moderate": {
+            "post": {
+                "description": "Pause or remove a listing with safe reason.",
+                "operationId": "AdminController_moderateListing",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "required": true,
+                        "in": "path",
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "action",
+                                    "safeReason"
+                                ],
+                                "properties": {
+                                    "action": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pause",
+                                            "remove"
+                                        ]
+                                    },
+                                    "safeReason": {
+                                        "type": "string",
+                                        "example": "Violates platform policy"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Moderate Listing",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/notifications/kinds": {
+            "get": {
+                "description": "List notification categories for admin accounts.",
+                "operationId": "AdminController_adminNotificationKinds",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "List Admin Notification Kinds",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        },
+        "/api/v1/admin/notifications/preferences": {
+            "post": {
+                "description": "Update preferences for admin alerts.",
+                "operationId": "AdminController_updateAdminNotificationPreferences",
+                "parameters": [],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    }
+                },
+                "security": [
+                    {
+                        "bearer": []
+                    }
+                ],
+                "summary": "Update Admin Notification Preferences",
+                "tags": [
+                    "Admin"
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "College Rental Platform API",
+        "description": "Interactive OpenAPI documentation for College Rental Platform backend APIs.",
+        "version": "1.0.0",
+        "contact": {}
+    },
+    "tags": [],
+    "servers": [],
+    "components": {
+        "securitySchemes": {
+            "bearer": {
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "type": "http",
+                "description": "Enter JWT Access Token"
+            },
+            "admin-key": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "x-admin-key",
+                "description": "Admin API Key"
+            }
+        },
+        "schemas": {}
+    }
+}
