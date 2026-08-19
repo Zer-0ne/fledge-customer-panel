@@ -9,9 +9,10 @@ import { toggleListingFavorite } from '@/lib/api/services/discovery';
 import { showToast } from '@/components/ui/toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MagicCard } from '@/components/ui/magic-card';
+import { ShimmerButton } from '@/components/ui/shimmer-button';
 import { Heart, Bed, Bath, MapPin, Sparkles, Building, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
-import BorderGlow from '@/components/BorderGlow'
 
 export interface ListingCardProps {
   listing: Listing;
@@ -108,8 +109,8 @@ export function ListingCard({
     .join(' • ');
 
   return (
-    <BorderGlow className='rounded-2xl!'>
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+    <MagicCard className="rounded-2xl">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       {/* Image Header */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
         <Link href={`/listings/${listing.id}`} className="relative block h-full w-full">
@@ -210,19 +211,18 @@ export function ListingCard({
               </Button>
             </Link>
           ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full justify-center gap-1.5 rounded-xl border-primary/20 hover:bg-primary hover:text-primary-foreground transition-all"
+            <ShimmerButton
+              type="button"
+              className="h-8 w-full gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium"
               onClick={handleInterest}
             >
-              <Sparkles className="size-3.5" />
+              <Sparkles />
               Express Interest
-            </Button>
+            </ShimmerButton>
           )}
         </div>
       </div>
     </div>
-    </BorderGlow>
+    </MagicCard>
   );
 }

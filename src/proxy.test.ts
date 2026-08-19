@@ -18,6 +18,14 @@ describe("decideProxyAction — customer panel route protection", () => {
     it("passes the ad-style design preview", () => {
       expect(decideProxyAction({ pathname: "/ad-style-preview", isAuthenticated: false })).toEqual({ type: "pass" });
     });
+
+    it("passes company and legal pages", () => {
+      expect(decideProxyAction({ pathname: "/about", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/faq", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/contact", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/privacy", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/terms", isAuthenticated: false })).toEqual({ type: "pass" });
+    });
   });
 
   describe("protected paths", () => {

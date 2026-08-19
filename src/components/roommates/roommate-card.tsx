@@ -7,6 +7,8 @@ import { isRoommatePostExpired } from '@/lib/api/services/roommates';
 import { RoommatePostMedia } from '@/components/roommates/roommate-post-media';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { MagicCard } from '@/components/ui/magic-card';
+import { ShimmerButton } from '@/components/ui/shimmer-button';
 import { showToast } from '@/components/ui/toast';
 import Link from 'next/link';
 import {
@@ -21,7 +23,6 @@ import {
   ShieldCheck,
   Inbox,
 } from 'lucide-react';
-import BorderGlow from '@/components/BorderGlow'
 
 export interface RoommateCardProps {
   post: RoommatePost;
@@ -69,9 +70,9 @@ export function RoommateCard({ post, onInterestClick, isOwner = false, hasExpres
     .join(' • ');
 
   return (
-    <BorderGlow className='rounded-2xl!'>
-    <div className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
-      expired ? 'border-muted opacity-80 bg-muted/20' : 'border-border/60 hover:border-primary/40'
+    <MagicCard className="rounded-2xl">
+    <div className={`group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
+      expired ? 'opacity-80 bg-muted/20' : ''
     }`}>
       {/* Cover image — only when the author actually uploaded media (edge-to-edge, home-style) */}
       {post.mediaIds && post.mediaIds.length > 0 && (
@@ -215,20 +216,19 @@ export function RoommateCard({ post, onInterestClick, isOwner = false, hasExpres
             </Button>
           </Link>
         ) : (
-          <Button
-            size="sm"
+          <ShimmerButton
+            type="button"
             disabled={expired}
-            variant={expired ? 'outline' : 'default'}
-            className="w-full justify-center gap-1.5 rounded-xl font-medium transition-all"
+            className="h-8 w-full gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium disabled:opacity-50"
             onClick={handleInterest}
           >
-            <Sparkles className="size-3.5" />
+            <Sparkles />
             {expired ? 'Post Expired' : 'Connect / Express Interest'}
-          </Button>
+          </ShimmerButton>
         )}
       </div>
       </div>
     </div>
-    </BorderGlow>
+    </MagicCard>
   );
 }

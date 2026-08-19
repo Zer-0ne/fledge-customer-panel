@@ -8,8 +8,8 @@
  *     page is protected too — no bootstrap/data API call ever fires without
  *     a session cookie.
  *   - Public exceptions: auth pages (/login /signup /otp), the token-based
- *     contact-approval email deep link, and the static ad-style design
- *     preview.
+ *     contact-approval email deep link, the static ad-style design preview,
+ *     and company/legal pages (/about /faq /contact /privacy /terms).
  *
  * This is NOT an authorization decision — the backend's 401/403 always win
  * (the `(protected)` layout + auth provider handle expired sessions).
@@ -20,7 +20,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
 
 const PUBLIC_PATH_PATTERN =
-  /^\/(login|signup|otp|contact-approval|ad-style-preview)(\/|$)/;
+  /^\/(login|signup|otp|contact-approval|ad-style-preview|about|faq|contact|privacy|terms)(\/|$)/;
 
 export type ProxyDecision =
   | { type: "pass" }

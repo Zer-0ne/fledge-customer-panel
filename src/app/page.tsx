@@ -11,14 +11,27 @@ import { ListingCard } from '@/components/listings/listing-card';
 import { MasonryGrid } from '@/components/common/masonry-grid';
 import { InterestDialog } from '@/components/listings/interest-dialog';
 import Aurora from '@/components/Aurora'
-import { AnimatedShinyText } from "@/components/ui/animated-shiny-text"
+import { SparklesText } from "@/components/ui/sparkles-text"
+import { AnimatedGradientText } from "@/components/ui/animated-gradient-text"
+import { BlurFade } from "@/components/ui/blur-fade"
+import { MagicCard } from "@/components/ui/magic-card"
+import { ShimmerButton } from "@/components/ui/shimmer-button"
+import { HoverBorderGradient } from "@/components/ui/hover-border-gradient"
+import { TextGenerateEffect } from "@/components/ui/text-generate-effect"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
+import { Field, FieldLabel } from "@/components/ui/field"
+import { Card, CardContent } from "@/components/ui/card"
+import { LiquidGlassCard } from "@/components/kokonutui/liquid-glass-card"
 import { SponsoredAd } from '@/components/ads/sponsored-ad';
 import { NeedNowFeedCard } from '@/components/neednow/neednow-feed-card';
 import Text3DFlip from "@/components/ui/text-3d-flip"
 import { RoommateCard } from '@/components/roommates/roommate-card';
 import { RoommateInterestDialog } from '@/components/roommates/roommate-interest-dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { ErrorState } from '@/components/ui/error-state';
 import { Search, Building2, Users, ArrowRight, Sparkles, Timer } from 'lucide-react';
@@ -146,9 +159,11 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center text-center">
             {/* Badge */}
-            <div className="inline-flex backdrop-blur-2xl! backdrop-saturate-50! items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary mb-6 shadow-xs">
-              <Sparkles className="size-3.5" />
-              <AnimatedShinyText className='text-white'>Verified Student Housing Near Your Campus</AnimatedShinyText>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-primary shadow-xs">
+              <Sparkles />
+              <SparklesText className="text-xs font-semibold text-primary" sparklesCount={4}>
+                Verified Student Housing Near Your Campus
+              </SparklesText>
             </div>
 
             {/* Main Headline */}
@@ -160,28 +175,30 @@ export default function HomePage() {
                 flipTextClassName="bg-none text-foreground"
                 rotateDirection="top"
               >
-                Find Your Ideal Flat Near <span className="text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text">Campus</span>
+                Find Your Ideal Flat Near <AnimatedGradientText>Campus</AnimatedGradientText>
               </Text3DFlip>
             </h1>
-            <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
-              Explore verified student apartments, shared flats, and PG accommodations around top universities with zero hassle.
-            </p>
+            <BlurFade delay={0.15} inView>
+              <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
+                Explore verified student apartments, shared flats, and PG accommodations around top universities with zero hassle.
+              </p>
+            </BlurFade>
 
             {/* Quick Search Card */}
 
+            <MagicCard className="mt-8 w-full max-w-3xl rounded-2xl">
+            <Card className="border-0 bg-card/80 py-3 shadow-none ring-0 sm:py-4">
+              <CardContent className="px-3 sm:px-4">
             <form
               onSubmit={handleHeroSearch}
-              className="mt-8 w-full max-w-3xl rounded-2xl border border-border/80 bg-card p-3 sm:p-4 shadow-lg backdrop-blur-xl"
             >
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-center">
-                {/* College Selector */}
-                <div className="sm:col-span-5 relative text-left">
-                  <label className="block text-xs font-medium text-muted-foreground mb-1 ml-1">
-                    Select College
-                  </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
+                <Field className="sm:col-span-5">
+                  <FieldLabel htmlFor="home-college">Select College</FieldLabel>
                   <div className="relative">
-                    <Building2 className="absolute left-3 top-2.5 size-4 text-muted-foreground z-10 pointer-events-none" />
+                    <Building2 className="pointer-events-none absolute top-2.5 left-3 z-10 text-muted-foreground" />
                     <Select
+                      id="home-college"
                       value={selectedCollegeId}
                       onChange={(e) => setSelectedCollegeId(e.target.value)}
                       className="pl-9 text-sm"
@@ -194,37 +211,39 @@ export default function HomePage() {
                       ))}
                     </Select>
                   </div>
-                </div>
+                </Field>
 
-                {/* Keyword Search */}
-                <div className="sm:col-span-5 text-left">
-                  <label className="block text-xs font-medium text-muted-foreground mb-1 ml-1">
-                    Location or Keywords
-                  </label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground z-10 pointer-events-none" />
-                    <Input
+                <Field className="sm:col-span-5">
+                  <FieldLabel htmlFor="home-search">Location or Keywords</FieldLabel>
+                  <InputGroup className="h-10">
+                    <InputGroupAddon>
+                      <Search />
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      id="home-search"
                       type="text"
                       placeholder="e.g. 2 BHK, Koramangala, North Campus..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 text-sm"
                     />
-                  </div>
-                </div>
+                  </InputGroup>
+                </Field>
 
-                {/* Submit Button */}
-                <div className="sm:col-span-2 flex items-end">
-                  <Button type="submit" size="lg" className="w-full gap-2 rounded-xl sm:mt-5">
-                    <Search className="size-4" />
-                    <span>Search</span>
-                  </Button>
+                <div className="flex sm:col-span-2">
+                  <ShimmerButton type="submit" className="h-10 w-full gap-2 rounded-xl px-4 py-2 text-sm">
+                    <Search />
+                    Search
+                  </ShimmerButton>
                 </div>
               </div>
             </form>
+              </CardContent>
+            </Card>
+            </MagicCard>
 
             {/* Quick Stats / Highlights */}
-            <div className="mt-12 grid grid-cols-2 gap-6 sm:grid-cols-3 text-center">
+            <BlurFade delay={0.25} inView>
+            <div className="mt-12 grid grid-cols-2 gap-6 text-center sm:grid-cols-3">
               <div className="flex flex-col items-center">
                 <span className="text-2xl font-bold text-foreground sm:text-3xl">100%</span>
                 <span className="text-xs text-muted-foreground">Verified Properties</span>
@@ -238,6 +257,7 @@ export default function HomePage() {
                 <span className="text-xs text-muted-foreground">Hidden Fees</span>
               </div>
             </div>
+            </BlurFade>
           </div>
         </div>
       </section>
@@ -250,19 +270,22 @@ export default function HomePage() {
               <Timer className="size-3.5" />
               <span>Need Now · 24h requirements</span>
             </div>
-            <h2 id="need-now-heading" className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            <h2 id="need-now-heading" className="sr-only">
               Students need housing right now
             </h2>
+            <TextGenerateEffect words="Students need housing right now" />
             <p className="text-sm text-muted-foreground mt-1">
               Active requirements near Delhi — respond before their 24 hours run out.
             </p>
           </div>
-          <Link href="/need-now/new">
-            <Button className="gap-2 rounded-xl font-semibold shadow-sm">
-              <Sparkles className="size-4" />
-              Post your requirement
-            </Button>
-          </Link>
+          <HoverBorderGradient
+            as={Link}
+            href="/need-now/new"
+            containerClassName="rounded-xl"
+          >
+            <Sparkles />
+            Post your requirement
+          </HoverBorderGradient>
         </div>
 
         {needsLoading ? (
@@ -278,19 +301,25 @@ export default function HomePage() {
             onRetry={() => void loadNearbyNeeds()}
           />
         ) : nearbyNeeds.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-border p-8 text-center space-y-3">
-            <Timer className="mx-auto size-8 text-muted-foreground" />
+          <LiquidGlassCard className="rounded-3xl border-dashed p-8 text-center">
+            <div className="flex flex-col items-center gap-3">
+            <Timer className="text-muted-foreground" />
             <p className="text-sm font-medium text-foreground">No active requirements nearby</p>
-            <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            <p className="max-w-md text-xs text-muted-foreground">
               Be the first to post a 24-hour requirement and nearby students will see it instantly.
             </p>
-            <Link href="/need-now/new" className="inline-block pt-1">
-              <Button className="gap-2 rounded-xl">
-                <Sparkles className="size-4" />
-                Post your requirement
-              </Button>
-            </Link>
-          </div>
+            <Button
+              render={<Link href="/need-now/new" />}
+              nativeButton={false}
+              size="sm"
+              variant="outline"
+              className="rounded-xl"
+            >
+              <Sparkles data-icon="inline-start" />
+              Post your requirement
+            </Button>
+            </div>
+          </LiquidGlassCard>
         ) : (
           <div
             className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
@@ -318,19 +347,21 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-4">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Featured Flat Listings
-            </h2>
+            <h2 className="sr-only">Featured Flat Listings</h2>
+            <TextGenerateEffect words="Featured Flat Listings" />
             <p className="text-sm text-muted-foreground mt-1">
               Top rated housing options available near your preferred college
             </p>
           </div>
-          <Link href="/search">
-            <Button variant="ghost" className="gap-2 text-primary hover:text-primary font-medium">
-              <span>View All Flats</span>
-              <ArrowRight className="size-4" />
-            </Button>
-          </Link>
+          <HoverBorderGradient
+            as={Link}
+            href="/search"
+            containerClassName="rounded-xl"
+            className="px-3 py-1.5 text-xs font-medium"
+          >
+            View All Flats
+            <ArrowRight />
+          </HoverBorderGradient>
         </div>
 
         {/* Pinterest-style masonry — every promotion type has its OWN carousel
@@ -495,34 +526,40 @@ export default function HomePage() {
       </section>
 
       {/* Roommate Discovery Banner */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-8 sm:p-12 text-white shadow-xl">
-          <div className="relative z-10 max-w-2xl space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur-md">
-              <Users className="size-3.5 text-emerald-300" />
+      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <MagicCard className="rounded-3xl">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary/10 via-card to-muted p-8 text-foreground shadow-xl sm:p-12">
+          <div className="relative z-10 max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/60 px-3 py-1 text-xs font-medium">
+              <Users />
               <span>Roommate Finder</span>
             </div>
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+            <h2 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">
               Looking for a roommate to split rent?
             </h2>
-            <p className="text-white/70 text-sm sm:text-base">
+            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
               Connect with fellow students attending your university and find verified flatmates with matching habits and budget.
             </p>
-            <div className="pt-2 flex flex-wrap gap-4">
-              <Link href="/roommates">
-                <Button size="lg" className="gap-2 rounded-xl shadow-md">
-                  <Users className="size-4" />
-                  Explore Roommates
-                </Button>
-              </Link>
-              <Link href="/roommate-posts/new">
-                <Button size="lg" variant="outline" className="gap-2 border-white/20 text-white hover:bg-white/10 rounded-xl">
-                  Post Roommate Requirement
-                </Button>
-              </Link>
+            <div className="mt-6 flex flex-wrap gap-4">
+              <HoverBorderGradient
+                as={Link}
+                href="/roommates"
+                containerClassName="rounded-xl"
+              >
+                <Users />
+                Explore Roommates
+              </HoverBorderGradient>
+              <HoverBorderGradient
+                as={Link}
+                href="/roommate-posts/new"
+                containerClassName="rounded-xl"
+              >
+                Post Roommate Requirement
+              </HoverBorderGradient>
             </div>
           </div>
         </div>
+        </MagicCard>
       </section>
 
       {/* Interest Dialog */}

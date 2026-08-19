@@ -1,6 +1,8 @@
+"use client";
+
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
-
 import { useState } from "react";
 
 export const HoverEffect = ({
@@ -14,46 +16,73 @@ export const HoverEffect = ({
   }[];
   className?: string;
 }) => {
-  let [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   return (
     <div
       className={cn(
-        "grid grid-cols-1 md:grid-cols-2  lg:grid-cols-3  py-10",
+        "grid grid-cols-1 py-10 md:grid-cols-2 lg:grid-cols-3",
         className
       )}
     >
-      {items.map((item, idx) => (
-        <a
-          href={item?.link}
-          key={item?.link}
-          className="relative group  block p-2 h-full w-full"
-          onMouseEnter={() => setHoveredIndex(idx)}
-          onMouseLeave={() => setHoveredIndex(null)}
-        >
-          <AnimatePresence>
-            {hoveredIndex === idx && (
-              <motion.span
-                className="absolute inset-0 block h-full w-full rounded-3xl bg-muted"
-                layoutId="hoverBackground"
-                initial={{ opacity: 0 }}
-                animate={{
-                  opacity: 1,
-                  transition: { duration: 0.15 },
-                }}
-                exit={{
-                  opacity: 0,
-                  transition: { duration: 0.15, delay: 0.2 },
-                }}
-              />
-            )}
-          </AnimatePresence>
-          <Card>
-            <CardTitle>{item.title}</CardTitle>
-            <CardDescription>{item.description}</CardDescription>
-          </Card>
-        </a>
-      ))}
+      {items.map((item, idx) => {
+        const isInternal = item.link.startsWith("/");
+        const itemClassName = "group relative block h-full w-full p-2";
+        const hoverHandlers = {
+          onMouseEnter: () => setHoveredIndex(idx),
+          onMouseLeave: () => setHoveredIndex(null),
+        };
+
+        const body = (
+          <>
+            <AnimatePresence>
+              {hoveredIndex === idx && (
+                <motion.span
+                  className="absolute inset-0 block h-full w-full rounded-3xl bg-muted"
+                  layoutId="hoverBackground"
+                  initial={{ opacity: 0 }}
+                  animate={{
+                    opacity: 1,
+                    transition: { duration: 0.15 },
+                  }}
+                  exit={{
+                    opacity: 0,
+                    transition: { duration: 0.15, delay: 0.2 },
+                  }}
+                />
+              )}
+            </AnimatePresence>
+            <Card>
+              <CardTitle>{item.title}</CardTitle>
+              <CardDescription>{item.description}</CardDescription>
+            </Card>
+          </>
+        );
+
+        if (isInternal) {
+          return (
+            <Link
+              key={item.link}
+              href={item.link}
+              className={itemClassName}
+              {...hoverHandlers}
+            >
+              {body}
+            </Link>
+          );
+        }
+
+        return (
+          <a
+            key={item.link}
+            href={item.link}
+            className={itemClassName}
+            {...hoverHandlers}
+          >
+            {body}
+          </a>
+        );
+      })}
     </div>
   );
 };
@@ -72,9 +101,7 @@ export const Card = ({
         className
       )}
     >
-      <div className="relative z-50">
-        <div className="p-4">{children}</div>
-      </div>
+      <div className="relative z-50">{children}</div>
     </div>
   );
 };
@@ -86,7 +113,7 @@ export const CardTitle = ({
   children: React.ReactNode;
 }) => {
   return (
-    <h4 className={cn("mt-4 font-bold tracking-wide text-card-foreground", className)}>
+    <h4 className={cn("font-semibold tracking-tight text-card-foreground", className)}>
       {children}
     </h4>
   );
@@ -101,7 +128,7 @@ export const CardDescription = ({
   return (
     <p
       className={cn(
-        "mt-8 text-sm leading-relaxed tracking-wide text-muted-foreground",
+        "mt-2 text-sm leading-relaxed text-muted-foreground",
         className
       )}
     >

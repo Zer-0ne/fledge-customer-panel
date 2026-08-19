@@ -2,42 +2,46 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Building2 } from 'lucide-react';
 
+const PRODUCT_LINKS = [
+  { href: '/', label: 'Explore Colleges' },
+  { href: '/search', label: 'Browse Flats' },
+  { href: '/roommates', label: 'Find Roommates' },
+  { href: '/donate', label: 'Donate' },
+];
+
+const COMPANY_LINKS = [
+  { href: '/about', label: 'About' },
+  { href: '/faq', label: 'FAQ' },
+  { href: '/contact', label: 'Contact us' },
+];
+
+const LEGAL_LINKS = [
+  { href: '/privacy', label: 'Privacy Policy' },
+  { href: '/terms', label: 'Terms of Service' },
+];
+
 export function Footer({ appName = 'Flat Finder' }: { appName?: string }) {
   return (
-    <footer className="border-t border-border bg-card/40 py-8 md:py-12 mb-14 md:mb-0">
+    <footer className="mb-14 border-t border-border bg-card/40 py-8 md:mb-0 md:py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo & Tagline */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-col items-center text-center md:items-start md:text-left">
             <div className="flex items-center gap-2.5">
               <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Building2 className="size-4" />
+                <Building2 />
               </div>
-              <span className="font-bold text-base tracking-tight">{appName}</span>
+              <span className="text-base font-bold tracking-tight">{appName}</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-2 max-w-sm">
-              Verified student housing, flat shares, and roommate matching platform across top university campuses.
+            <p className="mt-2 max-w-sm text-xs text-muted-foreground">
+              Verified student housing, flat shares, and roommate matching across university campuses.
             </p>
           </div>
 
-          {/* Quick Links */}
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-            <Link href="/" className="hover:text-foreground transition-colors">
-              Explore Colleges
-            </Link>
-            <Link href="/search" className="hover:text-foreground transition-colors">
-              Browse Flats
-            </Link>
-            <Link href="/roommates" className="hover:text-foreground transition-colors">
-              Find Roommates
-            </Link>
-            <Link href="/privacy" className="hover:text-foreground transition-colors">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">
-              Terms of Service
-            </Link>
-          </div>
+          <nav className="grid grid-cols-2 gap-8 text-xs sm:grid-cols-3" aria-label="Footer">
+            <FooterColumn title="Product" links={PRODUCT_LINKS} />
+            <FooterColumn title="Company" links={COMPANY_LINKS} />
+            <FooterColumn title="Legal" links={LEGAL_LINKS} />
+          </nav>
         </div>
 
         <div className="mt-8 border-t border-border/50 pt-4 text-center text-xs text-muted-foreground">
@@ -45,5 +49,28 @@ export function Footer({ appName = 'Flat Finder' }: { appName?: string }) {
         </div>
       </div>
     </footer>
+  );
+}
+
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string;
+  links: { href: string; label: string }[];
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="font-medium text-foreground">{title}</p>
+      {links.map((link) => (
+        <Link
+          key={link.href}
+          href={link.href}
+          className="text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {link.label}
+        </Link>
+      ))}
+    </div>
   );
 }

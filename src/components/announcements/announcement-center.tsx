@@ -46,7 +46,6 @@ function useAnnouncements() {
       const visible = list.filter((a) => !locallyDismissed.has(a.id));
       setItems(visible);
       setLoaded(true);
-      // Mark all visible as seen (best-effort, fire and forget)
       for (const item of visible) {
         void markAnnouncementSeen(item.id);
       }
@@ -90,7 +89,7 @@ function AnnouncementCard({ item, onUpdate }: { item: AnnouncementItem; onUpdate
     <div className={cn('rounded-xl border p-4 shadow-sm', style.accent, !isRead && 'ring-1 ring-current/10')}>
       <button type="button" onClick={toggleExpand} className="flex w-full items-start gap-3 text-left" aria-expanded={expanded}>
         <span className="mt-0.5 shrink-0">{style.icon}</span>
-        <span className="flex-1 space-y-1">
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold">{item.currentVersion.title}</span>
             {item.requireAcknowledgement && !isAcknowledged && (
@@ -135,7 +134,7 @@ export function AnnouncementCenter({ variant = 'dashboard' }: { variant?: 'dashb
   };
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {dashboardItems.map((item) => (
         <div key={item.id} className="relative">
           <button type="button" onClick={() => handleDismiss(item.id)} className="absolute right-2 top-2 z-10 rounded-full p-1 opacity-60 hover:opacity-100" aria-label="Dismiss announcement">
