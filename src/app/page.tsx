@@ -10,8 +10,11 @@ import { fetchRoommatePosts } from '@/lib/api/services/roommates';
 import { ListingCard } from '@/components/listings/listing-card';
 import { MasonryGrid } from '@/components/common/masonry-grid';
 import { InterestDialog } from '@/components/listings/interest-dialog';
+import Aurora from '@/components/Aurora'
+import { AnimatedShinyText } from "@/components/ui/animated-shiny-text"
 import { SponsoredAd } from '@/components/ads/sponsored-ad';
 import { NeedNowFeedCard } from '@/components/neednow/neednow-feed-card';
+import Text3DFlip from "@/components/ui/text-3d-flip"
 import { RoommateCard } from '@/components/roommates/roommate-card';
 import { RoommateInterestDialog } from '@/components/roommates/roommate-interest-dialog';
 import { Button } from '@/components/ui/button';
@@ -135,25 +138,37 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col gap-12 pb-16">
+      <Aurora
+        blend={0.5}
+      />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-background to-background pt-12 pb-16 sm:pt-20 sm:pb-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center text-center">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary mb-6 shadow-xs">
+            <div className="inline-flex backdrop-blur-2xl! backdrop-saturate-50! items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold text-primary mb-6 shadow-xs">
               <Sparkles className="size-3.5" />
-              <span>Verified Student Housing Near Your Campus</span>
+              <AnimatedShinyText className='text-white'>Verified Student Housing Near Your Campus</AnimatedShinyText>
             </div>
 
             {/* Main Headline */}
+
             <h1 className="max-w-4xl text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl sm:leading-tight">
-              Find Your Ideal Flat Near <span className="text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text">Campus</span>
+              <Text3DFlip
+                className="bg-none text-center! justify-center"
+                textClassName="bg-none text-foreground"
+                flipTextClassName="bg-none text-foreground"
+                rotateDirection="top"
+              >
+                Find Your Ideal Flat Near <span className="text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text">Campus</span>
+              </Text3DFlip>
             </h1>
             <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
               Explore verified student apartments, shared flats, and PG accommodations around top universities with zero hassle.
             </p>
 
             {/* Quick Search Card */}
+
             <form
               onSubmit={handleHeroSearch}
               className="mt-8 w-full max-w-3xl rounded-2xl border border-border/80 bg-card p-3 sm:p-4 shadow-lg backdrop-blur-xl"
@@ -326,18 +341,18 @@ export default function HomePage() {
         <MasonryGrid adaptiveSpanKeys={['standard-promotion']}>
           {isLoading
             ? Array.from({ length: 3 }).map((_, i) => (
-                <div key={`sk-a-${i}`} className="h-80 rounded-2xl bg-muted/60 animate-pulse" />
-              ))
+              <div key={`sk-a-${i}`} className="h-80 rounded-2xl bg-muted/60 animate-pulse" />
+            ))
             : featuredListings.slice(0, 3).map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={listing}
-                  onInterestClick={(item) => {
-                    setSelectedListingForInterest(item);
-                    setIsInterestOpen(true);
-                  }}
-                />
-              ))}
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                onInterestClick={(item) => {
+                  setSelectedListingForInterest(item);
+                  setIsInterestOpen(true);
+                }}
+              />
+            ))}
 
           <SponsoredAd
             key="maximum-carousel"
@@ -360,18 +375,18 @@ export default function HomePage() {
 
           {isLoading
             ? Array.from({ length: 3 }).map((_, i) => (
-                <div key={`sk-b-${i}`} className="h-80 rounded-2xl bg-muted/60 animate-pulse" />
-              ))
+              <div key={`sk-b-${i}`} className="h-80 rounded-2xl bg-muted/60 animate-pulse" />
+            ))
             : featuredListings.slice(3, 6).map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={listing}
-                  onInterestClick={(item) => {
-                    setSelectedListingForInterest(item);
-                    setIsInterestOpen(true);
-                  }}
-                />
-              ))}
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                onInterestClick={(item) => {
+                  setSelectedListingForInterest(item);
+                  setIsInterestOpen(true);
+                }}
+              />
+            ))}
 
           <SponsoredAd
             key="premium-carousel"
@@ -394,18 +409,18 @@ export default function HomePage() {
 
           {isLoading
             ? Array.from({ length: 3 }).map((_, i) => (
-                <div key={`sk-c-${i}`} className="h-80 rounded-2xl bg-muted/60 animate-pulse" />
-              ))
+              <div key={`sk-c-${i}`} className="h-80 rounded-2xl bg-muted/60 animate-pulse" />
+            ))
             : featuredListings.slice(6, 9).map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={listing}
-                  onInterestClick={(item) => {
-                    setSelectedListingForInterest(item);
-                    setIsInterestOpen(true);
-                  }}
-                />
-              ))}
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                onInterestClick={(item) => {
+                  setSelectedListingForInterest(item);
+                  setIsInterestOpen(true);
+                }}
+              />
+            ))}
 
           <SponsoredAd
             key="boost-carousel"
@@ -428,18 +443,18 @@ export default function HomePage() {
 
           {isLoading
             ? Array.from({ length: 2 }).map((_, i) => (
-                <div key={`sk-d-${i}`} className="h-80 rounded-2xl bg-muted/60 animate-pulse" />
-              ))
+              <div key={`sk-d-${i}`} className="h-80 rounded-2xl bg-muted/60 animate-pulse" />
+            ))
             : featuredListings.slice(9, 11).map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={listing}
-                  onInterestClick={(item) => {
-                    setSelectedListingForInterest(item);
-                    setIsInterestOpen(true);
-                  }}
-                />
-              ))}
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                onInterestClick={(item) => {
+                  setSelectedListingForInterest(item);
+                  setIsInterestOpen(true);
+                }}
+              />
+            ))}
 
           {/* Standard/Active slim promotion — adaptive masonry tile (span 1-2) */}
           <SponsoredAd
@@ -464,18 +479,18 @@ export default function HomePage() {
 
           {isLoading
             ? Array.from({ length: 1 }).map((_, i) => (
-                <div key={`sk-e-${i}`} className="h-80 rounded-2xl bg-muted/60 animate-pulse" />
-              ))
+              <div key={`sk-e-${i}`} className="h-80 rounded-2xl bg-muted/60 animate-pulse" />
+            ))
             : featuredListings.slice(11).map((listing) => (
-                <ListingCard
-                  key={listing.id}
-                  listing={listing}
-                  onInterestClick={(item) => {
-                    setSelectedListingForInterest(item);
-                    setIsInterestOpen(true);
-                  }}
-                />
-              ))}
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                onInterestClick={(item) => {
+                  setSelectedListingForInterest(item);
+                  setIsInterestOpen(true);
+                }}
+              />
+            ))}
         </MasonryGrid>
       </section>
 

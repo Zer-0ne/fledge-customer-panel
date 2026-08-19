@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { showToast } from '@/components/ui/toast';
+import BorderGlow from '@/components/BorderGlow'
 import {
   Building2,
   CheckCircle2,
@@ -269,8 +270,8 @@ export default function InterestsPage() {
             const isProcessing = actionLoadingId === interest.id;
 
             return (
+              <BorderGlow key={interest.id} className='rounded-2xl!'>
               <div
-                key={interest.id}
                 className="group relative flex flex-col md:flex-row items-start md:items-center justify-between rounded-2xl border border-border/80 bg-card p-5 gap-4 shadow-xs transition-all hover:shadow-md"
               >
                 {/* Left Section: Listing Thumbnail + Metadata */}
@@ -390,6 +391,7 @@ export default function InterestsPage() {
                   )}
                 </div>
               </div>
+              </BorderGlow>
             );
           })}
         </div>

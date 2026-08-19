@@ -21,6 +21,7 @@ import {
   Ban,
   Loader2,
 } from 'lucide-react';
+import BorderGlow from '@/components/BorderGlow'
 
 export interface AvailabilityConfirmationCardProps {
   entityType: 'listing' | 'roommate_post';
@@ -93,6 +94,7 @@ export function AvailabilityConfirmationCard({
   };
 
   return (
+    <BorderGlow className='rounded-2xl!'>
     <div className="space-y-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
       <div className="flex items-center justify-between border-b border-border pb-3">
         <div>
@@ -188,5 +190,6 @@ export function AvailabilityConfirmationCard({
         </Button>
       </div>
     </div>
+    </BorderGlow>
   );
 }

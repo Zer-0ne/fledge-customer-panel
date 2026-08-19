@@ -19,6 +19,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { showToast } from '@/components/ui/toast';
 import { Bell, CheckCheck, ChevronRight, Settings, Archive } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import BorderGlow from '@/components/BorderGlow'
 
 export default function NotificationsPage() {
   const { user } = useAuth();
@@ -250,6 +251,7 @@ export default function NotificationsPage() {
         <ul className="space-y-2">
           {items.map((notification) => {
             const content = (
+              <BorderGlow className='rounded-xl!'>
               <div
                 className={cn(
                   'flex items-start gap-3 rounded-xl border border-border/80 bg-card p-4 transition-colors',
@@ -321,6 +323,7 @@ export default function NotificationsPage() {
                   </div>
                 </div>
               </div>
+              </BorderGlow>
             );
 
             if (notification.targetUrl) {

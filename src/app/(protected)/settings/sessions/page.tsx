@@ -11,6 +11,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { showToast } from '@/components/ui/toast';
+import BorderGlow from '@/components/BorderGlow'
 import { MonitorSmartphone, Shield } from 'lucide-react';
 
 export default function SessionsSettingsPage() {
@@ -97,8 +98,8 @@ export default function SessionsSettingsPage() {
       ) : (
         <ul className="space-y-3">
           {sessions.map((session) => (
+            <BorderGlow key={session.id} className='rounded-xl!'>
             <li
-              key={session.id}
               className="rounded-xl border border-border/80 bg-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
             >
               <div className="flex items-start gap-3 min-w-0">
@@ -138,6 +139,7 @@ export default function SessionsSettingsPage() {
                 </Button>
               )}
             </li>
+            </BorderGlow>
           ))}
         </ul>
       )}

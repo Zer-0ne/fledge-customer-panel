@@ -8,6 +8,7 @@ import { formatDate } from '@/lib/formatting';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { Badge } from '@/components/ui/badge';
+import BorderGlow from '@/components/BorderGlow'
 import { UserRound } from 'lucide-react';
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -69,6 +70,7 @@ export default function ProfileSettingsPage() {
         </p>
       </div>
 
+      <BorderGlow className='rounded-2xl!'>
       <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 space-y-6">
         <div className="flex items-center gap-4">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
@@ -107,6 +109,7 @@ export default function ProfileSettingsPage() {
           </div>
         )}
       </div>
+      </BorderGlow>
     </section>
   );
 }

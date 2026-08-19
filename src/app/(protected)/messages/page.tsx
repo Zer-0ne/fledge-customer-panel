@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
+import BorderGlow from '@/components/BorderGlow'
 import {
   MessageSquare,
   Search,
@@ -302,8 +303,8 @@ export default function MessagesPage() {
             const msgTime = conv.lastMessage?.createdAt || conv.updatedAt || conv.createdAt;
 
             return (
+              <BorderGlow key={conv.id} className='rounded-xl!'>
               <Link
-                key={conv.id}
                 href={`/messages/${conv.id}`}
                 className={`group flex items-center justify-between p-4 rounded-xl border transition-all shadow-xs ${
                   hasUnread
@@ -389,6 +390,7 @@ export default function MessagesPage() {
                   </div>
                 </div>
               </Link>
+              </BorderGlow>
             );
           })}
         </div>

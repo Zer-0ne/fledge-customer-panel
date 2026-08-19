@@ -37,6 +37,7 @@ import {
 } from '@/lib/api/services/neednow';
 import { STAY_DURATION_LABELS } from '@/lib/api/services/neednow';
 import { NeedNowRequest } from '@/types';
+import BorderGlow from '@/components/BorderGlow'
 
 export interface NeedNowRequestCardProps {
   request: NeedNowRequest;
@@ -71,6 +72,7 @@ export function NeedNowRequestCard({ request, onChanged }: NeedNowRequestCardPro
   const isEditable = EDITABLE_STATUSES.includes(status);
 
   return (
+    <BorderGlow className='rounded-2xl!'>
     <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition-all hover:shadow-md">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         {/* Summary */}
@@ -229,6 +231,7 @@ export function NeedNowRequestCard({ request, onChanged }: NeedNowRequestCardPro
         isLoading={busy('remove')}
       />
     </div>
+    </BorderGlow>
   );
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { CheckCircle2, XCircle, ImageOff } from 'lucide-react';
+import BorderGlow from '@/components/BorderGlow'
 
 /**
  * Community post content rules (Phase 12).
@@ -9,6 +10,7 @@ import { CheckCircle2, XCircle, ImageOff } from 'lucide-react';
  */
 export function ContentRules() {
   return (
+    <BorderGlow className='rounded-2xl!'>
     <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-foreground">What is allowed</h3>
@@ -43,6 +45,7 @@ export function ContentRules() {
         </p>
       </div>
     </div>
+    </BorderGlow>
   );
 }
 

@@ -11,6 +11,7 @@ import {
   NEED_NOW_INTENT_LABELS,
 } from '@/lib/api/services/neednow';
 import { NeedNowRequest } from '@/types';
+import BorderGlow from '@/components/BorderGlow'
 
 export interface NeedNowFeedCardProps {
   request: NeedNowRequest;
@@ -22,6 +23,7 @@ export function NeedNowFeedCard({ request }: NeedNowFeedCardProps) {
   const timeLabel = formatRemainingTime(remaining ?? request.remainingSeconds, request.status);
 
   return (
+    <BorderGlow className='rounded-2xl!'>
     <Link
       href={`/need-now/${request.id}`}
       className="group flex w-64 shrink-0 snap-start flex-col gap-3 rounded-2xl border border-border/80 bg-card p-4 shadow-xs transition-all hover:border-primary/30 hover:shadow-md"
@@ -61,5 +63,6 @@ export function NeedNowFeedCard({ request }: NeedNowFeedCardProps) {
         <span className="font-normal text-muted-foreground">/mo</span>
       </p>
     </Link>
+    </BorderGlow>
   );
 }

@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { showToast } from '@/components/ui/toast';
+import BorderGlow from '@/components/BorderGlow'
 import { Bell, MoonStar, BellRing } from 'lucide-react';
 import {
   configureWebPush,
@@ -172,8 +173,8 @@ export default function NotificationPreferencesClient({ firebaseConfig }: { fire
 
       <ul className="space-y-3">
         {preferences.map((pref) => (
+          <BorderGlow key={pref.kind} className='rounded-xl!'>
           <li
-            key={pref.kind}
             className="rounded-xl border border-border/80 bg-card p-4 flex items-start justify-between gap-4"
           >
             <div className="flex items-start gap-3 min-w-0">
@@ -196,9 +197,11 @@ export default function NotificationPreferencesClient({ firebaseConfig }: { fire
               aria-label={`Toggle ${preferenceKindLabel(pref.kind)}`}
             />
           </li>
+          </BorderGlow>
         ))}
       </ul>
 
+      <BorderGlow className='rounded-xl!'>
       <div className="rounded-xl border border-border/80 bg-card p-4 space-y-4">
         <div className="flex items-start gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -232,7 +235,9 @@ export default function NotificationPreferencesClient({ firebaseConfig }: { fire
           </p>
         )}
       </div>
+      </BorderGlow>
 
+      <BorderGlow className='rounded-xl!'>
       <div className="rounded-xl border border-border/80 bg-card p-4 space-y-4">
         <div className="flex items-start gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -296,6 +301,7 @@ export default function NotificationPreferencesClient({ firebaseConfig }: { fire
           Save quiet hours
         </Button>
       </div>
+      </BorderGlow>
     </section>
   );
 }

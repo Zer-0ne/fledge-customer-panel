@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Heart, Bed, Bath, MapPin, Sparkles, Building, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
+import BorderGlow from '@/components/BorderGlow'
 
 export interface ListingCardProps {
   listing: Listing;
@@ -107,6 +108,7 @@ export function ListingCard({
     .join(' • ');
 
   return (
+    <BorderGlow className='rounded-2xl!'>
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
       {/* Image Header */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
@@ -221,5 +223,6 @@ export function ListingCard({
         </div>
       </div>
     </div>
+    </BorderGlow>
   );
 }

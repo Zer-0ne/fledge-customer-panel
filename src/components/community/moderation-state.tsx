@@ -18,6 +18,7 @@ import { RoommatePost, RedirectTarget } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { RoommatePostMedia } from '@/components/roommates/roommate-post-media';
+import BorderGlow from '@/components/BorderGlow'
 
 export type PostUiState =
   | 'changes-required'
@@ -131,6 +132,7 @@ export function PostStateCard({ post, showReport = false, onReport }: PostStateC
   const changeHints = decision?.changeHints ?? (post.requiredAction?.type === 'CHANGES_REQUIRED' ? post.requiredAction.hints : null);
 
   return (
+    <BorderGlow className='rounded-2xl!'>
     <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
@@ -184,6 +186,7 @@ export function PostStateCard({ post, showReport = false, onReport }: PostStateC
         )}
       </div>
     </div>
+    </BorderGlow>
   );
 }
 

@@ -9,6 +9,7 @@ import { fetchRoommateInterests } from '@/lib/api/services/roommates';
 import { fetchConversations } from '@/lib/api/services/chat';
 import { fetchNotifications } from '@/lib/api/services/notifications';
 import { AnnouncementCenter } from '@/components/announcements/announcement-center';
+import BorderGlow from '@/components/BorderGlow'
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showToast } from '@/components/ui/toast';
@@ -219,6 +220,7 @@ export default function DashboardPage() {
           const Icon = card.icon;
           return (
             <Link key={card.href} href={card.href} className="group">
+              <BorderGlow className='rounded-2xl!'>
               <div className="h-full rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition-all hover:shadow-md hover:border-primary/50">
                 <div className="flex items-center justify-between mb-4">
                   <div
@@ -247,11 +249,13 @@ export default function DashboardPage() {
                   )}
                 </div>
               </div>
+              </BorderGlow>
             </Link>
           );
         })}
       </div>
 
+      <BorderGlow className='rounded-2xl!'>
       <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -291,6 +295,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      </BorderGlow>
     </div>
   );
 }

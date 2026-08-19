@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Inbox,
 } from 'lucide-react';
+import BorderGlow from '@/components/BorderGlow'
 
 export interface RoommateCardProps {
   post: RoommatePost;
@@ -68,6 +69,7 @@ export function RoommateCard({ post, onInterestClick, isOwner = false, hasExpres
     .join(' • ');
 
   return (
+    <BorderGlow className='rounded-2xl!'>
     <div className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
       expired ? 'border-muted opacity-80 bg-muted/20' : 'border-border/60 hover:border-primary/40'
     }`}>
@@ -227,5 +229,6 @@ export function RoommateCard({ post, onInterestClick, isOwner = false, hasExpres
       </div>
       </div>
     </div>
+    </BorderGlow>
   );
 }

@@ -148,6 +148,22 @@ export class AnalyticsQueue {
     }
   }
 
+  /** Returns events rejected by a transient backend shed (503/502/504) to
+   * 'pending' so they are retried as-is. The server never saw them, so they
+   * must not count as failed attempts (no attemptCount/backoff inflation). */
+  async requeue(ids: string[]): Promise<void> {
+    if (!this.db) return;
+    const db = this.db;
+    for (const id of ids) {
+      const event = await txPromise(db, 'readonly', (s) => s.get(id));
+      if (event) {
+        event.status = 'pending';
+        event.nextRetryAt = null;
+        await txPromise(db, 'readwrite', (s) => s.put(event));
+      }
+    }
+  }
+
   async markFailed(ids: string[]): Promise<void> {
     if (!this.db) return;
     const db = this.db;

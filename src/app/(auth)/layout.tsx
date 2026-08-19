@@ -2,6 +2,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Building2, ShieldCheck } from 'lucide-react';
 import { env } from '@/lib/env';
+import BorderGlow from '@/components/BorderGlow'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -31,9 +32,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Card Container */}
-        <div className="rounded-2xl border border-border/80 bg-card/80 p-6 sm:p-8 shadow-xl backdrop-blur-xl transition-all">
-          {children}
-        </div>
+        <BorderGlow
+          className='rounded-2xl!'
+        >
+          <div className="rounded-2xl border border-border/80 bg-card/80 p-6 sm:p-8 shadow-xl backdrop-blur-xl transition-all">
+            {children}
+          </div>
+        </BorderGlow>
       </div>
     </div>
   );

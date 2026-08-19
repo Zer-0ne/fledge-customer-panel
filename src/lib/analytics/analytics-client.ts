@@ -23,13 +23,29 @@ import { initializeErrorCapture } from './analytics-error-capture';
 
 const MAX_BATCH_SIZE = 50;
 const FLUSH_INTERVAL_MS = 60_000;
+/** Minimum pause after a backend 5xx (load-shedding etc.) — the backend's
+ * Retry-After is ~1s, but a shed window outlives it, so re-hammering every
+ * interval would just pile more rejected requests onto a struggling backend.
+ * The cooldown doubles on each consecutive shed (60s → 2m → 4m → …) and
+ * resets on the first successful flush. */
+const SHED_COOLDOWN_MS = 60_000;
+const MAX_SHED_COOLDOWN_MS = 10 * 60_000;
 const APP_VERSION = '1.0.0';
 
 let queue: AnalyticsQueue | null = null;
 let flushTimer: ReturnType<typeof setInterval> | null = null;
 let initialized = false;
-let enabled = true;
+// Event sending is disabled by default for now — the backend load shedder was
+// blocking the batch flush (503). No events are queued or sent. Re-enable via
+// setAnalyticsEnabled(true) once the backend side is sorted.
+let enabled = false;
 let previousScreen: string | null = null;
+/** While the backend sheds (503/502/504), flushes are paused until this time. */
+let nextFlushAllowedAt = 0;
+/** Current shed backoff (doubles on each consecutive shed, resets on success). */
+let shedCooldownMs = SHED_COOLDOWN_MS;
+/** One-shot retry scheduled for the moment the shed cooldown expires. */
+let shedFlushTimer: ReturnType<typeof setTimeout> | null = null;
 /** Serializes flushes — visibilitychange/hidden, online, interval, init and
  * dispose all call flush(); without this lock overlapping flushes re-send the
  * same events and the backend answers every eventId as a duplicate. */
@@ -214,6 +230,7 @@ export function resetIdentity(): void {
  * for the in-flight flush instead of re-sending the same batch. */
 export async function flush(): Promise<void> {
   if (!enabled || !queue || flushing) return;
+  if (Date.now() < nextFlushAllowedAt) return;
   flushing = true;
   try {
     const pending = await queue.pending();
@@ -268,6 +285,8 @@ async function sendBatch(batch: QueuedEvent[]): Promise<void> {
     });
 
     if (response.ok) {
+      // Shed window is over — reset the backoff so a later 503 starts fresh.
+      shedCooldownMs = SHED_COOLDOWN_MS;
       const body = await response.json() as {
         accepted?: string[];
         duplicates?: string[];
@@ -288,12 +307,35 @@ async function sendBatch(batch: QueuedEvent[]): Promise<void> {
         const toFail = all.filter((e) => rejected.includes(e.eventId)).map((e) => e.id);
         await queue.markFailed(toFail);
       }
+    } else if (response.status === 503 || response.status === 502 || response.status === 504) {
+      // Backend is shedding / temporarily unavailable — back off exponentially
+      // instead of re-hammering every interval, and keep the events pending so
+      // they are retried as-is when the shed clears (a shed is not a failure).
+      const retryAfterSec = Number(response.headers.get('retry-after'));
+      const retryAfterMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0 ? retryAfterSec * 1000 : 0;
+      nextFlushAllowedAt = Date.now() + Math.max(retryAfterMs, shedCooldownMs);
+      shedCooldownMs = Math.min(shedCooldownMs * 2, MAX_SHED_COOLDOWN_MS);
+      scheduleCooldownFlush();
+      await queue.requeue(freshIds);
     } else {
       await queue.markFailed(freshIds);
     }
   } catch {
     await queue.markFailed(freshIds);
   }
+}
+
+/** After a shed, retry once as soon as the cooldown expires instead of waiting
+ * for the next interval tick (which could add up to a full interval later).
+ * A single timer is kept — a new shed while one is pending just extends the
+ * cooldown, and the pending timer fires (no-op) at the old deadline. */
+function scheduleCooldownFlush(): void {
+  if (shedFlushTimer) return;
+  const wait = Math.max(0, nextFlushAllowedAt - Date.now());
+  shedFlushTimer = setTimeout(() => {
+    shedFlushTimer = null;
+    unawaited(flush());
+  }, wait);
 }
 
 /** Cleanup old events from the queue. */
@@ -309,6 +351,10 @@ export function setAnalyticsEnabled(value: boolean): void {
 /** Dispose resources (call on page unload). */
 export function disposeAnalytics(): void {
   if (flushTimer) clearInterval(flushTimer);
+  if (shedFlushTimer) {
+    clearTimeout(shedFlushTimer);
+    shedFlushTimer = null;
+  }
   const ended = endSession();
   if (ended?.isValid) {
     track('session_ended', {
