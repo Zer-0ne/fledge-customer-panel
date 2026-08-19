@@ -60,7 +60,7 @@ export type ChatSocketHandlers = {
   onError?: (message: string) => void;
 };
 
-type AckResult =
+export type AckResult =
   | { ok: true; data?: unknown }
   | { ok: false; error: { statusCode: number; message: string } };
 
@@ -95,7 +95,7 @@ async function fetchSocketToken(): Promise<string> {
   return data.token;
 }
 
-function parseChatMessage(payload: unknown, conversationId?: string): ChatMessage {
+export function parseChatMessage(payload: unknown, conversationId?: string): ChatMessage {
   const raw = (payload && typeof payload === 'object' ? payload : {}) as Record<
     string,
     unknown
@@ -133,7 +133,7 @@ function parseChatMessage(payload: unknown, conversationId?: string): ChatMessag
   };
 }
 
-function parseDeliveredState(
+export function parseDeliveredState(
   payload: unknown,
   requireUser = true
 ): DeliveredState & { userId: string } {
@@ -161,7 +161,7 @@ function parseDeliveredState(
   };
 }
 
-function parseReadState(
+export function parseReadState(
   payload: unknown,
   requireUser = true
 ): ReadState & { userId: string } {
@@ -198,7 +198,7 @@ function parseReadState(
   };
 }
 
-function parseUnreadCounts(payload: unknown): UnreadCountsState {
+export function parseUnreadCounts(payload: unknown): UnreadCountsState {
   const raw = (payload && typeof payload === 'object' ? payload : {}) as Record<string, unknown>;
   const data = (raw.data && typeof raw.data === 'object' ? raw.data : raw) as Record<string, unknown>;
   return {
@@ -217,7 +217,7 @@ function parseUnreadCounts(payload: unknown): UnreadCountsState {
   };
 }
 
-function parseConversationUpdated(payload: unknown): ConversationUpdatedState {
+export function parseConversationUpdated(payload: unknown): ConversationUpdatedState {
   const raw = (payload && typeof payload === 'object' ? payload : {}) as Record<string, unknown>;
   const data = (raw.data && typeof raw.data === 'object' ? raw.data : raw) as Record<string, unknown>;
   const conversationId = String(data.conversationId || data.conversation_id || '');
@@ -235,7 +235,7 @@ function parseConversationUpdated(payload: unknown): ConversationUpdatedState {
   };
 }
 
-function parseNotificationCreated(payload: unknown): RealtimeNotificationPayload {
+export function parseNotificationCreated(payload: unknown): RealtimeNotificationPayload {
   const raw = (payload && typeof payload === 'object' ? payload : {}) as Record<string, unknown>;
   const data = (raw.data && typeof raw.data === 'object' ? raw.data : raw) as Record<string, unknown>;
   return {
@@ -543,4 +543,15 @@ export class ConversationSocket {
     if (!this.socket) throw new Error('Socket is not connected');
     return this.socket;
   }
+}
+
+export function createConversationSocket(
+  handlers: ChatSocketHandlers = {},
+): ConversationSocket {
+  if (process.env.NEXT_PUBLIC_REALTIME_DRIVER === 'ws') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { WsConversationSocket } = require('./ws-realtime-client');
+    return new WsConversationSocket(handlers);
+  }
+  return new ConversationSocket(handlers);
 }
