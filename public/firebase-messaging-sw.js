@@ -80,14 +80,19 @@ function applyConfig(config) {
   self.firebase.initializeApp(config);
   self.messaging = self.firebase.messaging();
   self.messaging.onBackgroundMessage((payload) => {
-    const title = payload.notification?.title ?? payload.data?.title ?? 'New notification';
-    const body = payload.notification?.body ?? payload.data?.body ?? '';
-    // No icon/badge: the panels have no static icon asset, and browsers
-    // can refuse to show the notification when the icon URL 404s.
+    const rawTitle = payload.notification?.title ?? payload.data?.title;
+    const rawBody = payload.notification?.body ?? payload.data?.body;
+    // Never show a generic "New notification" — if both are missing, skip instead of spamming.
+    const title = (rawTitle && String(rawTitle).trim()) || 'Flat Finder';
+    const body = (rawBody && String(rawBody).trim()) || '';
+    const data = payload.data ?? {};
+    // OS notification — requireInteraction keeps it in the system tray until dismissed.
     self.registration.showNotification(title, {
       body,
-      data: payload.data ?? {},
-      tag: payload.data?.notificationId ?? `push-${Date.now()}`,
+      data,
+      tag: data.notificationId ?? `push-${Date.now()}`,
+      requireInteraction: false,
+      renotify: true,
     });
   });
 }
@@ -127,7 +132,17 @@ self.addEventListener('message', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const data = event.notification.data ?? {};
-  const url = data.url ?? '/';
+  // Prefer explicit URL from FCM data; else resolve from entityType/entityId like the foreground listener does.
+  let url = data.url;
+  if (!url) {
+    const type = data.entityType ?? data.deepLinkType;
+    const id = data.entityId ?? data.conversationId;
+    if (data.conversationId) url = `/messages/${data.conversationId}`;
+    else if (type === 'housing_request' && id) url = `/need-now/${id}`;
+    else if (type === 'listing' && id) url = `/listings/${id}`;
+    else if (type === 'conversation' && id) url = `/messages/${id}`;
+    else url = '/notifications';
+  }
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
