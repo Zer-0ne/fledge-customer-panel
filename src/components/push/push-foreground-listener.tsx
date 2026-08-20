@@ -63,10 +63,39 @@ export default function PushForegroundListener() {
         notification?: { title?: string; body?: string };
         data?: PushData;
       };
+      const title = payload?.notification?.title ?? (payload?.data as unknown as Record<string, unknown>)?.title as string | undefined ?? 'New notification';
+      const body = payload?.notification?.body ?? (payload?.data as unknown as Record<string, unknown>)?.body as string | undefined ?? '';
       showToast({
-        title: payload?.notification?.title ?? 'New notification',
-        description: payload?.notification?.body ?? '',
+        title,
+        description: body,
       });
+      // OS-level notification (system tray) even when tab is focused.
+      // SW onBackgroundMessage only fires when page is hidden/closed, so
+      // foreground pushes need an explicit Notification() here.
+      try {
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted' && document.visibilityState === 'visible') {
+          const data = (payload?.data ?? {}) as PushData & Record<string, unknown>;
+          const tag = (data.notificationId as string | undefined) ?? `push-${Date.now()}`;
+          // Use SW registration if available so notificationclick is handled by SW.
+          const show = (reg?: ServiceWorkerRegistration) => {
+            const opts: NotificationOptions & { renotify?: boolean } = {
+              body: body || undefined,
+              data,
+              tag,
+              renotify: true,
+            };
+            if (reg) reg.showNotification(title, opts);
+            else new Notification(title, { body: body || undefined, tag, data } as NotificationOptions);
+          };
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(show).catch(() => show());
+          } else {
+            show();
+          }
+        }
+      } catch {
+        // Notification API may throw if permission revoked mid-flight
+      }
     };
 
     const onClick = (event: Event) => {
