@@ -5,56 +5,82 @@ import {
   configureWebPush,
   ensureSwConfigured,
   isWebPushActive,
+  isWebPushSupported,
 } from '@/lib/push/push-notifications';
 import type { FirebaseWebConfig } from '@/lib/push/push-notifications';
 
 /**
- * Global push bootstrap — mounts once in the root layout.
+ * Global push bootstrap — mounts in the root layout.
  *
- * Previously the Firebase config was only injected from
- * settings/notifications page, so a user who never visited Settings
- * had activeConfig === null and the SW never received FIREBASE_CONFIG —
- * background pushes were silently dropped after a restart/reload.
- *
- * This provider receives the server-rendered config (or null) and on
- * every authenticated mount (and on config change) re-posts it to all
- * registered SWs so firebase-messaging-sw.js can initialise
- * onBackgroundMessage regardless of which page the user is on.
- *
- * Additionally: registers Firebase onMessage handler on every mount so
- * foreground pushes (page visible) trigger both in-app toast AND
- * OS-level notification. Previously onMessage was only registered inside
- * enableWebPush() (Settings page) — navigating away lost the handler.
+ * Does TWO things:
+ * 1. Posts Firebase config to the SW (background pushes via onBackgroundMessage)
+ * 2. Registers Firebase onMessage on the PAGE so foreground pushes show BOTH
+ *    in-app toast (via webpush:message event) AND OS notification (directly).
  */
 export function PushBootstrap({ firebaseConfig }: { firebaseConfig: FirebaseWebConfig | null }) {
   React.useEffect(() => {
     configureWebPush(firebaseConfig);
     void ensureSwConfigured();
 
-    // Register foreground onMessage handler if push was previously enabled.
-    // This ensures OS notifications show even when tab is focused.
-    if (firebaseConfig && isWebPushActive()) {
-      import('firebase/app').then(({ initializeApp, getApps }) => {
-        const app = getApps()[0] ?? initializeApp({
-          apiKey: firebaseConfig.apiKey,
-          projectId: firebaseConfig.projectId,
-          messagingSenderId: firebaseConfig.messagingSenderId,
-          appId: firebaseConfig.appId,
-        });
-        return import('firebase/messaging');
-      }).then(({ getMessaging, onMessage }) => {
-        try {
-          const messaging = getMessaging();
-          onMessage(messaging, (payload) => {
-            window.dispatchEvent(new CustomEvent('webpush:message', { detail: payload }));
-          });
-        } catch {
-          // Firebase already initialized or messaging unavailable — safe to ignore
-        }
-      }).catch(() => {
-        // Firebase SDK load failed — foreground push disabled, background still works via SW
+    if (!firebaseConfig || !isWebPushActive() || !isWebPushSupported()) return;
+
+    let stopped = false;
+
+    import('firebase/app').then(({ initializeApp, getApps }) => {
+      if (stopped) return null;
+      const app = getApps()[0] ?? initializeApp({
+        apiKey: firebaseConfig.apiKey,
+        projectId: firebaseConfig.projectId,
+        messagingSenderId: firebaseConfig.messagingSenderId,
+        appId: firebaseConfig.appId,
       });
-    }
+      return import('firebase/messaging');
+    }).then((messagingMod) => {
+      if (!messagingMod || stopped) return;
+      const { getMessaging, onMessage } = messagingMod;
+      try {
+        const messaging = getMessaging();
+        onMessage(messaging, (payload) => {
+          // 1. Dispatch event for PushForegroundListener (in-app toast)
+          window.dispatchEvent(new CustomEvent('webpush:message', { detail: payload }));
+
+          // 2. Direct OS notification — no dependency on PushForegroundListener
+          try {
+            if (Notification.permission === 'granted') {
+              const title = payload.notification?.title
+                ?? (payload.data as Record<string, unknown>)?.title as string
+                ?? 'New notification';
+              const body = payload.notification?.body
+                ?? (payload.data as Record<string, unknown>)?.body as string
+                ?? '';
+              const data = (payload.data ?? {}) as Record<string, unknown>;
+              const tag = (data.notificationId as string) ?? `push-${Date.now()}`;
+
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then((reg) => {
+                  reg.showNotification(title, {
+                    body,
+                    data,
+                    tag,
+                    
+                  });
+                }).catch(() => {
+                  new Notification(title, { body });
+                });
+              } else {
+                new Notification(title, { body });
+              }
+            }
+          } catch {
+            // Notification API unavailable or permission revoked
+          }
+        });
+      } catch {
+        // Firebase messaging init failed
+      }
+    }).catch(() => {});
+
+    return () => { stopped = true; };
   }, [firebaseConfig]);
 
   return null;
