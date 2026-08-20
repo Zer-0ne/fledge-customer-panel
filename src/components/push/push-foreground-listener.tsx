@@ -16,18 +16,6 @@ interface PushData {
   url?: string;
 }
 
-/**
- * Foreground push surface (fix 2026-08-07):
- * 1. `webpush:message` — dispatched by src/lib/push/push-notifications.ts
- *    onMessage handler. Previously NOTHING listened to it, so foreground
- *    pushes (app open) were invisible. Now renders an in-app toast.
- * 2. `NOTIFICATION_CLICK` — posted by public/firebase-messaging-sw.js when a
- *    background OS notification is tapped. Previously nothing handled it and
- *    the SW's openWindow fallback always opened '/' (no `url` in the payload).
- *    Now resolves the deep link from entityType/entityId/conversationId.
- *
- * Mounted once in the protected layout — active on every authenticated page.
- */
 export function resolvePushRoute(data: PushData): string | null {
   const conversationId = data.conversationId ?? (data.deepLinkData?.conversationId as string | undefined);
   if (conversationId && conversationId.length > 0) return `/messages/${conversationId}`;
@@ -36,66 +24,35 @@ export function resolvePushRoute(data: PushData): string | null {
   if (type.startsWith('/')) return type;
   const id = data.entityId ?? (data.deepLinkData?.entityId as string | undefined);
   switch (type) {
-    case 'housing_request':
-      return id ? `/need-now/${id}` : '/need-now';
-    case 'housing_response':
-      return '/need-now';
-    case 'announcement':
-      return '/notifications';
+    case 'housing_request': return id ? `/need-now/${id}` : '/need-now';
+    case 'housing_response': return '/need-now';
+    case 'announcement': return '/notifications';
     case 'listing':
-    case 'property':
-      return id ? `/listings/${id}` : '/listings';
-    case 'conversation':
-      return id ? `/messages/${id}` : null;
-    case 'roommate_post':
-      return id ? `/roommate-posts/${id}` : '/roommate-posts';
-    default:
-      return null;
+    case 'property': return id ? `/listings/${id}` : '/listings';
+    case 'conversation': return id ? `/messages/${id}` : null;
+    case 'roommate_post': return id ? `/roommate-posts/${id}` : '/roommate-posts';
+    default: return null;
   }
 }
 
+/**
+ * Protected-layout push surface.
+ * - Listens for NOTIFICATION_CLICK (posted by SW on OS notification tap)
+ *   and navigates to the deep-linked route.
+ * - Shows in-app toast for foreground pushes (webpush:message from PushBootstrap).
+ */
 export default function PushForegroundListener() {
   const router = useRouter();
 
   React.useEffect(() => {
-    const onMessage = (event: Event) => {
+    const onForeground = (event: Event) => {
       const payload = (event as CustomEvent).detail as {
         notification?: { title?: string; body?: string };
         data?: PushData;
       };
-      const title = payload?.notification?.title ?? (payload?.data as unknown as Record<string, unknown>)?.title as string | undefined ?? 'New notification';
-      const body = payload?.notification?.body ?? (payload?.data as unknown as Record<string, unknown>)?.body as string | undefined ?? '';
-      showToast({
-        title,
-        description: body,
-      });
-      // OS-level notification (system tray) even when tab is focused.
-      // SW onBackgroundMessage only fires when page is hidden/closed, so
-      // foreground pushes need an explicit Notification() here.
-      try {
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted' && document.visibilityState === 'visible') {
-          const data = (payload?.data ?? {}) as PushData & Record<string, unknown>;
-          const tag = (data.notificationId as string | undefined) ?? `push-${Date.now()}`;
-          // Use SW registration if available so notificationclick is handled by SW.
-          const show = (reg?: ServiceWorkerRegistration) => {
-            const opts: NotificationOptions & { renotify?: boolean } = {
-              body: body || undefined,
-              data,
-              tag,
-              renotify: true,
-            };
-            if (reg) reg.showNotification(title, opts);
-            else new Notification(title, { body: body || undefined, tag, data } as NotificationOptions);
-          };
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(show).catch(() => show());
-          } else {
-            show();
-          }
-        }
-      } catch {
-        // Notification API may throw if permission revoked mid-flight
-      }
+      const title = payload?.notification?.title ?? 'New notification';
+      const body = payload?.notification?.body ?? '';
+      showToast({ title, description: body });
     };
 
     const onClick = (event: Event) => {
@@ -104,10 +61,10 @@ export default function PushForegroundListener() {
       router.push(route ?? '/notifications');
     };
 
-    window.addEventListener('webpush:message', onMessage);
+    window.addEventListener('webpush:message', onForeground);
     window.addEventListener('NOTIFICATION_CLICK', onClick);
     return () => {
-      window.removeEventListener('webpush:message', onMessage);
+      window.removeEventListener('webpush:message', onForeground);
       window.removeEventListener('NOTIFICATION_CLICK', onClick);
     };
   }, [router]);
