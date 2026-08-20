@@ -943,3 +943,196 @@ export interface CreateNeedNowResponseParams {
   message?: string;
 }
 
+// ─── Saved Searches (customer-facing search alerts) ──────────────────────────
+export interface SavedSearchFilters {
+  query?: string;
+  campusId?: string;
+  collegeId?: string;
+  minRentPaise?: number;
+  maxRentPaise?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  furnishing?: string;
+  genderPreference?: string;
+  petFriendly?: boolean;
+  minAreaSqft?: number;
+  maxRentPerSqftPaise?: number;
+  availableBy?: string;
+  moveInFrom?: string;
+  moveInTo?: string;
+  amenityIds?: string[];
+}
+
+export interface SavedSearch {
+  id: string;
+  userId: string;
+  name: string;
+  filters: SavedSearchFilters;
+  alertEnabled: boolean;
+  lastMatchedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSavedSearchPayload {
+  name: string;
+  filters: SavedSearchFilters;
+  alertEnabled?: boolean;
+}
+
+export interface UpdateSavedSearchPayload {
+  name?: string;
+  filters?: SavedSearchFilters;
+  alertEnabled?: boolean;
+}
+
+export interface SavedSearchRunResult {
+  items: Listing[];
+  nextCursor: string | null;
+  totalCount?: number;
+  lastMatchedAt: string | null;
+}
+
+// ─── Maintenance Requests ────────────────────────────────────────────────────
+export type MaintenanceStatus = 'open' | 'in_progress' | 'resolved' | 'closed' | 'escalated';
+export type MaintenancePriority = 'critical' | 'high' | 'normal' | 'low';
+export type MaintenanceCategory =
+  | 'plumbing'
+  | 'electrical'
+  | 'appliance'
+  | 'furniture'
+  | 'pest'
+  | 'cleaning'
+  | 'other';
+
+export interface MaintenanceRequest {
+  id: string;
+  listingId: string;
+  requestedBy: string;
+  assignedTo: string | null;
+  category: MaintenanceCategory;
+  title: string;
+  description: string | null;
+  priority: MaintenancePriority;
+  status: MaintenanceStatus;
+  slaDueAt: string | null;
+  slaBreached?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
+  closedAt: string | null;
+  escalatedAt: string | null;
+}
+
+export interface CreateMaintenanceRequestPayload {
+  listingId: string;
+  category: MaintenanceCategory;
+  title: string;
+  description?: string;
+  priority?: MaintenancePriority;
+}
+
+export interface UpdateMaintenanceRequestPayload {
+  title?: string;
+  description?: string;
+  category?: MaintenanceCategory;
+  priority?: MaintenancePriority;
+  status?: MaintenanceStatus;
+  comment?: string;
+}
+
+// ─── Data Export / Erase (GDPR portability) ─────────────────────────────────
+export interface DataExportJob {
+  id: string;
+  kind: string;
+  status: string;
+  sizeBytes: number | null;
+  payload?: unknown;
+  expiresAt: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface DataEraseResponse {
+  requestedAt: string;
+  eraseAt: string;
+  jobId: string;
+}
+
+// ─── College Rules ───────────────────────────────────────────────────────────
+export interface CollegeRule {
+  id: string;
+  collegeId: string;
+  category: string;
+  title: string;
+  body: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Guidance Tips ───────────────────────────────────────────────────────────
+export interface GuidanceTip {
+  id: string;
+  key: string;
+  route: string | null;
+  audience: 'all' | 'customer' | 'partner';
+  title: string;
+  body: string;
+  locale: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── i18n ────────────────────────────────────────────────────────────────────
+export interface I18nStrings {
+  locale: string;
+  supported: string[];
+  strings: Record<string, string>;
+}
+
+// ─── Trust Score ─────────────────────────────────────────────────────────────
+export interface TrustScore {
+  userId: string;
+  score: number;
+  breakdown: {
+    base: number;
+    phoneVerified: number;
+    emailVerified: number;
+    profileComplete: number;
+    tenantVerified: number;
+    studentVerified: number;
+    accountAge: number;
+  };
+  recomputedAt: string;
+}
+
+export interface TrustBadgesResponse {
+  userId: string;
+  score: number;
+  badges: string[];
+  recomputedAt: string;
+}
+
+// ─── User Settings ───────────────────────────────────────────────────────────
+export type UserSettingKey =
+  | 'language'
+  | 'theme'
+  | 'marketingOptOut'
+  | 'availabilityReminders'
+  | 'contactShareReminders'
+  | 'chatNotifications'
+  | 'compactMode';
+
+export type UserSettingValue = string | number | boolean;
+
+export interface UserSetting {
+  key: UserSettingKey;
+  value: UserSettingValue;
+  updatedAt?: string;
+}
+
+export type UpdateUserSettingsPayload = Partial<Record<UserSettingKey, UserSettingValue>>;
+

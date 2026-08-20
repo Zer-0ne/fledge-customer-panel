@@ -8,7 +8,7 @@
  */
 
 import { apiFetch } from '@/lib/api/client';
-import { UpdateUserSettingsPayload, UserSetting, UserSettingKey } from '@/types';
+import { UpdateUserSettingsPayload, UserSetting, UserSettingKey, UserSettingValue } from '@/types';
 
 /**
  * Maps a raw user setting into a UserSetting.
@@ -48,7 +48,7 @@ export function normalizeUserSettingsResponse(res: unknown): UserSetting[] {
     if (directMap.length > 0) {
       return directMap.map(([key, value]) => ({
         key: key as UserSettingKey,
-        value,
+        value: value as UserSettingValue,
       }));
     }
 

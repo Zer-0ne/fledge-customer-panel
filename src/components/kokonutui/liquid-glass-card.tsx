@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import React from "react";
-import { Button, type ButtonProps } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -101,7 +101,7 @@ const liquidButtonVariants = cva(
   }
 );
 
-export type LiquidButtonProps = ButtonProps &
+export type LiquidButtonProps = React.ComponentProps<typeof Button> &
   VariantProps<typeof liquidButtonVariants>;
 
 function LiquidButton({

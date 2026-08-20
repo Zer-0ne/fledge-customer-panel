@@ -11,7 +11,7 @@ import {
   requestDataErase,
 } from '@/lib/api/services/data-export';
 import { fetchI18nStrings } from '@/lib/api/services/i18n';
-import { DataExportJob, UserSettingKey, UserSettingValue } from '@/types';
+import { DataExportJob, UpdateUserSettingsPayload, UserSettingKey, UserSettingValue } from '@/types';
 import { formatRelativeTime, formatDate } from '@/lib/formatting';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -125,7 +125,7 @@ export default function DataPrivacySettingsPage() {
     setSettings((s) => ({ ...s, [key]: value }));
     setIsSavingSetting(true);
     try {
-      await updateUserSettings({ settings: [{ key, value }] });
+      await updateUserSettings({ [key]: value } as UpdateUserSettingsPayload);
       showToast({ title: 'Setting saved', description: 'Your preference was updated.', variant: 'success' });
     } catch (err: unknown) {
       setSettings((s) => ({ ...s, [key]: prev }));

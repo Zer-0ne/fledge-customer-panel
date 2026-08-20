@@ -2,7 +2,7 @@
  * Listing Filter conversion and URL serialization utilities.
  */
 
-import { ListingFilterParams } from '@/types';
+import { ListingFilterParams, SavedSearchFilters } from '@/types';
 
 /**
  * Converts Indian Rupees (INR) to Paise.
@@ -135,4 +135,42 @@ export function buildListingsQueryString(params: ListingFilterParams): string {
 
   const str = searchParams.toString();
   return str ? `?${str}` : '';
+}
+
+/**
+ * Converts ListingFilterParams → SavedSearchFilters for persisting a saved search.
+ */
+export function listingFiltersToSavedSearchFilters(params: ListingFilterParams): SavedSearchFilters {
+  const out: SavedSearchFilters = {};
+  if (params.query !== undefined) out.query = params.query;
+  if (params.campusId !== undefined) out.campusId = params.campusId;
+  if (params.collegeId !== undefined) out.collegeId = params.collegeId;
+  if (params.minRentPaise !== undefined) out.minRentPaise = params.minRentPaise;
+  if (params.maxRentPaise !== undefined) out.maxRentPaise = params.maxRentPaise;
+  if (params.bedrooms !== undefined) out.bedrooms = params.bedrooms;
+  if (params.bathrooms !== undefined) out.bathrooms = params.bathrooms;
+  if (params.furnishing !== undefined) out.furnishing = params.furnishing;
+  if (params.genderPreference !== undefined) out.genderPreference = params.genderPreference;
+  return out;
+}
+
+/**
+ * Converts SavedSearchFilters → ListingFilterParams for re-running / navigating with a saved search.
+ */
+export function savedSearchFiltersToListingFilters(filters: SavedSearchFilters): ListingFilterParams {
+  const out: ListingFilterParams = {};
+  if (filters.query !== undefined) out.query = filters.query;
+  if (filters.campusId !== undefined) out.campusId = filters.campusId;
+  if (filters.collegeId !== undefined) out.collegeId = filters.collegeId;
+  if (filters.minRentPaise !== undefined) out.minRentPaise = filters.minRentPaise;
+  if (filters.maxRentPaise !== undefined) out.maxRentPaise = filters.maxRentPaise;
+  if (filters.bedrooms !== undefined) out.bedrooms = filters.bedrooms;
+  if (filters.bathrooms !== undefined) out.bathrooms = filters.bathrooms;
+  if (filters.furnishing !== undefined) out.furnishing = filters.furnishing;
+  if (filters.genderPreference !== undefined) out.genderPreference = filters.genderPreference;
+  if (filters.availableBy !== undefined) out.query = filters.query;
+  if (filters.minAreaSqft !== undefined) {
+    // minAreaSqft is saved-search-only; ListingFilterParams has no direct field — keep query-compatible fallback
+  }
+  return out;
 }

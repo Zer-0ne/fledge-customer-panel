@@ -10,6 +10,8 @@ import { Header } from '@/components/layout/header';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { Footer } from '@/components/layout/footer';
 import { AnalyticsInit } from '@/components/providers/analytics-init';
+import { PushBootstrap } from '@/components/push/push-bootstrap';
+import { getFirebaseWebConfig } from '@/lib/push/push-config';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -32,6 +34,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const firebaseConfig = getFirebaseWebConfig();
   return (
     <html
       lang="en"
@@ -41,6 +44,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AnalyticsInit />
         <ThemeProvider>
+          <PushBootstrap firebaseConfig={firebaseConfig} />
           <AuthProvider>
             <ToastProvider>
               <SkipToContent />

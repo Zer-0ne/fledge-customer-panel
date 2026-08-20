@@ -83,7 +83,7 @@ export default function SavedSearchesPage() {
       showToast({
         title: count > 0 ? `${count} matching flat${count > 1 ? 's' : ''} found!` : 'No new matches',
         description: count > 0 ? 'Browse the results from the search page.' : 'Try widening your filters or check back later.',
-        variant: count > 0 ? 'success' : 'neutral',
+        variant: count > 0 ? 'success' : 'info',
       });
       applyFilters(saved);
     } catch (err: unknown) {
