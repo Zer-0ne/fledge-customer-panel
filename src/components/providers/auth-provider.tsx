@@ -205,6 +205,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } finally {
+      // Push leak fix: deactivate this browser's WEB push installation so the
+      // backend push_tokens row is deleted (isActive=false) and the SW
+      // IndexedDB firebase-push-config cache is cleared. Without this the
+      // orphan token keeps receiving background pushes after cookie-clear/logout.
+      try {
+        await import('@/lib/push/push-notifications').then((m) => m.deactivateWebPushInstallation());
+      } catch {}
+      try {
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const r of regs) r.active?.postMessage({ type: 'FIREBASE_CONFIG_CLEAR' });
+        }
+      } catch {}
       setUser(null);
       setPermissions([]);
       setUnreadNotificationCount(0);
