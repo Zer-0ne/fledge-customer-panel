@@ -184,9 +184,8 @@ export async function enableWebPush(): Promise<{ ok: boolean; message?: string }
     await registerWebPushToken(token);
     window.localStorage.setItem(SUBSCRIBED_KEY, '1');
 
-    onMessage(messaging, (payload) => {
-      window.dispatchEvent(new CustomEvent('webpush:message', { detail: payload }));
-    });
+    // onMessage is registered globally by PushBootstrap — no need to
+    // register it here (would cause duplicate OS notifications).
 
     return { ok: true };
   } catch (error) {
