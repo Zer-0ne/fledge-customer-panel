@@ -109,7 +109,7 @@ export default function StudentVerifyPage() {
       await uploadToStorage(upload.uploadUrl, file, { method: upload.method, headers: upload.headers });
       await confirmUploadComplete(upload.id);
 
-      // 2. Submit verification
+      // 2. Submit verification — backend waits up to 12s if media is still processing (no frontend polling needed)
       const res = await fetch('/api/proxy/api/v1/student-verifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -117,7 +117,12 @@ export default function StudentVerifyPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? 'Submission failed');
+        const code = (data as { code?: string })?.code ?? (data as { error?: { code?: string } })?.error?.code;
+        const msg = (data as { message?: string })?.message ?? (data as { error?: string })?.error ?? 'Submission failed';
+        if (res.status === 409 && code === 'MEDIA_PROCESSING') {
+          throw new Error('Document is still being processed. Please try again in 5 seconds.');
+        }
+        throw new Error(msg);
       }
 
       showToast('Verification submitted! We\'ll review it within 24 hours.');
@@ -128,8 +133,9 @@ export default function StudentVerifyPage() {
         const historyData = await historyRes.json();
         setVerifications(Array.isArray(historyData) ? historyData : historyData?.data ?? []);
       }
-    } catch (err: any) {
-      showToast(err?.message ?? 'Failed to submit verification');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to submit verification';
+      showToast(msg);
     } finally {
       setSubmitting(false);
     }
