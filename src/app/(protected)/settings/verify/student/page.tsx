@@ -26,7 +26,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-type VerifyMethod = 'id_card' | 'fee_receipt';
+type VerifyMethod = 'STUDENT_ID_CARD' | 'FEE_RECEIPT';
 
 interface Verification {
   id: string;
@@ -52,7 +52,7 @@ function formatDate(iso?: string): string {
 
 export default function StudentVerifyPage() {
   const router = useRouter();
-  const [method, setMethod] = React.useState<VerifyMethod>('id_card');
+  const [method, setMethod] = React.useState<VerifyMethod>('STUDENT_ID_CARD');
   const [file, setFile] = React.useState<File | null>(null);
   const [preview, setPreview] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
@@ -175,9 +175,9 @@ export default function StudentVerifyPage() {
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => { setMethod('id_card'); handleRemoveFile(); }}
+              onClick={() => { setMethod('STUDENT_ID_CARD'); handleRemoveFile(); }}
               className={`flex items-center gap-2.5 rounded-xl border p-3.5 text-left transition-colors ${
-                method === 'id_card'
+                method === 'STUDENT_ID_CARD'
                   ? 'border-primary/50 bg-primary/5 text-foreground'
                   : 'border-border/60 bg-card text-muted-foreground hover:border-primary/30'
               }`}
@@ -190,9 +190,9 @@ export default function StudentVerifyPage() {
             </button>
             <button
               type="button"
-              onClick={() => { setMethod('fee_receipt'); handleRemoveFile(); }}
+              onClick={() => { setMethod('FEE_RECEIPT'); handleRemoveFile(); }}
               className={`flex items-center gap-2.5 rounded-xl border p-3.5 text-left transition-colors ${
-                method === 'fee_receipt'
+                method === 'FEE_RECEIPT'
                   ? 'border-primary/50 bg-primary/5 text-foreground'
                   : 'border-border/60 bg-card text-muted-foreground hover:border-primary/30'
               }`}
@@ -217,10 +217,10 @@ export default function StudentVerifyPage() {
               <Upload className="size-8" />
               <div className="text-center">
                 <p className="text-sm font-medium">
-                  {method === 'id_card' ? 'Upload ID card photo' : 'Upload fee receipt'}
+                  {method === 'STUDENT_ID_CARD' ? 'Upload ID card photo' : 'Upload fee receipt'}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {method === 'id_card'
+                  {method === 'STUDENT_ID_CARD'
                     ? 'JPG, PNG, or WebP — max 10 MB'
                     : 'PDF, JPG, PNG — max 10 MB'}
                 </p>
@@ -301,7 +301,7 @@ export default function StudentVerifyPage() {
                         variant="ghost"
                         size="sm"
                         className="h-7 text-xs gap-1"
-                        onClick={() => { setMethod('id_card'); handleRemoveFile(); }}
+                        onClick={() => { setMethod('STUDENT_ID_CARD'); handleRemoveFile(); }}
                       >
                         <RefreshCw className="size-3" />
                         Re-upload
@@ -317,7 +317,7 @@ export default function StudentVerifyPage() {
         <input
           ref={fileRef}
           type="file"
-          accept={method === 'id_card' ? 'image/*' : 'image/*,.pdf'}
+          accept={method === 'STUDENT_ID_CARD' ? 'image/*' : 'image/*,.pdf'}
           onChange={handleFileChange}
           className="hidden"
         />
