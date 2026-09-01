@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
     const photonRes = await fetch(photonUrl.toString(), {
       headers: { Accept: 'application/json' },
-      next: { revalidate: 0 },
+      next: { revalidate: 3600 }, // 1h data cache — same coords reuse the response (OSM rate-limits hard).
     });
 
     if (photonRes.ok) {
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         'User-Agent': 'FlatSystemCustomerPanel/1.0 (location-picker)',
         'Accept-Language': 'en-IN,en',
       },
-      next: { revalidate: 0 },
+      next: { revalidate: 3600 }, // 1h data cache — same coords reuse the response (OSM rate-limits hard).
     });
 
     if (nominatimRes.ok) {

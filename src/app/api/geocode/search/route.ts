@@ -18,7 +18,7 @@ async function searchPhoton(q: string): Promise<PlaceDto[]> {
 
   const res = await fetch(url.toString(), {
     headers: { Accept: 'application/json' },
-    next: { revalidate: 0 },
+    next: { revalidate: 3600 }, // 1h data cache — same place query reuses the response (OSM rate-limits hard).
   });
   if (!res.ok) return [];
   return fromPhoton(await res.json());
@@ -38,7 +38,7 @@ async function searchNominatim(q: string): Promise<PlaceDto[]> {
       'User-Agent': 'FlatSystemCustomerPanel/1.0 (location-picker)',
       'Accept-Language': 'en-IN,en',
     },
-    next: { revalidate: 0 },
+    next: { revalidate: 3600 }, // 1h data cache — same place query reuses the response (OSM rate-limits hard).
   });
   if (!res.ok) return [];
   return fromNominatim(await res.json());

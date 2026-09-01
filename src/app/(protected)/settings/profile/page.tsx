@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/components/providers/auth-provider';
 import { fetchOwnProfile } from '@/lib/api/services/account';
 import { User } from '@/types';
@@ -102,6 +103,16 @@ export default function ProfileSettingsPage() {
           <Field label="Campus ID" value={data?.campusId || 'Not set'} />
         </dl>
 
+        {/* ── Verification Section ── */}
+        <div className="pt-3 border-t border-border/60 space-y-3">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Verification</p>
+          <div className="grid gap-2">
+            <VerifyRow icon="📱" label="Phone" done={!!data?.phoneVerifiedAt} route="/settings/verify/phone" />
+            <VerifyRow icon="✉️" label="Email" done={!!data?.emailVerifiedAt} subtitle={data?.emailVerifiedAt ? 'Verified via Google Sign-In' : 'Verify via email link'} />
+            <VerifyRow icon="🎓" label="Student ID" done={false} route="/settings/verify/student" subtitle="Upload college ID card photo" />
+          </div>
+        </div>
+
         {data?.bio && (
           <div className="pt-2 border-t border-border/60 space-y-1">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bio</p>
@@ -111,5 +122,26 @@ export default function ProfileSettingsPage() {
       </div>
       </BorderGlow>
     </section>
+  );
+}
+
+function VerifyRow({ icon, label, done, route, subtitle }: { icon: string; label: string; done: boolean; route?: string; subtitle?: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-border/40 bg-card/50 px-3 py-2.5">
+      <div className="flex items-center gap-2.5">
+        <span className="text-base">{icon}</span>
+        <div>
+          <p className="text-sm font-medium">{label}</p>
+          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        </div>
+      </div>
+      {done ? (
+        <span className="text-xs font-medium text-green-500 flex items-center gap-1">✓ Verified</span>
+      ) : route ? (
+        <Link href={route} className="text-xs font-medium text-primary hover:underline">Verify →</Link>
+      ) : (
+        <span className="text-xs text-muted-foreground">—</span>
+      )}
+    </div>
   );
 }

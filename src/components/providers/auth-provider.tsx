@@ -2,7 +2,11 @@
 
 import * as React from 'react';
 import { User, BootstrapResponse } from '@/types';
-import { ConversationSocket } from '@/lib/api/services/chat-socket';
+import {
+  createConversationSocket,
+  type ConversationSocket,
+} from '@/lib/api/services/chat-socket';
+import { fetchConversations } from '@/lib/api/services/chat';
 import { showToast } from '@/components/ui/toast';
 
 export interface AuthContextType {
@@ -92,7 +96,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (!user?.id) return;
 
-    const socket = new ConversationSocket({
+    let socket: ConversationSocket | null = null;
+    let conversationIds: string[] = [];
+    let heartbeat: number | undefined;
+    let stopped = false;
+
+    const announcePresence = async (active: boolean) => {
+      if (stopped || !socket) return;
+      if (active && !socket.connected) await socket.connect();
+      for (const conversationId of conversationIds) {
+        if (active) void socket.join(conversationId).catch(() => undefined);
+        socket.setPresence(conversationId, active);
+      }
+    };
+
+    socket = createConversationSocket({
+      onStatus: (status) => {
+        if (status === 'connected') void announcePresence(true);
+      },
       onUserUnreadCounts: (counts) => {
         setUnreadMessageCount(counts.unreadMessages);
         setUnreadNotificationCount(counts.unreadNotifications);
@@ -121,10 +142,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
-    void socket.connect().catch(() => undefined);
+    const onVisibilityChange = () => {
+      void announcePresence(document.visibilityState === 'visible').catch(
+        () => undefined
+      );
+    };
+    const onPageHide = () => void announcePresence(false).catch(() => undefined);
+
+    void (async () => {
+      await socket?.connect();
+      conversationIds = (await fetchConversations()).map(({ id }) => id);
+      await announcePresence(true);
+      if (conversationIds.length > 0) {
+        heartbeat = window.setInterval(
+          () => void announcePresence(true).catch(() => undefined),
+          60_000
+        );
+      }
+    })().catch(() => undefined);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', onPageHide);
 
     return () => {
-      socket.disconnect();
+      void announcePresence(false);
+      stopped = true;
+      if (heartbeat !== undefined) window.clearInterval(heartbeat);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', onPageHide);
+      socket?.disconnect();
+      socket = null;
     };
   }, [user?.id]);
 

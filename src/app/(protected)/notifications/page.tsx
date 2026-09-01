@@ -21,6 +21,63 @@ import { Bell, CheckCheck, ChevronRight, Settings, Archive } from 'lucide-react'
 import { cn } from '@/lib/utils';
 import BorderGlow from '@/components/BorderGlow'
 
+/** Moderation notification: Instagram-style violation chips + risk level. */
+function ModerationChips({ notification }: { notification: Notification }) {
+  // Extract from deepLinkData if available (backend sets these).
+  const flags = ((notification as unknown) as Record<string, unknown>).deepLinkData as Record<string, unknown> | undefined;
+  const violationFlags = flags?.violationFlags as string[] | undefined;
+  const riskLevel = flags?.riskLevel as string | undefined;
+  const safeReason = flags?.safeReason as string | undefined;
+
+  if (!violationFlags && !riskLevel && !safeReason) return null;
+
+  const flagLabels: Record<string, string> = {
+    REPEATED_DESCRIPTION: 'Duplicate content',
+    CONTACT_INFORMATION: 'Contact info detected',
+    PROMOTIONAL_CONTENT: 'Promotional content',
+    SPAM_KEYWORDS: 'Spam detected',
+    QR_CODE_DETECTED: 'QR code found',
+    SUSPICIOUS_LINKS: 'Suspicious links',
+    POLICY_VIOLATION: 'Policy violation',
+  };
+
+  return (
+    <div className="space-y-2 pt-1">
+      {violationFlags && violationFlags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {violationFlags.slice(0, 3).map((flag) => (
+            <span
+              key={flag}
+              className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600 dark:bg-red-950/30 dark:text-red-400"
+            >
+              {flagLabels[flag] ?? flag}
+            </span>
+          ))}
+        </div>
+      )}
+      {riskLevel && (
+        <span
+          className={cn(
+            'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold',
+            riskLevel === 'HIGH' || riskLevel === 'CRITICAL'
+              ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400'
+              : riskLevel === 'MEDIUM'
+                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400'
+                : 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400'
+          )}
+        >
+          Risk: {riskLevel}
+        </span>
+      )}
+      {safeReason && (
+        <p className="text-xs italic text-muted-foreground bg-muted/50 rounded-md px-2 py-1">
+          &ldquo;{safeReason}&rdquo;
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function NotificationsPage() {
   const { user } = useAuth();
   const [items, setItems] = React.useState<Notification[]>([]);
@@ -282,6 +339,10 @@ export default function NotificationsPage() {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {notification.body || notification.message}
                   </p>
+                  {/* Moderation-specific: violation chips + risk level */}
+                  {notification.kind === 'moderation' && (
+                    <ModerationChips notification={notification} />
+                  )}
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <span className="text-xs text-muted-foreground">
                       {formatRelativeTime(notification.createdAt)}

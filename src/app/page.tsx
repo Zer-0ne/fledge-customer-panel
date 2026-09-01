@@ -7,6 +7,7 @@ import { College, Listing, NeedNowRequest, RoommatePost } from '@/types';
 import { fetchColleges, fetchListings } from '@/lib/api/services/discovery';
 import { nearbyFeed } from '@/lib/api/services/neednow';
 import { fetchRoommatePosts } from '@/lib/api/services/roommates';
+import { resolveLocation, type UserLocation } from '@/lib/location';
 import { ListingCard } from '@/components/listings/listing-card';
 import { MasonryGrid } from '@/components/common/masonry-grid';
 import { InterestDialog } from '@/components/listings/interest-dialog';
@@ -28,6 +29,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { LiquidGlassCard } from "@/components/kokonutui/liquid-glass-card"
 import { SponsoredAd } from '@/components/ads/sponsored-ad';
 import { NeedNowFeedCard } from '@/components/neednow/neednow-feed-card';
+import { NeedNowStoryViewer } from '@/components/neednow/neednow-story-viewer';
 import Text3DFlip from "@/components/ui/text-3d-flip"
 import { RoommateCard } from '@/components/roommates/roommate-card';
 import { RoommateInterestDialog } from '@/components/roommates/roommate-interest-dialog';
@@ -36,7 +38,7 @@ import { Select } from '@/components/ui/select';
 import { ErrorState } from '@/components/ui/error-state';
 import { Search, Building2, Users, ArrowRight, Sparkles, Timer } from 'lucide-react';
 
-const NEED_NOW_DEFAULT_LAT = 28.6139; // Delhi
+const NEED_NOW_DEFAULT_LAT = 28.6139; // Delhi fallback
 const NEED_NOW_DEFAULT_LNG = 77.209;
 
 export default function HomePage() {
@@ -63,13 +65,18 @@ export default function HomePage() {
   const [roommatePosts, setRoommatePosts] = React.useState<RoommatePost[]>([]);
   const [selectedRoommateForInterest, setSelectedRoommateForInterest] = React.useState<RoommatePost | null>(null);
 
+  // Need Now Story Viewer state
+  const [storyViewerOpen, setStoryViewerOpen] = React.useState(false);
+  const [storyViewerIndex, setStoryViewerIndex] = React.useState(0);
+
   const loadNearbyNeeds = React.useCallback(async () => {
     setNeedsLoading(true);
     setNeedsError(null);
     try {
+      const loc: UserLocation = await resolveLocation();
       const feed = await nearbyFeed({
-        longitude: NEED_NOW_DEFAULT_LNG,
-        latitude: NEED_NOW_DEFAULT_LAT,
+        longitude: loc.longitude,
+        latitude: loc.latitude,
         limit: 10,
       });
       setNearbyNeeds(feed.items);
@@ -326,9 +333,15 @@ export default function HomePage() {
             role="list"
             aria-label="Active housing requirements near you"
           >
-            {nearbyNeeds.map((request) => (
+            {nearbyNeeds.map((request, i) => (
               <div key={request.id} role="listitem" className="snap-start">
-                <NeedNowFeedCard request={request} />
+                <NeedNowFeedCard
+                  request={request}
+                  onClick={() => {
+                    setStoryViewerIndex(i);
+                    setStoryViewerOpen(true);
+                  }}
+                />
               </div>
             ))}
             <Link
@@ -575,6 +588,15 @@ export default function HomePage() {
         isOpen={!!selectedRoommateForInterest}
         onClose={() => setSelectedRoommateForInterest(null)}
       />
+
+      {/* Need Now Story Viewer — fullscreen Instagram-style overlay */}
+      {storyViewerOpen && nearbyNeeds.length > 0 && (
+        <NeedNowStoryViewer
+          requests={nearbyNeeds}
+          initialIndex={storyViewerIndex}
+          onClose={() => setStoryViewerOpen(false)}
+        />
+      )}
     </div>
   );
 }

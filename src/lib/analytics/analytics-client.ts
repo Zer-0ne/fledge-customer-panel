@@ -22,7 +22,8 @@ import { initializeWebVitals } from './analytics-web-vitals';
 import { initializeErrorCapture } from './analytics-error-capture';
 
 const MAX_BATCH_SIZE = 50;
-const FLUSH_INTERVAL_MS = 60_000;
+// Load-shedding friendly: 1 batch per hour — local IndexedDB queue, no polling storm during shedding. Also flushes on hidden/online. Was 60s before.
+const FLUSH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 /** Minimum pause after a backend 5xx (load-shedding etc.) — the backend's
  * Retry-After is ~1s, but a shed window outlives it, so re-hammering every
  * interval would just pile more rejected requests onto a struggling backend.
@@ -35,10 +36,9 @@ const APP_VERSION = '1.0.0';
 let queue: AnalyticsQueue | null = null;
 let flushTimer: ReturnType<typeof setInterval> | null = null;
 let initialized = false;
-// Event sending is disabled by default for now — the backend load shedder was
-// blocking the batch flush (503). No events are queued or sent. Re-enable via
-// setAnalyticsEnabled(true) once the backend side is sorted.
-let enabled = false;
+// Enabled by default now — hourly batch + shed-aware backoff keeps data flowing
+// locally even when load shedding returns 503. Disable explicitly if needed.
+let enabled = true;
 let previousScreen: string | null = null;
 /** While the backend sheds (503/502/504), flushes are paused until this time. */
 let nextFlushAllowedAt = 0;

@@ -155,6 +155,9 @@ function CreateRoommatePostPageInner() {
 
       if (result.publicationStatus === 'PUBLISHED' || result.moderationStatus === 'APPROVED') {
         showToast({ title: 'Post published', description: 'Your personal post is live.', variant: 'default' });
+      } else if (result.publicationStatus === 'PENDING') {
+        // Shadow publish: author sees their post as "live" while moderation runs.
+        showToast({ title: 'Post published', description: 'Your post is live. It will appear to others after a quick review.', variant: 'default' });
       } else {
         showToast({
           title: 'Post submitted',

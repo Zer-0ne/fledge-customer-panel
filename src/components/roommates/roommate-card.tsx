@@ -108,6 +108,12 @@ export function RoommateCard({ post, onInterestClick, isOwner = false, hasExpres
                 Roommate
               </Badge>
             )}
+            {post.shadowPublished && (
+              <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium text-[11px] px-2 py-0.5">
+                <Clock className="size-3" />
+                Under review
+              </Badge>
+            )}
             {expired ? (
               <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 font-medium">
                 <Clock className="mr-1 size-3" />

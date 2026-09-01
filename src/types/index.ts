@@ -13,6 +13,8 @@ export interface User {
   bio?: string | null;
   collegeId?: string | null;
   campusId?: string | null;
+  phoneVerifiedAt?: string | null;
+  emailVerifiedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -244,6 +246,8 @@ export interface RoommatePost {
   postType?: RoommatePostType;
   publicationStatus?: PublicationStatus;
   moderationStatus?: ModerationStatus;
+  /** True when post is PENDING moderation but shown to the author as "live". */
+  shadowPublished?: boolean;
   mediaIds?: string[];
   decision?: RoommatePostDecision | null;
   requiredAction?: RequiredAction | null;

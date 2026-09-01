@@ -19,7 +19,8 @@ import {
   isConversationExpired,
 } from '@/lib/api/services/chat';
 import {
-  ConversationSocket,
+  createConversationSocket,
+  type ConversationSocket,
   type SocketStatus,
 } from '@/lib/api/services/chat-socket';
 import { Conversation, ChatMessage, MessageReceiptStatus } from '@/types';
@@ -40,6 +41,7 @@ import {
   Send,
   User,
   Users,
+  Home,
   Ban,
   Check,
   CheckCheck,
@@ -106,18 +108,34 @@ function applyRead(
   });
 }
 
+async function withRetry<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
+  let lastErr: unknown;
+  for (let a = 1; a <= maxAttempts; a++) {
+    try { return await fn(); } catch (e: unknown) {
+      lastErr = e;
+      const status = (e as { statusCode?: number })?.statusCode ?? (e as { status?: number })?.status;
+      if (status && status >= 400 && status < 500) break;
+      if (a < maxAttempts) await new Promise(r => setTimeout(r, 400 * a + (a * 37) % 100));
+    }
+  }
+  throw lastErr;
+}
 function ackPeerReceipts(
   conversationId: string,
   messageId: string,
   socket: ConversationSocket | null
 ): void {
   if (!conversationId || !messageId) return;
-  markMessageDelivered(conversationId, messageId).catch(() => {});
-  markMessageRead(conversationId, messageId).catch(() => {});
-  if (socket?.connected) {
-    socket.markDelivered(conversationId, messageId).catch(() => {});
-    socket.markRead(conversationId, messageId).catch(() => {});
-  }
+  const doAck = async () => {
+    if (socket?.connected) {
+      try { await socket.markRead(conversationId, messageId); return; } catch {}
+      try { await socket.markDelivered(conversationId, messageId); } catch {}
+    }
+    // REST fallback with retry — guarantees persistence even if socket flaky
+    await withRetry(() => markMessageRead(conversationId, messageId)).catch(() => {});
+    await withRetry(() => markMessageDelivered(conversationId, messageId)).catch(() => {});
+  };
+  void doAck();
 }
 
 export default function ChatThreadPage() {
@@ -151,7 +169,11 @@ export default function ChatThreadPage() {
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const loadingMoreRef = React.useRef(false);
+  const stickToBottomRef = React.useRef(true);
+  const prependAnchorRef = React.useRef<{ height: number; top: number } | null>(null);
   const socketRef = React.useRef<ConversationSocket | null>(null);
+  const presenceCleanupRef = React.useRef<(() => void) | null>(null);
   const typingTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingClientIdsRef = React.useRef<Set<string>>(new Set());
   const [listingTitle, setListingTitle] = React.useState<string | null>(null);
@@ -199,8 +221,20 @@ export default function ChatThreadPage() {
         setIsBlockedByPeer(theirs.includes(peer.id));
       })
       .catch(() => {});
+    const onBlocked = (e: Event) => {
+      const d = (e as CustomEvent).detail as {blockedId?: string; blockerId?: string; active?: boolean};
+      if (!peer?.id) return;
+      if (d.blockedId === peer.id) setIsBlocked(Boolean(d.active));
+      if (d.blockerId === peer.id) setIsBlockedByPeer(Boolean(d.active));
+    };
+    for (const evt of ['user:blocked','user:unblocked','user:blocked_by','user:unblocked_by'] as const) {
+      window.addEventListener(evt, onBlocked);
+    }
     return () => {
       cancelled = true;
+      for (const evt of ['user:blocked','user:unblocked','user:blocked_by','user:unblocked_by'] as const) {
+        window.removeEventListener(evt, onBlocked);
+      }
     };
   }, [peer?.id]);
 
@@ -258,6 +292,7 @@ export default function ChatThreadPage() {
   // Load conversation meta & initial message history + Socket.IO (no polling)
   const loadInitialData = React.useCallback(async () => {
     if (!conversationId) return;
+    stickToBottomRef.current = true;
     setIsLoading(true);
     setError(null);
     setRealtimeNotice(null);
@@ -298,7 +333,9 @@ export default function ChatThreadPage() {
       socketRef.current?.disconnect();
       setPeerTyping(false);
       const me = userId;
-      const socket = new ConversationSocket({
+      // Realtime updates — driver picked by NEXT_PUBLIC_REALTIME_DRIVER
+      // (uwebsockets -> raw WS on REALTIME_UWS_PORT).
+      const socket = createConversationSocket({
         onStatus: setSocketStatus,
         onError: (message) => setError(message),
         onMessage: (message) => {
@@ -376,6 +413,14 @@ export default function ChatThreadPage() {
         await socket.connect();
         await socket.join(conversationId);
         socket.setPresence(conversationId, true);
+        // Presence heartbeat: the edge worker's ephemeral presence key lasts
+        // ~90s — without re-announcing, the peer flips back to "Offline" while
+        // this thread stays open (the Flutter app heartbeats every 60s).
+        const presenceHeartbeat = window.setInterval(
+          () => socketRef.current?.setPresence(conversationId, true),
+          40_000
+        );
+        presenceCleanupRef.current = () => window.clearInterval(presenceHeartbeat);
         if (lastIncoming) {
           ackPeerReceipts(conversationId, lastIncoming.id, socket);
         }
@@ -405,15 +450,28 @@ export default function ChatThreadPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadInitialData();
     return () => {
+      presenceCleanupRef.current?.();
+      presenceCleanupRef.current = null;
       socketRef.current?.disconnect();
       socketRef.current = null;
     };
   }, [loadInitialData]);
 
-  // Auto scroll to bottom when initial messages load or when user sends message
+  React.useLayoutEffect(() => {
+    const anchor = prependAnchorRef.current;
+    const node = scrollContainerRef.current;
+    if (!anchor || !node) return;
+    node.scrollTop = anchor.top + node.scrollHeight - anchor.height;
+    prependAnchorRef.current = null;
+  }, [messages.length]);
+
+  // Follow new messages only while the reader is already at the bottom.
   React.useEffect(() => {
-    if (!isLoading && (messages.length > 0 || peerTyping)) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (stickToBottomRef.current && !isLoading && (messages.length > 0 || peerTyping)) {
+      scrollContainerRef.current?.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
     }
   }, [isLoading, messages.length, peerTyping]);
 
@@ -435,7 +493,12 @@ export default function ChatThreadPage() {
 
   // Load older messages via cursor
   const handleLoadOlderMessages = async () => {
-    if (!nextCursor || isLoadingMore) return;
+    if (!nextCursor || loadingMoreRef.current) return;
+    const node = scrollContainerRef.current;
+    if (node) {
+      prependAnchorRef.current = { height: node.scrollHeight, top: node.scrollTop };
+    }
+    loadingMoreRef.current = true;
     setIsLoadingMore(true);
     try {
       const history = await fetchMessageHistory(conversationId, {
@@ -458,8 +521,15 @@ export default function ChatThreadPage() {
     } catch (err) {
       console.error('Failed to load older messages:', err);
     } finally {
+      loadingMoreRef.current = false;
       setIsLoadingMore(false);
     }
+  };
+
+  const handleChatScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const node = event.currentTarget;
+    stickToBottomRef.current = node.scrollHeight - node.scrollTop - node.clientHeight < 120;
+    if (node.scrollTop <= 120) void handleLoadOlderMessages();
   };
 
   // Send message handler
@@ -467,6 +537,7 @@ export default function ChatThreadPage() {
     if (e) e.preventDefault();
     const body = composerText.trim();
     if (!body || isSending || cannotMessage || chatClosed) return;
+    stickToBottomRef.current = true;
 
     const clientId = typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
@@ -601,9 +672,13 @@ export default function ChatThreadPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 flex flex-col h-[calc(100vh-5rem)]">
+    <main className="relative mx-auto max-w-4xl px-4 py-6 sm:px-6 flex flex-col h-[calc(100vh-5rem)]">
+      <div className="absolute inset-x-4 top-6 z-20 sm:inset-x-6">
       {/* Header Bar */}
-      <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-t-2xl border border-border bg-card shadow-xs shrink-0">
+      <div
+        className="relative z-20 flex items-center justify-between p-3.5 sm:p-4 rounded-t-2xl border border-white/20 bg-background/55 shadow-lg shadow-primary/5 supports-[backdrop-filter]:bg-background/40"
+        style={{ backdropFilter: 'blur(20px) saturate(160%)', WebkitBackdropFilter: 'blur(20px) saturate(160%)' }}
+      >
         <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="ghost"
@@ -681,7 +756,7 @@ export default function ChatThreadPage() {
           </Button>
 
           {showOptionsMenu && (
-            <div className="absolute right-0 mt-2 w-48 rounded-xl border border-border bg-popover p-1.5 shadow-lg z-50 text-xs">
+            <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-border bg-popover p-1.5 text-xs shadow-xl">
               <button
                 onClick={() => {
                   setShowOptionsMenu(false);
@@ -707,8 +782,41 @@ export default function ChatThreadPage() {
         </div>
       </div>
 
+      {conversation && (() => {
+        const isRoommate = conversation.contextType === 'roommate_interest';
+        const title = isRoommate
+          ? conversation.roommatePostTitle || conversation.roommatePost?.title
+          : listingTitle || conversation.listingTitle || conversation.listing?.title;
+        const postId = isRoommate
+          ? conversation.roommatePostId
+          : conversation.listingId || conversation.listing?.id;
+        if (!title) return null;
+        return (
+          <div className="relative z-10 border-x border-b border-white/20 bg-background/45 px-4 py-2.5 shadow-lg shadow-primary/5 supports-[backdrop-filter]:bg-background/35"
+            style={{ backdropFilter: 'blur(18px) saturate(150%)', WebkitBackdropFilter: 'blur(18px) saturate(150%)' }}>
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-white/10 px-3.5 py-2.5">
+              <div className="flex min-w-0 items-center gap-2.5">
+                {isRoommate ? <Users className="size-4 shrink-0 text-purple-500" /> : <Home className="size-4 shrink-0 text-primary" />}
+                <div className="min-w-0">
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Related {isRoommate ? 'roommate post' : 'listing'}</p>
+                  <p className="truncate text-xs font-semibold text-foreground">{title}</p>
+                </div>
+              </div>
+              <Link href={isRoommate ? '/roommates' : postId ? `/listings/${postId}` : '/listings'} className="shrink-0 text-[11px] font-medium text-primary hover:underline">
+                View post
+              </Link>
+            </div>
+          </div>
+        );
+      })()}
+      </div>
+
       {/* Main Chat Area */}
-      <div className="flex-1 border-x border-border bg-muted/10 p-4 overflow-y-auto space-y-4" ref={scrollContainerRef}>
+      <div
+        className={`flex-1 rounded-2xl border border-border bg-muted/10 px-4 pb-4 overflow-y-auto space-y-4 ${conversation ? 'pt-36' : 'pt-20'}`}
+        ref={scrollContainerRef}
+        onScroll={handleChatScroll}
+      >
         {realtimeNotice && socketStatus !== 'connected' && (
           <div className="rounded-xl border border-border bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground flex items-center justify-between gap-2">
             <span>{realtimeNotice}</span>
@@ -722,28 +830,6 @@ export default function ChatThreadPage() {
           </div>
         )}
 
-        {/* Roommate Post Context Banner */}
-        {conversation?.contextType === 'roommate_interest' &&
-          (conversation.roommatePostTitle || conversation.roommatePost?.title) && (
-            <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 px-3.5 py-2.5 text-xs text-muted-foreground flex items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <Users className="size-4 text-purple-500 shrink-0" />
-                <span className="truncate">
-                  Regarding Roommate Post:{' '}
-                  <strong className="text-foreground font-semibold">
-                    {conversation.roommatePostTitle || conversation.roommatePost?.title}
-                  </strong>
-                </span>
-              </div>
-              <Link
-                href="/roommates"
-                className="text-purple-600 dark:text-purple-400 font-medium hover:underline text-[11px] shrink-0"
-              >
-                View Posts
-              </Link>
-            </div>
-          )}
-
         {/* Contact Share Card */}
         <ContactShareCard
           conversationId={conversationId}
@@ -752,25 +838,9 @@ export default function ChatThreadPage() {
           roommateInterestId={conversation?.contextType === 'roommate_interest' ? conversation.contextId : undefined}
         />
 
-        {/* Load older messages button */}
-        {hasMore && (
-          <div className="flex justify-center py-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLoadOlderMessages}
-              disabled={isLoadingMore}
-              className="text-xs rounded-full"
-            >
-              {isLoadingMore ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin mr-1" />
-                  Loading older messages...
-                </>
-              ) : (
-                'Load older messages'
-              )}
-            </Button>
+        {hasMore && isLoadingMore && (
+          <div className="flex justify-center py-2" role="status" aria-label="Loading older messages">
+            <Loader2 className="size-4 animate-spin text-muted-foreground" />
           </div>
         )}
 

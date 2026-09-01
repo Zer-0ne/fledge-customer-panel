@@ -14,7 +14,13 @@ import {
   parseNotificationCreated,
 } from './chat-socket';
 import type { ChatMessage } from '@/types';
-import type { DeliveredState, ReadState } from '@/lib/api/services/chat';
+import {
+  markMessageDelivered,
+  markMessageRead,
+  sendMessage,
+  type DeliveredState,
+  type ReadState,
+} from '@/lib/api/services/chat';
 
 const MAX_FRAME_BYTES = 8192;
 const ACK_TIMEOUT_MS = 12_000;
@@ -70,22 +76,40 @@ export class WsConversationSocket {
   private pending = new Map<string, PendingAck>();
   private reconnectAttempt = 0;
   private reconnectTimer?: ReturnType<typeof setTimeout>;
+  private typing = new Map<string, boolean>();
+  private connectPromise?: Promise<void>;
 
-  constructor(private readonly handlers: ChatSocketHandlers = {}) {}
+  constructor(
+    private readonly handlers: ChatSocketHandlers = {},
+    private readonly downstreamOnly = false,
+  ) {}
 
   get connected(): boolean {
     return this.ws?.readyState === WebSocket.OPEN;
   }
 
-  async connect(): Promise<void> {
-    if (this.disposed) return;
+  connect(): Promise<void> {
+    if (this.disposed) return Promise.resolve();
+    if (this.connected) {
+      this.handlers.onStatus?.('connected');
+      return Promise.resolve();
+    }
+    if (this.connectPromise) return this.connectPromise;
+    const pending = this.connectOnce();
+    this.connectPromise = pending;
+    return pending.finally(() => {
+      if (this.connectPromise === pending) this.connectPromise = undefined;
+    });
+  }
+
+  private async connectOnce(): Promise<void> {
     this.handlers.onStatus?.('connecting');
     this.memoryToken = await fetchSocketToken();
     this.openSocket();
     await this.waitForOpen();
   }
 
-  private openSocket(): void {
+  private openSocket(rejoin = false): void {
     if (!this.memoryToken) return;
     const url = wsUrl(this.memoryToken);
     const ws = new WebSocket(url);
@@ -94,8 +118,10 @@ export class WsConversationSocket {
     ws.onopen = () => {
       this.reconnectAttempt = 0;
       this.handlers.onStatus?.('connected');
-      for (const conversationId of this.joined) {
-        void this.join(conversationId).catch(() => undefined);
+      if (rejoin) {
+        for (const conversationId of this.joined) {
+          void this.join(conversationId).catch(() => undefined);
+        }
       }
     };
 
@@ -210,6 +236,17 @@ export class WsConversationSocket {
           };
           if (event === 'typing') this.handlers.onTyping?.(ev);
           else this.handlers.onPresence?.(ev);
+          break;
+        }
+        case 'user:blocked':
+        case 'user:unblocked':
+        case 'user:blocked_by':
+        case 'user:unblocked_by': {
+          (this.handlers as unknown as Record<string, ((p: unknown) => void) | undefined>)[event]?.(payload);
+          (this.handlers as unknown as Record<string, ((p: unknown) => void) | undefined>).onBlocked?.(payload);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent(event, { detail: payload }));
+          }
           break;
         }
       }
@@ -329,7 +366,7 @@ export class WsConversationSocket {
       this.scheduleReconnect();
       return;
     }
-    this.openSocket();
+    this.openSocket(true);
   }
 
   private rejectAllPending(message: string): void {
@@ -343,11 +380,17 @@ export class WsConversationSocket {
   async join(conversationId: string): Promise<void> {
     this.joined.add(conversationId);
     if (!this.connected) await this.connect();
+    if (this.downstreamOnly) return;
     await this.requestWithAck('conversation:join', { conversationId }, () => conversationId);
   }
 
   async leave(conversationId: string): Promise<void> {
     this.joined.delete(conversationId);
+    if (this.downstreamOnly) {
+      if (this.connected && this.typing.get(conversationId)) this.sendFrame('typing', { conversationId, active: false });
+      this.typing.delete(conversationId);
+      return;
+    }
     if (this.connected) {
       this.sendFrame('typing', { conversationId, active: false });
       this.sendFrame('presence', { conversationId, active: false });
@@ -355,6 +398,7 @@ export class WsConversationSocket {
   }
 
   async send(conversationId: string, clientId: string, body: string): Promise<ChatMessage> {
+    if (this.downstreamOnly) return sendMessage(conversationId, body, clientId);
     return this.requestWithAck(
       'message:send',
       { conversationId, clientId, body },
@@ -363,6 +407,15 @@ export class WsConversationSocket {
   }
 
   async markDelivered(conversationId: string, messageId: string): Promise<DeliveredState> {
+    if (this.downstreamOnly) {
+      await markMessageDelivered(conversationId, messageId);
+      return {
+        conversationId,
+        upToMessageId: messageId,
+        deliveredAt: new Date().toISOString(),
+        messageIds: [],
+      };
+    }
     return this.requestWithAck(
       'message:delivered',
       { conversationId, messageId },
@@ -374,6 +427,11 @@ export class WsConversationSocket {
   }
 
   async markRead(conversationId: string, messageId: string): Promise<ReadState> {
+    if (this.downstreamOnly) {
+      await markMessageRead(conversationId, messageId);
+      const updatedAt = new Date().toISOString();
+      return { conversationId, lastReadMessageId: messageId, updatedAt, readAt: updatedAt };
+    }
     return this.requestWithAck(
       'conversation:read',
       { conversationId, messageId },
@@ -385,12 +443,21 @@ export class WsConversationSocket {
   }
 
   setTyping(conversationId: string, active: boolean): void {
+    if (this.downstreamOnly) {
+      if ((this.typing.get(conversationId) ?? false) === active) return;
+      this.typing.set(conversationId, active);
+      this.sendFrame('typing', { conversationId, active });
+      return;
+    }
     if (this.connected) {
       this.sendFrame('typing', { conversationId, active });
     }
   }
 
   setPresence(conversationId: string, active: boolean): void {
+    // NOTE: presence must ALSO flow in downstreamOnly (cloudflare-edge) —
+    // the edge worker relays client presence frames over WS (routed), so
+    // suppressing it here is why the peer never sees this user as Online.
     if (this.connected) {
       this.sendFrame('presence', { conversationId, active });
     }
@@ -401,12 +468,15 @@ export class WsConversationSocket {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.rejectAllPending('Socket disconnected');
     for (const conversationId of [...this.joined]) {
-      if (this.connected) {
+      if (this.downstreamOnly && this.connected && this.typing.get(conversationId)) {
+        this.sendFrame('typing', { conversationId, active: false });
+      } else if (!this.downstreamOnly && this.connected) {
         this.sendFrame('typing', { conversationId, active: false });
         this.sendFrame('presence', { conversationId, active: false });
       }
     }
     this.joined.clear();
+    this.typing.clear();
     this.memoryToken = undefined;
     this.ws?.close(1000, 'Client disconnect');
     this.ws = undefined;

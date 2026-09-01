@@ -436,8 +436,6 @@ export class ConversationSocket {
       };
       const onError = (error: Error) => {
         cleanup();
-        socket.io.opts.reconnection = false;
-        socket.disconnect();
         this.handlers.onStatus?.('failed');
         reject(
           new Error(
@@ -545,13 +543,89 @@ export class ConversationSocket {
   }
 }
 
+type SharedSocket = Pick<
+  ConversationSocket,
+  'connected' | 'connect' | 'renewAuth' | 'join' | 'leave' | 'send' |
+  'markDelivered' | 'markRead' | 'setTyping' | 'setPresence' | 'disconnect'
+>;
+
+const sharedHandlers = new Set<ChatSocketHandlers>();
+let sharedSocket: SharedSocket | null = null;
+let socketLeases = 0;
+
+function notify<K extends keyof ChatSocketHandlers>(
+  key: K,
+  ...args: Parameters<NonNullable<ChatSocketHandlers[K]>>
+): void {
+  for (const handlers of sharedHandlers) {
+    try {
+      const handler = handlers[key] as ((...values: typeof args) => void) | undefined;
+      handler?.(...args);
+    } catch {
+      // One screen listener must not prevent the remaining global listeners.
+    }
+  }
+}
+
+const sharedHandlerProxy: ChatSocketHandlers = {
+  onMessage: (value) => notify('onMessage', value),
+  onDelivered: (value) => notify('onDelivered', value),
+  onRead: (value) => notify('onRead', value),
+  onTyping: (value) => notify('onTyping', value),
+  onPresence: (value) => notify('onPresence', value),
+  onUserUnreadCounts: (value) => notify('onUserUnreadCounts', value),
+  onConversationUpdated: (value) => notify('onConversationUpdated', value),
+  onNotificationCreated: (value) => notify('onNotificationCreated', value),
+  onStatus: (value) => notify('onStatus', value),
+  onError: (value) => notify('onError', value),
+};
+
 export function createConversationSocket(
   handlers: ChatSocketHandlers = {},
 ): ConversationSocket {
-  if (process.env.NEXT_PUBLIC_REALTIME_DRIVER === 'ws') {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { WsConversationSocket } = require('./ws-realtime-client');
-    return new WsConversationSocket(handlers);
+  // Env-driven driver selection — NOT hardcoded to socket.io.
+  // Backend REALTIME_DRIVER can be: socket.io | ws | uwebsockets | rust-native | cpp-native
+  // Only socket.io needs the socket.io client; ALL other drivers speak raw RFC6455 WS at /realtime
+  // (ws on app server, uwebsockets on :4003, rust-native on :4005, cpp-native on :4004).
+  // This makes switching drivers a pure env change (NEXT_PUBLIC_REALTIME_DRIVER).
+  const driver = process.env.NEXT_PUBLIC_REALTIME_DRIVER?.trim();
+  if (!sharedSocket) {
+    if (driver === 'socket.io') {
+      sharedSocket = new ConversationSocket(sharedHandlerProxy);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { WsConversationSocket } = require('./ws-realtime-client');
+      sharedSocket = new WsConversationSocket(
+        sharedHandlerProxy,
+        driver === 'cloudflare-edge'
+      );
+    }
   }
-  return new ConversationSocket(handlers);
+
+  sharedHandlers.add(handlers);
+  socketLeases += 1;
+  const socket = sharedSocket!;
+  let released = false;
+  return {
+    get connected() { return socket.connected; },
+    connect: () => socket.connect(),
+    renewAuth: () => socket.renewAuth(),
+    join: (id: string) => socket.join(id),
+    leave: (id: string) => socket.leave(id),
+    send: (id: string, clientId: string, body: string) => socket.send(id, clientId, body),
+    markDelivered: (id: string, messageId: string) => socket.markDelivered(id, messageId),
+    markRead: (id: string, messageId: string) => socket.markRead(id, messageId),
+    setTyping: (id: string, active: boolean) => socket.setTyping(id, active),
+    setPresence: (id: string, active: boolean) => socket.setPresence(id, active),
+    disconnect: () => {
+      if (released) return;
+      released = true;
+      sharedHandlers.delete(handlers);
+      socketLeases -= 1;
+      if (socketLeases === 0) {
+        socket.disconnect();
+        sharedSocket = null;
+      }
+    },
+  } as unknown as ConversationSocket;
 }

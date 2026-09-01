@@ -95,7 +95,7 @@ export async function requestPresignedUpload(
       mimeType: file.type as AllowedMimeType,
       sizeBytes: file.size,
       checksumSha256,
-      visibility: 'private',
+      visibility: purpose === 'community' ? 'listing' : 'private',
       purpose,
     },
   });
@@ -218,6 +218,13 @@ function socketUrl(): string {
   return value.replace(/\/$/, '');
 }
 
+function wsMediaUrl(token: string): string {
+  const value = process.env.NEXT_PUBLIC_SOCKET_URL?.trim();
+  if (!value) throw new Error('Realtime media status is not configured (NEXT_PUBLIC_SOCKET_URL).');
+  const base = value.replace(/\/$/, '').replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+  return `${base}/realtime?token=${encodeURIComponent(token)}`;
+}
+
 /**
  * Waits for a media upload to reach a terminal state using the realtime
  * `media:status` socket event pushed by the media worker (via Redis → chat
@@ -232,10 +239,12 @@ export async function waitForMediaStatus(
   return new Promise<MediaStatusResponse>((resolve, reject) => {
     let settled = false;
     let socket: Socket | null = null;
+    let rawWs: WebSocket | null = null;
     const timeout = setTimeout(() => {
       if (settled) return;
       settled = true;
       socket?.disconnect();
+      try { rawWs?.close(); } catch {}
       // Safety net: ONE final status read (no polling), then give up.
       void getMediaStatus(mediaId).then(resolve).catch(() => {
         reject(new Error('Timed out waiting for media processing'));
@@ -247,6 +256,7 @@ export async function waitForMediaStatus(
       settled = true;
       clearTimeout(timeout);
       socket?.disconnect();
+      try { rawWs?.close(); } catch {}
       resolve(status);
     };
 
@@ -269,16 +279,34 @@ export async function waitForMediaStatus(
         const tokenResponse = await fetch('/api/auth/socket-token', { method: 'POST', cache: 'no-store' });
         const tokenData = (await tokenResponse.json().catch(() => null)) as { token?: string } | null;
         if (!tokenResponse.ok || !tokenData?.token) throw new Error('no socket token');
-        socket = io(socketUrl(), {
-          autoConnect: false,
-          transports: ['websocket', 'polling'],
-          withCredentials: false,
-          auth: { token: tokenData.token },
-          reconnection: false,
-          timeout: 6_000,
-        });
-        socket.on('media:status', onEvent);
-        socket.connect();
+        // Env-driven transport — NOT hardcoded to socket.io
+        // Only socket.io needs the socket.io client; ALL other drivers (ws, uwebsockets, rust-native, cpp-native)
+        // speak raw RFC6455 WS at /realtime?token=
+        const driver = process.env.NEXT_PUBLIC_REALTIME_DRIVER?.trim();
+        if (driver === 'socket.io') {
+          socket = io(socketUrl(), {
+            autoConnect: false,
+            transports: ['websocket', 'polling'],
+            withCredentials: false,
+            auth: { token: tokenData.token },
+            reconnection: false,
+            timeout: 6_000,
+          });
+          socket.on('media:status', onEvent);
+          socket.connect();
+        } else {
+          // Raw WebSocket path for native drivers
+          rawWs = new WebSocket(wsMediaUrl(tokenData.token));
+          rawWs.onmessage = (ev) => {
+            try {
+              const msg = JSON.parse(typeof ev.data === 'string' ? ev.data : '') as { event?: string; payload?: unknown };
+              if (msg.event === 'media:status') onEvent(msg.payload);
+              // Some drivers wrap payload directly without event wrapper — also handle bare payload with id/status
+              else if (msg && typeof msg === 'object' && 'id' in (msg as Record<string, unknown>)) onEvent(msg);
+            } catch {}
+          };
+          rawWs.onerror = () => {};
+        }
       } catch {
         // Socket unavailable → the timeout safety net does one final read.
       }

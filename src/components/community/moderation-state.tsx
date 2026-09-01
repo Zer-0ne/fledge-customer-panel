@@ -64,6 +64,15 @@ export function getPostState(post: RoommatePost): PostStateInfo {
     return { state: 'published', label: 'Published', description: 'Your post is live and visible to students.' };
   }
 
+  // Shadow publish: post is PENDING moderation but shown to the author as "live"
+  if (publication === 'PENDING' && post.shadowPublished) {
+    return {
+      state: 'published',
+      label: 'Published',
+      description: 'Your post is live. It will appear to others after a quick review.',
+    };
+  }
+
   if (post.requiredAction?.type === 'TENANT_VERIFICATION') {
     return {
       state: 'verification-required',

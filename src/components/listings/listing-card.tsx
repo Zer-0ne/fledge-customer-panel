@@ -29,6 +29,30 @@ export function ListingCard({
 }: ListingCardProps) {
   const [isFavorited, setIsFavorited] = React.useState(!!listing.isFavorited);
   const [isFavLoading, setIsFavLoading] = React.useState(false);
+  const [imageIndex, setImageIndex] = React.useState(0);
+  const [hovered, setHovered] = React.useState(false);
+
+  const images = React.useMemo(() => {
+    const urls = (listing.images ?? []).filter(Boolean);
+    return urls.length > 0
+      ? urls
+      : ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop&q=80'];
+  }, [listing.images]);
+
+  // Auto-playing image carousel — same cadence as the Flutter app (4s).
+  // Pauses while the user hovers/interacts so it never fights the cursor.
+  const multiImage = images.length > 1;
+  React.useEffect(() => {
+    setImageIndex(0);
+  }, [listing.id, images.length]);
+
+  React.useEffect(() => {
+    if (!multiImage || hovered) return;
+    const timer = window.setInterval(() => {
+      setImageIndex((i) => (i + 1) % images.length);
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [multiImage, hovered, images.length]);
 
   let isAuthenticated = false;
   try {
@@ -37,11 +61,6 @@ export function ListingCard({
   } catch {
     // Rendered outside AuthProvider
   }
-
-  const primaryImage =
-    listing.images && listing.images.length > 0
-      ? listing.images[0]
-      : 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop&q=80';
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -110,19 +129,53 @@ export function ListingCard({
 
   return (
     <MagicCard className="rounded-2xl">
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-      {/* Image Header */}
+    <div
+      className="group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* Image Header — auto-playing carousel (multi-image) */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
         <Link href={`/listings/${listing.id}`} className="relative block h-full w-full">
-          <Image
-            src={primaryImage}
-            alt={listing.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+          {images.map((src, i) => (
+            <Image
+              key={`${listing.id}-${i}-${src}`}
+              src={src}
+              alt={i === imageIndex ? listing.title : ''}
+              fill
+              className="object-cover transition-all duration-700 ease-out group-hover:scale-105"
+              style={{
+                opacity: i === imageIndex ? 1 : 0,
+                transform: `translateX(${(i - imageIndex) * 6}%)`,
+              }}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ))}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
         </Link>
+
+        {/* Carousel dots */}
+        {multiImage && (
+          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5">
+            {images.map((_, i) => (
+              <button
+                key={`dot-${listing.id}-${i}`}
+                type="button"
+                aria-label={`Go to image ${i + 1}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setImageIndex(i);
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === imageIndex
+                    ? 'w-4 bg-white'
+                    : 'w-1.5 bg-white/50 hover:bg-white/80'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Top Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-10">

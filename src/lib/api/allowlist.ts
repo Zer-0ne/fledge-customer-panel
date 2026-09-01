@@ -23,9 +23,18 @@ export const CUSTOMER_ALLOWLIST: AllowlistRule[] = [
   { method: 'GET', pattern: /^\/api\/v1\/properties\/[^\/]+$/ },
   { method: 'GET', pattern: /^\/api\/v1\/properties\/[^\/]+\/exact-address$/ },
 
-  // Auth sessions (customer self-service)
+  // Auth sessions + verification (customer self-service)
+  { method: 'GET', pattern: /^\/api\/v1\/auth\/me$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/auth\/bootstrap$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/auth\/phone\/verify$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/auth\/logout$/ },
   { method: 'GET', pattern: /^\/api\/v1\/auth\/sessions$/ },
   { method: 'DELETE', pattern: /^\/api\/v1\/auth\/sessions\/[^\/]+$/ },
+  // Student/Faculty verification (ID card / fee receipt) + UPI OTM
+  { method: 'POST', pattern: /^\/api\/v1\/student-verifications$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/student-verifications\/mine$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/verification\/upi\/initiate$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/verification\/upi\/cancel$/ },
 
   // Users
   { method: 'GET', pattern: /^\/api\/v1\/users\/[^\/]+\/public$/ },
@@ -103,6 +112,10 @@ export const CUSTOMER_ALLOWLIST: AllowlistRule[] = [
   { method: 'POST', pattern: /^\/api\/v1\/donations\/orders$/ },
   { method: 'POST', pattern: /^\/api\/v1\/donations\/verify$/ },
   { method: 'GET', pattern: /^\/api\/v1\/donations$/ },
+  // Donations transparency — public config/summary + supporters wall + donor privacy prefs
+  { method: 'GET', pattern: /^\/api\/v1\/donations\/config$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/donations\/supporters$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/donations\/preferences$/ },
 
   // Ads
   { method: 'POST', pattern: /^\/api\/v1\/ads\/select$/ },

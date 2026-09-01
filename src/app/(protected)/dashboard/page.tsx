@@ -13,6 +13,7 @@ import BorderGlow from '@/components/BorderGlow'
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showToast } from '@/components/ui/toast';
+import { TrustCard } from '@/components/trust/trust-card';
 import {
   Heart,
   MessageSquare,
@@ -179,6 +180,10 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       <AnnouncementCenter variant="dashboard" />
+
+      {/* Trust Score Card */}
+      <TrustCard />
+
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-700 dark:from-indigo-950 dark:via-purple-950 dark:to-slate-900 p-6 sm:p-8 text-white shadow-xl border border-white/10 dark:border-purple-500/20">
         <div className="absolute -top-24 -right-24 size-72 rounded-full bg-purple-500/20 blur-2xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">

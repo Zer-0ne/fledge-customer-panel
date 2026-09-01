@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Search, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { LocationSearchField, type PlaceResult } from '@/components/ui/location-search-field';
 
 export interface ListingFiltersProps {
   colleges: College[];
@@ -202,26 +203,30 @@ export function ListingFilters({
           </Select>
         </div>
 
-        {/* Selected Coordinates Status */}
+        {/* Location Search + Coordinates Status */}
         <div className="space-y-1 sm:col-span-2">
           <label className="text-xs font-medium text-muted-foreground">Location Pin</label>
-          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs">
-            <span className="text-muted-foreground font-mono">
-              {filters.latitude && filters.longitude
-                ? `Lat: ${filters.latitude.toFixed(4)}, Lng: ${filters.longitude.toFixed(4)}`
-                : 'No map center pin selected (Default: Campus center)'}
-            </span>
-            {filters.latitude && filters.longitude && (
+          <LocationSearchField
+            placeholder="Search area to set map pin…"
+            onPlaceSelected={(place: PlaceResult) =>
+              onFilterChange({ latitude: place.latitude, longitude: place.longitude })
+            }
+          />
+          {filters.latitude && filters.longitude && (
+            <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[10px]">
+              <span className="font-mono text-primary/70">
+                {filters.latitude.toFixed(4)}, {filters.longitude.toFixed(4)}
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-5 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
+                className="h-4 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
                 onClick={() => onFilterChange({ latitude: undefined, longitude: undefined })}
               >
-                Clear Pin
+                Clear
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -300,6 +300,9 @@ export async function fetchRoommatePosts(filters?: RoommatePostFilters): Promise
         items = (res as { data: unknown[] }).data;
       } else if ('items' in res && Array.isArray((res as { items: unknown[] }).items)) {
         items = (res as { items: unknown[] }).items;
+      } else if ('posts' in res && Array.isArray((res as { posts: unknown[] }).posts)) {
+        // Backend GET /roommate-posts responds with { posts: [...] }
+        items = (res as { posts: unknown[] }).posts;
       }
     }
 
@@ -373,6 +376,9 @@ export async function fetchMyRoommatePosts(): Promise<RoommatePost[]> {
         items = (res as { data: unknown[] }).data;
       } else if ('items' in res && Array.isArray((res as { items: unknown[] }).items)) {
         items = (res as { items: unknown[] }).items;
+      } else if ('posts' in res && Array.isArray((res as { posts: unknown[] }).posts)) {
+        // Backend GET /roommate-posts/mine responds with { posts: [...], urlsExpireAt }
+        items = (res as { posts: unknown[] }).posts;
       }
     }
 

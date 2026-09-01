@@ -78,17 +78,19 @@ export function Header({
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-md transition-all">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-90">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <Building2 className="size-5" />
+    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-background/60 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/40 dark:border-white/5">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
+        {/* Logo */}
+        <Link href="/" className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+            <Building2 className="size-4" />
           </div>
-          <span className="text-lg font-bold tracking-tight text-foreground">{appName}</span>
+          <span className="text-base font-bold tracking-tight text-foreground">{appName}</span>
         </Link>
 
+        {/* Desktop nav — pill bar */}
         <nav
-          className="hidden items-center rounded-full bg-muted/50 p-1 ring-1 ring-foreground/8 md:flex"
+          className="hidden items-center gap-0.5 rounded-full bg-white/10 p-0.5 ring-1 ring-white/10 backdrop-blur-md dark:bg-white/5 dark:ring-white/5 md:flex"
           aria-label="Primary"
         >
           {NAV_LINKS.map((link) => {
@@ -100,17 +102,17 @@ export function Header({
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors',
-                  active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  'relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
+                  active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'
                 )}
               >
-                {active ? (
+                {active && (
                   <motion.span
                     layoutId="header-nav-active"
-                    className="absolute inset-0 rounded-full bg-background shadow-sm ring-1 ring-foreground/10"
-                    transition={{ type: 'spring', bounce: 0.18, duration: 0.45 }}
+                    className="absolute inset-0 rounded-full bg-white/80 shadow-sm ring-1 ring-white/20 backdrop-blur-md dark:bg-white/10 dark:ring-white/10"
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
                   />
-                ) : null}
+                )}
                 <Icon className="relative size-3.5" />
                 <span className="relative hidden lg:inline">{link.label}</span>
               </Link>
@@ -118,7 +120,8 @@ export function Header({
           })}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-1">
+        {/* Right side actions */}
+        <div className="flex shrink-0 items-center gap-0.5">
           <ThemeToggle className="rounded-full" />
 
           {user ? (
@@ -127,12 +130,12 @@ export function Header({
                 <Button
                   render={<a href={partnerPortalUrl} />}
                   nativeButton={false}
-                  variant="outline"
-                  size="sm"
-                  className="hidden rounded-full lg:inline-flex"
+                  variant="ghost"
+                  size="icon"
+                  className="hidden size-9 rounded-full lg:inline-flex"
+                  aria-label="Partner portal"
                 >
-                  <Building2 data-icon="inline-start" />
-                  Partner
+                  <Building2 className="size-[18px] text-muted-foreground" />
                 </Button>
               ) : null}
 
@@ -141,15 +144,15 @@ export function Header({
                 nativeButton={false}
                 variant="ghost"
                 size="icon"
-                className="relative rounded-full"
+                className="relative size-9 rounded-full"
                 aria-label="Messages"
               >
-                <MessageSquare className="size-5 text-muted-foreground" />
-                {unreadMessagesCount > 0 ? (
-                  <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                <MessageSquare className="size-[18px] text-muted-foreground" />
+                {unreadMessagesCount > 0 && (
+                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
                     {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
                   </span>
-                ) : null}
+                )}
               </Button>
 
               <Button
@@ -157,38 +160,36 @@ export function Header({
                 nativeButton={false}
                 variant="ghost"
                 size="icon"
-                className="relative rounded-full"
+                className="relative size-9 rounded-full"
                 aria-label="Notifications"
               >
-                <Bell className="size-5 text-muted-foreground" />
-                {unreadNotificationsCount > 0 ? (
-                  <span className="absolute top-1.5 right-1.5 flex size-2 rounded-full bg-destructive" />
-                ) : null}
+                <Bell className="size-[18px] text-muted-foreground" />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-destructive" />
+                )}
               </Button>
 
               <Button
                 render={<Link href="/dashboard" />}
                 nativeButton={false}
-                variant="outline"
-                size="sm"
-                className="gap-2 rounded-full pl-1.5 pr-2.5 sm:pr-3"
+                variant="ghost"
+                size="icon"
+                className="ml-1 hidden size-9 rounded-full sm:inline-flex"
+                aria-label="Profile"
               >
                 {user.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={user.avatarUrl}
                     alt=""
-                    className="size-6 rounded-full object-cover"
+                    className="size-7 rounded-full object-cover ring-2 ring-background"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                     {user.displayName.charAt(0).toUpperCase()}
                   </span>
                 )}
-                <span className="hidden max-w-28 truncate text-xs font-medium sm:inline">
-                  {user.displayName}
-                </span>
               </Button>
             </>
           ) : (
@@ -198,7 +199,7 @@ export function Header({
                 nativeButton={false}
                 variant="ghost"
                 size="sm"
-                className="rounded-full"
+                className="hidden rounded-full sm:inline-flex"
               >
                 Log in
               </Button>

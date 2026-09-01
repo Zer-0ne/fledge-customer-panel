@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { href: '/roommates', label: 'Roommates', icon: Users },
   { href: '/need-now', label: 'Need Now', icon: Timer },
   { href: '/donate', label: 'Donate', icon: HeartHandshake },
-  { href: '/messages', label: 'Messages', icon: MessageSquare },
+  { href: '/messages', label: 'Chat', icon: MessageSquare },
   { href: '/dashboard', label: 'Profile', icon: User },
 ] as const;
 
@@ -36,7 +36,7 @@ export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNav
   const pathname = usePathname();
 
   return (
-    <nav className="fixed right-0 bottom-0 left-0 z-40 border-t border-border bg-background/95 pb-safe backdrop-blur-md md:hidden">
+    <nav className="fixed right-0 bottom-0 left-0 z-40 border-t border-white/10 bg-background/60 pb-safe backdrop-blur-2xl dark:border-white/5 md:hidden">
       <div className="flex h-14 items-center justify-around px-1">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -51,23 +51,23 @@ export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNav
               aria-current={isActive ? 'page' : undefined}
               className={cn(
                 'flex w-full flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium transition-colors',
-                isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                isActive ? 'text-primary' : 'text-muted-foreground'
               )}
             >
               <span
                 className={cn(
-                  'relative flex size-8 items-center justify-center rounded-full transition-colors',
-                  isActive && 'bg-primary/12 text-primary'
+                  'relative flex size-8 items-center justify-center rounded-xl transition-all duration-200',
+                  isActive && 'bg-primary/15 text-primary shadow-sm ring-1 ring-primary/20 backdrop-blur-md scale-105'
                 )}
               >
-                <Icon className="size-5" />
-                {badge > 0 ? (
-                  <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                <Icon className="size-[18px]" strokeWidth={isActive ? 2.2 : 1.8} />
+                {badge > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex size-3.5 items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground">
                     {badge > 9 ? '9+' : badge}
                   </span>
-                ) : null}
+                )}
               </span>
-              <span className="leading-tight">{item.label}</span>
+              <span className={cn('leading-tight', isActive && 'font-semibold')}>{item.label}</span>
             </Link>
           );
         })}

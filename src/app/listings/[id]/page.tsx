@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { ErrorState } from '@/components/ui/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showToast } from '@/components/ui/toast';
+import { CollegeRulesCard } from '@/components/colleges/college-rules-card';
 import { useAuth } from '@/components/providers/auth-provider';
 import {
   Bed,
@@ -383,6 +384,12 @@ export default function ListingDetailPage() {
               title={`Approximate location: ${locationText || 'Rental Location'}`}
             />
           </div>
+
+          {/* College Rules — public rulebook for the listing's campus */}
+          <CollegeRulesCard
+            collegeId={listing.property?.collegeId}
+            collegeName={listing.collegeName}
+          />
 
           {/* Associated Property Link */}
           {listing.propertyId && (

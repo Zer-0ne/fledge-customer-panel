@@ -15,19 +15,17 @@ import { MagicCard } from '@/components/ui/magic-card';
 
 export interface NeedNowFeedCardProps {
   request: NeedNowRequest;
+  /** Optional click handler — when provided, overrides the default Link navigation. */
+  onClick?: () => void;
 }
 
 /** Compact card for the home-page "Need Now" rail. */
-export function NeedNowFeedCard({ request }: NeedNowFeedCardProps) {
+export function NeedNowFeedCard({ request, onClick }: NeedNowFeedCardProps) {
   const remaining = useRemainingSeconds(request.expiresAt);
   const timeLabel = formatRemainingTime(remaining ?? request.remainingSeconds, request.status);
 
-  return (
-    <MagicCard className="w-64 shrink-0 rounded-2xl">
-    <Link
-      href={`/need-now/${request.id}`}
-      className="group flex snap-start flex-col gap-3 bg-card p-4"
-    >
+  const content = (
+    <div className="group flex snap-start flex-col gap-3 bg-card p-4">
       <div className="flex items-center gap-2.5">
         <UserAvatar
           name={request.owner.displayName}
@@ -62,7 +60,20 @@ export function NeedNowFeedCard({ request }: NeedNowFeedCardProps) {
         {formatBudgetRangePaise(request.budget.minimumPaise, request.budget.maximumPaise)}
         <span className="font-normal text-muted-foreground">/mo</span>
       </p>
-    </Link>
+    </div>
+  );
+
+  return (
+    <MagicCard className="w-64 shrink-0 rounded-2xl">
+      {onClick ? (
+        <button type="button" onClick={onClick} className="w-full text-left">
+          {content}
+        </button>
+      ) : (
+        <Link href={`/need-now/${request.id}`}>
+          {content}
+        </Link>
+      )}
     </MagicCard>
   );
 }
