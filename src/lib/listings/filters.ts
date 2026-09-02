@@ -51,6 +51,7 @@ export function parseListingFilterParams(
   const latStr = getSingle('latitude') || getSingle('lat');
   const lngStr = getSingle('longitude') || getSingle('lng');
   const radiusStr = getSingle('radiusMeters') || getSingle('radius');
+  const petFriendlyStr = getSingle('petFriendly');
 
   const minRentPaise = minRentStr ? rupeesToPaise(minRentStr) : undefined;
   const maxRentPaise = maxRentStr ? rupeesToPaise(maxRentStr) : undefined;
@@ -75,6 +76,7 @@ export function parseListingFilterParams(
     latitude: latitude !== undefined && !isNaN(latitude) ? latitude : undefined,
     longitude: longitude !== undefined && !isNaN(longitude) ? longitude : undefined,
     radiusMeters: radiusMeters !== undefined && !isNaN(radiusMeters) ? radiusMeters : undefined,
+    petFriendly: petFriendlyStr === 'true' ? true : undefined,
     limit: !isNaN(limit) && limit > 0 ? limit : 20,
   };
 }
@@ -91,6 +93,7 @@ export function serializeListingFilterParams(params: ListingFilterParams): Recor
   if (params.cursor) result.cursor = params.cursor;
   if (params.furnishing) result.furnishing = params.furnishing;
   if (params.genderPreference) result.genderPreference = params.genderPreference;
+  if (params.petFriendly) result.petFriendly = 'true';
 
   if (params.minRentPaise !== undefined) {
     const minRupees = paiseToRupees(params.minRentPaise);
@@ -131,6 +134,7 @@ export function buildListingsQueryString(params: ListingFilterParams): string {
   if (params.latitude !== undefined) searchParams.append('latitude', String(params.latitude));
   if (params.longitude !== undefined) searchParams.append('longitude', String(params.longitude));
   if (params.radiusMeters !== undefined) searchParams.append('radiusMeters', String(params.radiusMeters));
+  if (params.petFriendly) searchParams.append('petFriendly', 'true');
   if (params.limit !== undefined) searchParams.append('limit', String(params.limit));
 
   const str = searchParams.toString();
@@ -151,6 +155,7 @@ export function listingFiltersToSavedSearchFilters(params: ListingFilterParams):
   if (params.bathrooms !== undefined) out.bathrooms = params.bathrooms;
   if (params.furnishing !== undefined) out.furnishing = params.furnishing;
   if (params.genderPreference !== undefined) out.genderPreference = params.genderPreference;
+  if (params.petFriendly !== undefined) out.petFriendly = params.petFriendly;
   return out;
 }
 
@@ -168,6 +173,7 @@ export function savedSearchFiltersToListingFilters(filters: SavedSearchFilters):
   if (filters.bathrooms !== undefined) out.bathrooms = filters.bathrooms;
   if (filters.furnishing !== undefined) out.furnishing = filters.furnishing;
   if (filters.genderPreference !== undefined) out.genderPreference = filters.genderPreference;
+  if (filters.petFriendly !== undefined) out.petFriendly = filters.petFriendly;
   if (filters.availableBy !== undefined) out.query = filters.query;
   if (filters.minAreaSqft !== undefined) {
     // minAreaSqft is saved-search-only; ListingFilterParams has no direct field — keep query-compatible fallback

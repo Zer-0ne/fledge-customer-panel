@@ -134,7 +134,7 @@ export function ListingFilters({
       </div>
 
       {/* Expanded Filter Row */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 border-t border-border/40 pt-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 border-t border-border/40 pt-3">
         {/* Min Rent */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Min Rent (₹/mo)</label>
@@ -180,9 +180,20 @@ export function ListingFilters({
             <option value="fully-furnished">Fully Furnished</option>
           </Select>
         </div>
-      </div>
 
-      {/* Geo Radius Filter Row */}
+        {/* Pet Friendly */}
+        <div className="space-y-1 flex items-end">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={filters.petFriendly === true}
+              onChange={(e) => onFilterChange({ petFriendly: e.target.checked || undefined })}
+              className="rounded border-border accent-primary"
+            />
+            <span className="text-xs font-medium text-muted-foreground">🐾 Pet Friendly Only</span>
+          </label>
+        </div>
+      </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 border-t border-border/40 pt-3">
         {/* Search Radius */}
         <div className="space-y-1">
