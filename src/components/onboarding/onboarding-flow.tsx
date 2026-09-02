@@ -81,6 +81,8 @@ type Phase = 'loading' | 'questions' | 'done';
 /**
  * Post-login onboarding overlay — full-screen glass card over the protected UI.
  * Shows one question at a time; submit enables once all required are answered.
+ * Production: seeds answers from server `answered` so partially-answered users
+ * aren't forced to re-answer, and handles empty catalog gracefully.
  */
 export function OnboardingFlow() {
   const { refreshSession } = useAuth();
@@ -96,7 +98,29 @@ export function OnboardingFlow() {
     fetchOnboardingQuestions()
       .then((list) => {
         if (!mounted) return;
-        if (list.length === 0) return; // nothing to ask → render null
+        if (list.length === 0) {
+          // No active questions for this audience → nothing to block on.
+          // Treat as immediately done so the layout can hide the overlay.
+          setQuestions([]);
+          setPhase('done');
+          // Refresh to confirm status, but don't loop if still pending with 0 required.
+          window.setTimeout(() => void refreshSession(), 300);
+          window.setTimeout(() => setPhase('questions'), 1200);
+          return;
+        }
+        // Seed answers map from server `answered` so required gating respects
+        // already-answered questions (e.g. user answered q_primary_goal last session).
+        const seeded: AnswerMap = {};
+        for (const q of list) {
+          if (q.answered !== null && q.answered !== undefined) {
+            // Normalize: server may return "" for text, [] for multi — treat same as answered check.
+            const v = q.answered as OnboardingAnswerValue;
+            if (typeof v === 'string' ? v.trim().length > 0 : Array.isArray(v) ? v.length > 0 : true) {
+              seeded[q.id] = v;
+            }
+          }
+        }
+        setAnswers(seeded);
         setQuestions(list);
         setPhase('questions');
       })
@@ -108,9 +132,10 @@ export function OnboardingFlow() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [refreshSession]);
 
   if (phase === 'loading') return <LoadingCard />;
+  if (phase === 'done' && questions.length === 0) return null;
 
   const question = questions[index];
   if (!question) return null;
@@ -118,7 +143,7 @@ export function OnboardingFlow() {
   const answeredCurrent = isAnswered(question, answers);
   const requiredDone = questions.every((q) => !q.required || isAnswered(q, answers));
   const isLast = index === questions.length - 1;
-  const progressPct = Math.round(((index + (answeredCurrent ? 1 : 0)) / questions.length) * 100);
+  const progressPct = questions.length === 0 ? 100 : Math.round(((index + (answeredCurrent ? 1 : 0)) / questions.length) * 100);
 
   const updateAnswer = (value: OnboardingAnswerValue) => {
     setAnswers((previous) => ({ ...previous, [question.id]: value }));
