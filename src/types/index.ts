@@ -162,6 +162,7 @@ export interface Listing {
   furnishing: 'unfurnished' | 'semi-furnished' | 'fully-furnished';
   availableFrom: string;
   genderPreference?: 'any' | 'male' | 'female';
+  petFriendly?: boolean;
   images: string[];
   status: 'draft' | 'published' | 'paused' | 'rented' | 'expired' | 'removed';
   isFavorited?: boolean;
@@ -180,6 +181,7 @@ export interface ListingFilterParams {
   bathrooms?: number;
   furnishing?: string;
   genderPreference?: string;
+  petFriendly?: boolean;
   latitude?: number;
   longitude?: number;
   radiusMeters?: number;
@@ -931,7 +933,7 @@ export interface UpdateNeedNowParams {
   radiusMeters?: number;
   budgetMinPaise?: number;
   budgetMaxPaise?: number;
-  moveInDate?: string;
+  moveInDate?: string | null;
   stayDurationType?: StayDurationType;
   preferredRoomTypes?: PreferredRoomType[];
   description?: string;

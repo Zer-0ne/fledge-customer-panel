@@ -187,6 +187,11 @@ export function ListingCard({
               {listing.furnishing.replace('-', ' ')}
             </Badge>
           )}
+          {listing.petFriendly && (
+            <Badge variant="secondary" className="backdrop-blur-md bg-emerald-600/80 text-white border-0 font-medium">
+              🐾 Pets OK
+            </Badge>
+          )}
         </div>
 
         {/* Favorite Button */}
