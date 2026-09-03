@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 export type TrustBadgeKey = 'bronze' | 'silver' | 'gold' | 'diamond';
 
@@ -119,12 +119,10 @@ export function TrustBadge({
         className="inline-block"
         onError={() => setMissing(true)}
       />
-      <AnimatePresence>
-        {preview && open ? createPortal(
+      {preview && open ? createPortal(
           <motion.span
             initial={{ opacity: 0, y: 12, scale: 0.85 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.9 }}
             transition={{ type: 'spring', stiffness: 350, damping: 22 }}
             style={{ top: pos.top, left: pos.left, rotate, x: translateX }}
             className="fixed z-[9999] w-56 rounded-2xl border border-border bg-popover p-3 text-center shadow-2xl"
@@ -143,7 +141,6 @@ export function TrustBadge({
           </motion.span>,
           document.body,
         ) : null}
-      </AnimatePresence>
     </span>
   );
 }
