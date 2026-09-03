@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { showToast } from '@/components/ui/toast';
-import { Phone, Loader2, Copy, Check } from 'lucide-react';
+import { Phone, Loader2, Copy, Check, Eye } from 'lucide-react';
 import {
   fetchContactShareRequestDetail,
   approveContactShareRequest,
@@ -94,14 +94,28 @@ function NumberDialog({ grantId, onDone }: { grantId: string; onDone: () => void
   const [contact, setContact] = React.useState<RevealedContact | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [mode, setMode] = React.useState<'masked' | 'revealed' | 'done'>('masked');
+  // Single-view grants: fetch exactly once (StrictMode double-mount must not
+  // burn the only view).
+  const fetchedRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
+    if (fetchedRef.current === grantId) return;
+    fetchedRef.current = grantId;
     let live = true;
-    fetchRevealedContact(grantId)
-      .then((row) => { if (live) setContact(row); })
-      .catch(() => { if (live) setError('This number is no longer available.'); });
+    setMode('masked');
     return () => { live = false; };
   }, [grantId]);
+
+  const reveal = () => {
+    setBusy(true);
+    setError(null);
+    fetchRevealedContact(grantId)
+      .then((row) => { setContact(row); setMode('revealed'); })
+      .catch(() => { setError('This number is no longer available.'); setMode('done'); })
+      .finally(() => setBusy(false));
+  };
 
   const copy = async () => {
     if (!contact) return;
@@ -125,11 +139,14 @@ function NumberDialog({ grantId, onDone }: { grantId: string; onDone: () => void
           </DialogDescription>
         </DialogHeader>
         {error ? <p className="text-xs text-destructive">{error}</p> : null}
-        {contact ? (
+        {mode === 'masked' ? (
+          <Button disabled={busy} onClick={reveal} className="gap-1.5">
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Eye className="size-4" />} {busy ? 'Revealing…' : 'Tap to view number'}
+          </Button>
+        ) : null}
+        {mode === 'revealed' && contact ? (
           <p className="text-2xl font-semibold tracking-wide">{contact.phoneNumber}</p>
-        ) : (
-          <Loader2 className="size-5 animate-spin text-muted-foreground" />
-        )}
+        ) : null}
         <DialogFooter>
           <Button variant="outline" onClick={onDone}>Close</Button>
           <Button disabled={!contact} onClick={copy}>

@@ -33,6 +33,7 @@ import {
   Eye,
   Lock,
   Ban,
+  RefreshCw,
 } from 'lucide-react';
 
 export interface ContactShareCardProps {
@@ -186,6 +187,41 @@ export function ContactShareCard({
       showToast({
         title: 'Request Failed',
         description: safeMsg,
+        variant: 'error',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fresh request after expiry: same context, resets state to pending.
+  const handleRequestAgain = async () => {
+    const ctxListingId = request?.listingInterestId ?? listingInterestId;
+    const ctxRoommateId = request?.roommateInterestId ?? roommateInterestId;
+    if (!ctxListingId && !ctxRoommateId) {
+      showToast({
+        title: 'Action Unavailable',
+        description: 'An active accepted interest is required to request contact details.',
+        variant: 'error',
+      });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const payload = ctxListingId ? { listingInterestId: ctxListingId } : { roommateInterestId: ctxRoommateId };
+      const res = await createContactShareRequest(payload);
+      setRequest(res);
+      setGrant(res.accessGrant ?? null);
+      setRevealedContact(null);
+      showToast({
+        title: 'Request Sent',
+        description: 'Fresh contact share request sent to the owner.',
+        variant: 'success',
+      });
+    } catch (err: unknown) {
+      showToast({
+        title: 'Request Failed',
+        description: normalizeContactError(err),
         variant: 'error',
       });
     } finally {
@@ -419,6 +455,10 @@ export function ContactShareCard({
         <p className="text-[11px] text-muted-foreground">
           {grant?.status === 'revoked' ? 'The owner revoked this access.' : 'Views are used up or the time limit passed. Send a fresh request to see the number again.'}
         </p>
+        <Button size="sm" variant="outline" disabled={isLoading} onClick={handleRequestAgain} className="text-xs h-8 gap-1.5">
+          {isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
+          Request again
+        </Button>
       </div>
     );
   }
