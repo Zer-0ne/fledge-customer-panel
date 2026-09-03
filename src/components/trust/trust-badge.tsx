@@ -84,17 +84,16 @@ export function TrustBadge({
     };
   }, [badge, userId]);
 
-  const place = (clientX?: number) => {
+  const place = () => {
     const el = anchorRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
     const w = 224;
     const h = 190;
-    const cx = clientX ?? r.left + r.width / 2;
+    const cx = r.left + r.width / 2;
     const left = Math.min(Math.max(cx - w / 2, 8), window.innerWidth - w - 8);
     const below = r.top < h + 12;
     setPos({ top: below ? r.bottom + 8 : r.top - h - 8, left });
-    if (clientX !== undefined) mouseX.set(clientX - (r.left + r.width / 2));
   };
 
   if (!resolved || missing) return null;
@@ -104,7 +103,10 @@ export function TrustBadge({
       ref={anchorRef}
       className="inline-flex shrink-0 align-[-2px]"
       onMouseEnter={preview ? () => { place(); setOpen(true); } : undefined}
-      onMouseMove={preview ? (e) => place(e.clientX) : undefined}
+      onMouseMove={preview ? (e) => {
+        const r = anchorRef.current?.getBoundingClientRect();
+        if (r) mouseX.set(e.clientX - (r.left + r.width / 2));
+      } : undefined}
       onMouseLeave={preview ? () => setOpen(false) : undefined}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
