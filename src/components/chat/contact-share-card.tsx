@@ -9,6 +9,7 @@ import {
 import {
   createContactShareRequest,
   fetchContactShareRequests,
+  fetchContactShareRequestDetail,
   approveContactShareRequest,
   rejectContactShareRequest,
   revokeContactShareRequest,
@@ -62,6 +63,17 @@ export function ContactShareCard({
   const [copied, setCopied] = React.useState(false);
   const [remainingTime, setRemainingTime] = React.useState<string | null>(null);
   const [isDisabledByPlatform, setIsDisabledByPlatform] = React.useState(false);
+
+  // Stub grants (id only, no expiry) resolve to live status once — otherwise
+  // a stale approved stub renders an active card with a phantom timer.
+  React.useEffect(() => {
+    if (!grant || grant.expiresAt !== '' || !request?.id) return;
+    let live = true;
+    fetchContactShareRequestDetail(request.id)
+      .then((detail) => { if (live && detail.accessGrant) setGrant(detail.accessGrant); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [grant, request?.id]);
 
   // Sync initial request
   React.useEffect(() => {
@@ -258,8 +270,22 @@ export function ContactShareCard({
 
   // Explicitly fetch unmasked contact number
   const handleRevealContact = async () => {
-    const activeGrantId = grant?.id || (request?.status === 'approved' ? request.id : null);
-    if (!activeGrantId) return;
+    // Never use the REQUEST id as a grant id (backend looks up grants only) —
+    // resolve the real grant id from the request detail when missing.
+    let activeGrantId = grant?.id ?? null;
+    if (!activeGrantId && request?.status === 'approved' && request.id) {
+      try {
+        const detail = await fetchContactShareRequestDetail(request.id);
+        activeGrantId = detail.accessGrant?.id ?? null;
+        if (detail.accessGrant) setGrant(detail.accessGrant);
+      } catch {
+        activeGrantId = null;
+      }
+    }
+    if (!activeGrantId) {
+      showToast({ title: 'Not ready yet', description: 'Grant is not available — ask for a fresh share.', variant: 'error' });
+      return;
+    }
 
     setIsRevealing(true);
     try {
@@ -380,7 +406,23 @@ export function ContactShareCard({
   }
 
   // 2. Grant Active or Approved Request State
-  if (grant?.status === 'approved' || request?.status === 'approved') {
+  // Sync rule: revoked/time-expired/views-exhausted grants render the expired
+  // state (no timer, no View button) instead of a live-looking active card.
+  const grantLive = grant?.status === 'approved' && grant.remainingViews !== 0;
+  if (grant?.status === 'expired' || grant?.status === 'revoked' || (request?.status === 'approved' && !grantLive)) {
+    return (
+      <div className="p-4 rounded-xl border border-border/60 bg-muted/30 space-y-2">
+        <div className="flex items-center gap-2 text-muted-foreground font-semibold text-xs">
+          <ShieldCheck className="size-4 shrink-0" />
+          Temporary Contact Access {grant?.status === 'revoked' ? 'Revoked' : 'Expired'}
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          {grant?.status === 'revoked' ? 'The owner revoked this access.' : 'Views are used up or the time limit passed. Send a fresh request to see the number again.'}
+        </p>
+      </div>
+    );
+  }
+  if (grantLive || request?.status === 'approved') {
     const contactSource = grant?.contactSource || 'OWNER';
     return (
       <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10 space-y-3">

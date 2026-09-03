@@ -528,6 +528,8 @@ export interface AdCreative {
   imageUrl?: string | null;
   /** May be present on select; click endpoint is source of truth for redirect */
   destinationUrl?: string | null;
+  /** Contact action (wa.me → WHATSAPP, tel: → PHONE) — drives the card CTA label */
+  contactType?: 'WEBSITE' | 'WHATSAPP' | 'PHONE' | null;
   sponsorName?: string | null;
   /** Priority tier — BOOST/PREMIUM slides hold longer in carousels */
   priorityTier?: string | null;
@@ -670,6 +672,7 @@ export interface ContactAccessGrantSummary {
   contactSource: ContactSource;
   expiresAt: string;
   maximumViewCount: number;
+  remainingViews?: number;
 }
 
 export interface RevealedContact {
