@@ -66,7 +66,7 @@ export default function SignupPage() {
   //       email.trim() ? email.trim() : undefined,
   //       phone.trim() ? phone.trim() : undefined
   //     );
-  //     addToast('Account Created', 'Welcome to Flat Finder!', 'success');
+  //     addToast('Account Created', 'Welcome to Owl Sight!', 'success');
   //     router.push('/dashboard');
   //   } catch (err: unknown) {
   //     const message = err instanceof Error ? err.message : 'Registration failed. Please check your information.';

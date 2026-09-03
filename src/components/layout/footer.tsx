@@ -20,7 +20,7 @@ const LEGAL_LINKS = [
   { href: '/terms', label: 'Terms of Service' },
 ];
 
-export function Footer({ appName = 'Flat Finder' }: { appName?: string }) {
+export function Footer({ appName = 'Owl Sight' }: { appName?: string }) {
   return (
     <footer className="mb-14 border-t border-border bg-card/40 py-8 md:mb-0 md:py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

@@ -417,7 +417,7 @@ export function LeafletMapInner({
             <span className="flex items-center gap-1">Radius: {(radiusMeters / 1000).toFixed(1)} km</span>
           )}
         </div>
-        <div className="text-[11px] text-muted-foreground/70">Map data © Flat Finder</div>
+        <div className="text-[11px] text-muted-foreground/70">Map data © Owl Sight</div>
       </div>
     </div>
   );

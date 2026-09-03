@@ -158,9 +158,9 @@ export default function DonatePage() {
         <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <HeartHandshake className="size-7" />
         </div>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Keep Flat Finder Free</h1>
+        <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Keep Owl Sight Free</h1>
         <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground sm:text-base">
-          Flat Finder helps students find flats and roommates without making core features paid.
+          Owl Sight helps students find flats and roommates without making core features paid.
           Completely optional — every feature stays free either way.
         </p>
       </div>
@@ -192,7 +192,7 @@ export default function DonatePage() {
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
             {config.supporterCount === 0
-              ? 'No contributions yet this month — FlatFinder is still free for everyone.'
+              ? 'No contributions yet this month — OwlSight is still free for everyone.'
               : `${config.supporterCount} supporter${config.supporterCount === 1 ? '' : 's'} helped this month`}
           </p>
         </div>
