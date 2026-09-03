@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import PushForegroundListener from '@/components/push/push-foreground-listener';
+import ContactShareDialogs from '@/components/contact/contact-share-dialogs';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -42,6 +43,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   return (
     <>
       <PushForegroundListener />
+      <ContactShareDialogs />
       {isOnboardingPending ? <OnboardingFlow /> : null}
       {children}
     </>

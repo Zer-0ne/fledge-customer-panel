@@ -241,7 +241,11 @@ export class WsConversationSocket {
         case 'user:blocked':
         case 'user:unblocked':
         case 'user:blocked_by':
-        case 'user:unblocked_by': {
+        case 'user:unblocked_by':
+        case 'contact:share_requested':
+        case 'contact:share_approved':
+        case 'contact:share_rejected':
+        case 'contact:number_seen': {
           (this.handlers as unknown as Record<string, ((p: unknown) => void) | undefined>)[event]?.(payload);
           (this.handlers as unknown as Record<string, ((p: unknown) => void) | undefined>).onBlocked?.(payload);
           if (typeof window !== 'undefined') {

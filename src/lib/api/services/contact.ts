@@ -115,10 +115,11 @@ export async function fetchContactShareRequestDetail(requestId: string): Promise
   return res;
 }
 
-export async function approveContactShareRequest(requestId: string): Promise<ContactAccessGrantSummary> {
+export async function approveContactShareRequest(requestId: string, phoneNumber?: string): Promise<ContactAccessGrantSummary> {
   const res = await apiFetch<ContactAccessGrantSummary>({
     path: `/api/v1/contact-share-requests/${requestId}/approve`,
     method: 'POST',
+    body: phoneNumber ? { phoneNumber } : {},
   });
   return res;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { FallbackContactManager } from '@/components/contact/fallback-contact-manager';
+// import { FallbackContactManager } from '@/components/contact/fallback-contact-manager'; // hidden until OTP SMS live
 import { ShieldCheck, PhoneCall, Info } from 'lucide-react';
 
 export default function ContactSettingsPage() {
@@ -27,7 +27,8 @@ export default function ContactSettingsPage() {
         </div>
       </div>
 
-      <FallbackContactManager />
+      {/* Fallback contacts hidden until OTP SMS delivery is live (CONTACT_DELIVERY_DRIVER). Backend APIs stay, UI returns with verification working. */}
+      {/* <FallbackContactManager /> */}
     </div>
   );
 }
