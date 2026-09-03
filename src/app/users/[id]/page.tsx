@@ -6,7 +6,7 @@ import { PublicUser } from '@/types';
 import { fetchPublicUser } from '@/lib/api/services/discovery';
 import { formatDate } from '@/lib/formatting';
 import { Button } from '@/components/ui/button';
-import { TrustBadge } from '@/components/trust/trust-badge';
+import { TrustBadge, TrustLevelSection } from '@/components/trust/trust-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { Calendar, GraduationCap, ArrowLeft, ShieldCheck } from 'lucide-react';
@@ -131,6 +131,7 @@ export default function PublicUserProfilePage() {
             This user has not added a bio yet.
           </div>
         )}
+        <TrustLevelSection badge={user.trustBadge} />
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import { formatDate } from '@/lib/formatting';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { Badge } from '@/components/ui/badge';
-import { TrustBadge } from '@/components/trust/trust-badge';
+import { TrustBadge, TrustLevelSection } from '@/components/trust/trust-badge';
 import BorderGlow from '@/components/BorderGlow'
 import { UserRound } from 'lucide-react';
 
@@ -156,6 +156,7 @@ export default function ProfileSettingsPage() {
             <p className="text-sm text-foreground leading-relaxed">{data.bio}</p>
           </div>
         )}
+        <TrustLevelSection badge={data?.trustBadge} />
       </div>
       </BorderGlow>
     </section>
