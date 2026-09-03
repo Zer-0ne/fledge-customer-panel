@@ -11,6 +11,7 @@ import { formatDate } from '@/lib/formatting';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { TrustBadge } from '@/components/trust/trust-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -343,6 +344,9 @@ export default function MessagesPage() {
                       }`}>
                         {peerName}
                       </h3>
+                      {peer?.id && !peer.id.startsWith('listing-') ? (
+                        <TrustBadge userId={peer.id} size={15} />
+                      ) : null}
                       <Badge
                         variant="outline"
                         className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${

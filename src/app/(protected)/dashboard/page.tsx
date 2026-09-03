@@ -11,6 +11,7 @@ import { fetchNotifications } from '@/lib/api/services/notifications';
 import { AnnouncementCenter } from '@/components/announcements/announcement-center';
 import BorderGlow from '@/components/BorderGlow'
 import { Button } from '@/components/ui/button';
+import { TrustBadge } from '@/components/trust/trust-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showToast } from '@/components/ui/toast';
 import { TrustCard } from '@/components/trust/trust-card';
@@ -193,7 +194,7 @@ export default function DashboardPage() {
               <span>Student Dashboard</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Welcome back, {user?.displayName || 'Student'}!
+              Welcome back, {user?.displayName || 'Student'}! <TrustBadge badge={user?.trustBadge} size={24} />
             </h1>
             <p className="text-sm text-white/85 max-w-xl">
               Jump into saved flats, interest requests, messages, and account settings from one place.
@@ -268,7 +269,7 @@ export default function DashboardPage() {
               {user?.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'}
             </div>
             <div>
-              <h2 className="font-bold text-foreground text-lg">{user?.displayName}</h2>
+              <h2 className="font-bold text-foreground text-lg">{user?.displayName} <TrustBadge badge={user?.trustBadge} size={18} /></h2>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <ShieldCheck className="size-3.5 text-emerald-500" />
                 <span>Verified Account</span>

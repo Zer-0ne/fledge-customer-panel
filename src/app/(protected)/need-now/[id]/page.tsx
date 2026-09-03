@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { TrustBadge } from '@/components/trust/trust-badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
@@ -77,7 +78,7 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
   const [editOpen, setEditOpen] = React.useState(false);
   const [removeOpen, setRemoveOpen] = React.useState(false);
   const [offerOpen, setOfferOpen] = React.useState(false);
-  const [joinOpen, setJoinOpen] = React.useState(false);
+  // const [joinOpen, setJoinOpen] = React.useState(false); // JOIN_SEARCH disabled — not needed yet
 
   const load = React.useCallback(async () => {
     try {
@@ -198,6 +199,7 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
           <div className="min-w-0 flex-1">
             <p className="flex flex-wrap items-center gap-2 text-base font-bold text-foreground">
               {request.owner.displayName}
+              <TrustBadge userId={request.owner.id} size={16} />
               {request.owner.verified && (
                 <Badge variant="success" className="gap-1">
                   <CheckCircle2 className="size-3" />
@@ -343,12 +345,14 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
                     Offer a listing
                   </Button>
                 )}
+                {/* JOIN_SEARCH disabled — not needed yet
                 {rel.canJoinSearch && (
                   <Button size="sm" variant="outline" onClick={() => setJoinOpen(true)} className="gap-1.5 rounded-xl">
                     <Users className="size-3.5" />
                     Join this search
                   </Button>
                 )}
+                */}
                 <Button
                   size="sm"
                   variant="ghost"
@@ -536,12 +540,14 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
         onResponded={() => void load()}
       />
 
+      {/* JOIN_SEARCH disabled — not needed yet
       <JoinSearchDialog
         open={joinOpen}
         onOpenChange={setJoinOpen}
         requestId={request.id}
         onResponded={() => void load()}
       />
+      */}
     </div>
   );
 }
@@ -693,7 +699,8 @@ function OfferListingDialog({
 }
 
 // ─── Join search dialog ─────────────────────────────────────────────────────
-
+// JOIN_SEARCH disabled — not needed yet. Kept for future re-enable.
+/*
 function JoinSearchDialog({
   open,
   onOpenChange,
@@ -771,3 +778,4 @@ function JoinSearchDialog({
     </Dialog>
   );
 }
+*/

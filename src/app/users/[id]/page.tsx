@@ -6,6 +6,7 @@ import { PublicUser } from '@/types';
 import { fetchPublicUser } from '@/lib/api/services/discovery';
 import { formatDate } from '@/lib/formatting';
 import { Button } from '@/components/ui/button';
+import { TrustBadge } from '@/components/trust/trust-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { Calendar, GraduationCap, ArrowLeft, ShieldCheck } from 'lucide-react';
@@ -100,6 +101,7 @@ export default function PublicUserProfilePage() {
               <h1 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
                 {user.displayName}
               </h1>
+              <TrustBadge badge={user.trustBadge} size={26} />
               <ShieldCheck className="size-5 text-primary" />
             </div>
 

@@ -14,6 +14,7 @@ import { RoommateInterest } from '@/types';
 import { formatPaiseToINR, formatDate } from '@/lib/formatting';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { TrustBadge } from '@/components/trust/trust-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { showToast } from '@/components/ui/toast';
@@ -325,7 +326,7 @@ export default function RoommateInterestsPage() {
                   {user && activeTab === 'incoming' && (
                     <div className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
                       <UserCheck className="size-3.5 text-primary" />
-                      <span>Applicant: <strong className="text-foreground">{user.displayName}</strong></span>
+                      <span>Applicant: <strong className="text-foreground">{user.displayName}</strong> <TrustBadge badge={user.trustBadge} size={12} /></span>
                     </div>
                   )}
                 </div>
