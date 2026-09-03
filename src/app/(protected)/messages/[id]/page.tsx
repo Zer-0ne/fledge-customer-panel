@@ -26,6 +26,7 @@ import {
 import { Conversation, ChatMessage, MessageReceiptStatus } from '@/types';
 import { formatDate, formatDateTime } from '@/lib/formatting';
 import { Button } from '@/components/ui/button';
+import { TrustBadge } from '@/components/trust/trust-badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -710,6 +711,9 @@ export default function ChatThreadPage() {
               <h2 className="font-bold text-sm sm:text-base text-foreground truncate">
                 {peerDisplayName}
               </h2>
+              {peer?.id && !peer.id.startsWith('listing-') && !peer.id.startsWith('roommate-') ? (
+                <TrustBadge userId={peer.id} size={16} />
+              ) : null}
               {conversation?.contextType && (
                 <Badge
                   variant="outline"

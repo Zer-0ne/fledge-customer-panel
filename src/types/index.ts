@@ -15,6 +15,7 @@ export interface User {
   campusId?: string | null;
   phoneVerifiedAt?: string | null;
   emailVerifiedAt?: string | null;
+  trustBadge?: 'bronze' | 'silver' | 'gold' | 'diamond' | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,6 +26,7 @@ export interface PublicUser {
   avatarUrl?: string | null;
   bio?: string | null;
   collegeId?: string | null;
+  trustBadge?: 'bronze' | 'silver' | 'gold' | 'diamond' | null;
   createdAt: string;
 }
 

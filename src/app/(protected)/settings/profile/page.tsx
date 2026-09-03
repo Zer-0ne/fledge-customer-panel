@@ -9,6 +9,7 @@ import { formatDate } from '@/lib/formatting';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { Badge } from '@/components/ui/badge';
+import { TrustBadge } from '@/components/trust/trust-badge';
 import BorderGlow from '@/components/BorderGlow'
 import { UserRound } from 'lucide-react';
 
@@ -117,7 +118,10 @@ export default function ProfileSettingsPage() {
             )}
           </div>
           <div>
-            <h3 className="text-base font-bold text-foreground">{data?.displayName || 'User'}</h3>
+            <h3 className="text-base font-bold text-foreground flex items-center gap-1.5">
+              {data?.displayName || 'User'}
+              <TrustBadge badge={data?.trustBadge} />
+            </h3>
             <Badge variant="secondary" className="mt-1">
               Read-only profile
             </Badge>
