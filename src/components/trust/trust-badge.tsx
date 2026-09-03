@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 export type TrustBadgeKey = 'bronze' | 'silver' | 'gold' | 'diamond';
@@ -119,7 +120,7 @@ export function TrustBadge({
         onError={() => setMissing(true)}
       />
       <AnimatePresence>
-        {preview && open ? (
+        {preview && open ? createPortal(
           <motion.span
             initial={{ opacity: 0, y: 12, scale: 0.85 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -139,7 +140,8 @@ export function TrustBadge({
             />
             <span className="mt-1.5 block text-sm font-bold text-foreground">{info.label}</span>
             <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">{info.description}</span>
-          </motion.span>
+          </motion.span>,
+          document.body,
         ) : null}
       </AnimatePresence>
     </span>
