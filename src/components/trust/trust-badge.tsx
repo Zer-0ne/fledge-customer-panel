@@ -13,6 +13,13 @@ const BADGE_SRC: Record<TrustBadgeKey, string> = {
   diamond: '/badges/owl-diamond.png',
 };
 
+export const TRUST_TIER_GLOW: Record<TrustBadgeKey, string> = {
+  bronze: 'drop-shadow-[0_0_28px_rgba(205,127,50,0.65)]',
+  silver: 'drop-shadow-[0_0_28px_rgba(192,192,192,0.65)]',
+  gold: 'drop-shadow-[0_0_28px_rgba(255,215,0,0.6)]',
+  diamond: 'drop-shadow-[0_0_28px_rgba(103,232,249,0.65)]',
+};
+
 export const TRUST_TIER_INFO: Record<TrustBadgeKey, { label: string; description: string }> = {
   bronze: {
     label: 'Bronze Member',
@@ -151,7 +158,7 @@ export function TrustBadge({
               alt=""
               width={160}
               height={160}
-              className="mx-auto drop-shadow-lg"
+              className={`mx-auto ${TRUST_TIER_GLOW[resolved]}`}
               onError={() => setMissing(true)}
             />
             <span className="mt-1.5 block text-sm font-bold text-foreground">{info.label}</span>
