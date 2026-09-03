@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 export type TrustBadgeKey = 'bronze' | 'silver' | 'gold' | 'diamond';
 
@@ -44,8 +45,8 @@ async function fetchBadgeForUser(userId: string): Promise<TrustBadgeKey | null> 
 
 /**
  * Owl trust badge shown after a user's name, sized to the surrounding text.
- * Hovering shows a viewport-aware preview card (big badge + tier text) that
- * never runs off-screen. Renders nothing without a tier (or missing PNGs).
+ * Hovering shows an Aceternity-style animated preview (spring pop, follows
+ * the mouse, clamped to the viewport). Renders nothing without a tier.
  */
 export function TrustBadge({
   badge,
@@ -61,8 +62,12 @@ export function TrustBadge({
   const [resolved, setResolved] = React.useState<TrustBadgeKey | null>(badge ?? null);
   const [missing, setMissing] = React.useState(false);
   const [open, setOpen] = React.useState(false);
-  const [pos, setPos] = React.useState<{ top: number; left: number; below: boolean }>({ top: 0, left: 0, below: false });
+  const [pos, setPos] = React.useState({ top: 0, left: 0 });
   const anchorRef = React.useRef<HTMLSpanElement>(null);
+
+  const mouseX = useMotionValue(0);
+  const rotate = useSpring(useTransform(mouseX, [-100, 100], [-12, 12]), { stiffness: 200, damping: 18 });
+  const translateX = useSpring(useTransform(mouseX, [-100, 100], [-8, 8]), { stiffness: 200, damping: 18 });
 
   React.useEffect(() => {
     if (badge !== undefined) {
@@ -79,17 +84,17 @@ export function TrustBadge({
     };
   }, [badge, userId]);
 
-  const show = () => {
+  const place = (clientX?: number) => {
     const el = anchorRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const w = 208;
-    const h = 170;
-    const cx = r.left + r.width / 2;
+    const w = 224;
+    const h = 190;
+    const cx = clientX ?? r.left + r.width / 2;
     const left = Math.min(Math.max(cx - w / 2, 8), window.innerWidth - w - 8);
     const below = r.top < h + 12;
-    setPos({ top: below ? r.bottom + 8 : r.top - h - 8, left, below });
-    setOpen(true);
+    setPos({ top: below ? r.bottom + 8 : r.top - h - 8, left });
+    if (clientX !== undefined) mouseX.set(clientX - (r.left + r.width / 2));
   };
 
   if (!resolved || missing) return null;
@@ -98,7 +103,8 @@ export function TrustBadge({
     <span
       ref={anchorRef}
       className="inline-flex shrink-0 align-[-2px]"
-      onMouseEnter={preview ? show : undefined}
+      onMouseEnter={preview ? () => { place(); setOpen(true); } : undefined}
+      onMouseMove={preview ? (e) => place(e.clientX) : undefined}
       onMouseLeave={preview ? () => setOpen(false) : undefined}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -110,24 +116,30 @@ export function TrustBadge({
         className="inline-block"
         onError={() => setMissing(true)}
       />
-      {preview && open ? (
-        <span
-          className="fixed z-[9999] w-52 rounded-xl border border-border bg-popover p-3 text-center shadow-xl"
-          style={{ top: pos.top, left: pos.left }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={BADGE_SRC[resolved]}
-            alt=""
-            width={64}
-            height={64}
-            className="mx-auto"
-            onError={() => setMissing(true)}
-          />
-          <span className="mt-1.5 block text-sm font-bold text-foreground">{info.label}</span>
-          <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">{info.description}</span>
-        </span>
-      ) : null}
+      <AnimatePresence>
+        {preview && open ? (
+          <motion.span
+            initial={{ opacity: 0, y: 12, scale: 0.85 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.9 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+            style={{ top: pos.top, left: pos.left, rotate, x: translateX }}
+            className="fixed z-[9999] w-56 rounded-2xl border border-border bg-popover p-3 text-center shadow-2xl"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={BADGE_SRC[resolved]}
+              alt=""
+              width={72}
+              height={72}
+              className="mx-auto drop-shadow-lg"
+              onError={() => setMissing(true)}
+            />
+            <span className="mt-1.5 block text-sm font-bold text-foreground">{info.label}</span>
+            <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">{info.description}</span>
+          </motion.span>
+        ) : null}
+      </AnimatePresence>
     </span>
   );
 }
