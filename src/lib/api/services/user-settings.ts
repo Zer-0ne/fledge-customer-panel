@@ -75,10 +75,13 @@ export async function fetchUserSettings(): Promise<UserSetting[]> {
  * Batch-updates user settings (`PUT /settings`).
  */
 export async function updateUserSettings(payload: UpdateUserSettingsPayload): Promise<UserSetting[]> {
+  // Backend batch schema is strict: { settings: [{ key, value }] } — a bare
+  // { [key]: value } map is rejected with 400, so convert here.
+  const settings = Object.entries(payload).map(([key, value]) => ({ key, value }));
   const res = await apiFetch<unknown>({
     path: '/api/v1/settings',
     method: 'PUT',
-    body: payload,
+    body: { settings },
   });
   return normalizeUserSettingsResponse(res);
 }

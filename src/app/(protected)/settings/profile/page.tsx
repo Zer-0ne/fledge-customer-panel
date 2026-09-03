@@ -26,6 +26,9 @@ export default function ProfileSettingsPage() {
   const [profile, setProfile] = React.useState<User | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [methods, setMethods] = React.useState<{ phoneOtpEnabled: boolean; upiEnabled: boolean } | null>(null);
+  const [studentVerified, setStudentVerified] = React.useState(false);
+  const [upiVerified, setUpiVerified] = React.useState(false);
 
   const loadProfile = React.useCallback(async () => {
     setIsLoading(true);
@@ -46,6 +49,33 @@ export default function ProfileSettingsPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadProfile();
   }, [loadProfile]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch('/api/proxy/api/v1/auth/config')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d) setMethods({ phoneOtpEnabled: d.phoneOtpEnabled ?? d.otpEnabled ?? true, upiEnabled: d.upiEnabled ?? false });
+      })
+      .catch(() => {});
+    // Real verification status (was hardcoded false): student VERIFIED flag
+    // from my verifications, UPI from the auth profile's verification method.
+    fetch('/api/proxy/api/v1/student-verifications/mine')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const list = Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : Array.isArray(d?.data) ? d.data : [];
+        if (!cancelled) setStudentVerified(list.some((v: { status?: string; verifiedAt?: string }) => v?.status === 'VERIFIED' || !!v?.verifiedAt));
+      })
+      .catch(() => {});
+    fetch('/api/proxy/api/v1/auth/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const method = d?.user?.verificationMethod ?? d?.verificationMethod;
+        if (!cancelled) setUpiVerified(method === 'UPI_OTM');
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   if (isLoading) {
     return (
@@ -107,9 +137,12 @@ export default function ProfileSettingsPage() {
         <div className="pt-3 border-t border-border/60 space-y-3">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Verification</p>
           <div className="grid gap-2">
-            <VerifyRow icon="📱" label="Phone" done={!!data?.phoneVerifiedAt} route="/settings/verify/phone" />
-            <VerifyRow icon="✉️" label="Email" done={!!data?.emailVerifiedAt} subtitle={data?.emailVerifiedAt ? 'Verified via Google Sign-In' : 'Verify via email link'} />
-            <VerifyRow icon="🎓" label="Student ID" done={false} route="/settings/verify/student" subtitle="Upload college ID card photo" />
+            {(methods === null || methods.phoneOtpEnabled) && (
+              <VerifyRow icon="📱" label="Phone" done={!!data?.phoneVerifiedAt} route="/settings/verify/phone" />
+            )}
+            <VerifyRow icon="✉️" label="Email" done={!!data?.emailVerifiedAt} subtitle={data?.emailVerifiedAt ? 'Verified via Google Sign-In' : 'Not verified'} />
+            <VerifyRow icon="🎓" label="Student ID" done={studentVerified} route={studentVerified ? undefined : "/settings/verify/student"} subtitle="Upload college ID card photo" />
+            <VerifyRow icon="💳" label="UPI" done={upiVerified} route={upiVerified ? undefined : "/settings/verify/upi"} subtitle={methods?.upiEnabled ? "Verify via ₹1 UPI mandate" : "UPI unavailable in test mode"} />
           </div>
         </div>
 

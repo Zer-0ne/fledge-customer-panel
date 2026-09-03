@@ -8,7 +8,7 @@ import { User, MonitorSmartphone, Bell, Trash2, ShieldCheck } from 'lucide-react
 
 const SETTINGS_NAV = [
   { href: '/settings/profile', label: 'Profile', icon: User },
-  { href: '/settings/contact', label: 'Contact Preferences', icon: ShieldCheck },
+  { href: '/settings/contact-privacy', label: 'Contact Preferences', icon: ShieldCheck },
   { href: '/settings/sessions', label: 'Sessions', icon: MonitorSmartphone },
   { href: '/settings/notifications', label: 'Notifications', icon: Bell },
   { href: '/settings/account', label: 'Account', icon: Trash2 },
