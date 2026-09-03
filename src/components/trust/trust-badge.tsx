@@ -77,8 +77,10 @@ export function TrustBadge({
   };
 
   const mouseX = useMotionValue(0);
-  const rotate = useSpring(useTransform(mouseX, [-100, 100], [-12, 12]), { stiffness: 200, damping: 18 });
-  const translateX = useSpring(useTransform(mouseX, [-100, 100], [-8, 8]), { stiffness: 200, damping: 18 });
+  const mouseY = useMotionValue(0);
+  const rotate = useSpring(useTransform(mouseX, [-80, 80], [-10, 10]), { stiffness: 180, damping: 16 });
+  const translateX = useSpring(useTransform(mouseX, [-80, 80], [-36, 36]), { stiffness: 180, damping: 16 });
+  const translateY = useSpring(useTransform(mouseY, [-60, 60], [-14, 14]), { stiffness: 180, damping: 16 });
 
   React.useEffect(() => {
     if (badge !== undefined) {
@@ -116,7 +118,11 @@ export function TrustBadge({
       onMouseEnter={preview ? () => { place(); openNow(); } : undefined}
       onMouseMove={preview ? (e) => {
         const r = anchorRef.current?.getBoundingClientRect();
-        if (r) mouseX.set(e.clientX - (r.left + r.width / 2));
+        if (!r) return;
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        mouseX.set(e.clientX - cx);
+        mouseY.set(e.clientY - cy);
       } : undefined}
       onMouseLeave={preview ? closeSoon : undefined}
     >
@@ -131,10 +137,10 @@ export function TrustBadge({
       />
       {preview && open ? createPortal(
           <motion.span
-            initial={{ opacity: 0, y: 12, scale: 0.85 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 350, damping: 22 }}
-            style={{ top: pos.top, left: pos.left, rotate, x: translateX }}
+            style={{ top: pos.top, left: pos.left, rotate, x: translateX, y: translateY }}
             className="fixed z-[9999] w-64 rounded-2xl border border-border bg-popover p-4 text-center shadow-2xl"
             onMouseEnter={openNow}
             onMouseLeave={closeSoon}
