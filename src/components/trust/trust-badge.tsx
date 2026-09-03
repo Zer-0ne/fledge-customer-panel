@@ -65,6 +65,16 @@ export function TrustBadge({
   const [open, setOpen] = React.useState(false);
   const [pos, setPos] = React.useState({ top: 0, left: 0 });
   const anchorRef = React.useRef<HTMLSpanElement>(null);
+  const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openNow = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setOpen(true);
+  };
+  const closeSoon = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setOpen(false), 180);
+  };
 
   const mouseX = useMotionValue(0);
   const rotate = useSpring(useTransform(mouseX, [-100, 100], [-12, 12]), { stiffness: 200, damping: 18 });
@@ -89,8 +99,8 @@ export function TrustBadge({
     const el = anchorRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const w = 224;
-    const h = 190;
+    const w = 256;
+    const h = 230;
     const cx = r.left + r.width / 2;
     const left = Math.min(Math.max(cx - w / 2, 8), window.innerWidth - w - 8);
     const below = r.top < h + 12;
@@ -103,12 +113,12 @@ export function TrustBadge({
     <span
       ref={anchorRef}
       className="inline-flex shrink-0 align-[-2px]"
-      onMouseEnter={preview ? () => { place(); setOpen(true); } : undefined}
+      onMouseEnter={preview ? () => { place(); openNow(); } : undefined}
       onMouseMove={preview ? (e) => {
         const r = anchorRef.current?.getBoundingClientRect();
         if (r) mouseX.set(e.clientX - (r.left + r.width / 2));
       } : undefined}
-      onMouseLeave={preview ? () => setOpen(false) : undefined}
+      onMouseLeave={preview ? closeSoon : undefined}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -125,14 +135,16 @@ export function TrustBadge({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ type: 'spring', stiffness: 350, damping: 22 }}
             style={{ top: pos.top, left: pos.left, rotate, x: translateX }}
-            className="fixed z-[9999] w-56 rounded-2xl border border-border bg-popover p-3 text-center shadow-2xl"
+            className="fixed z-[9999] w-64 rounded-2xl border border-border bg-popover p-4 text-center shadow-2xl"
+            onMouseEnter={openNow}
+            onMouseLeave={closeSoon}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={BADGE_SRC[resolved]}
               alt=""
-              width={72}
-              height={72}
+              width={96}
+              height={96}
               className="mx-auto drop-shadow-lg"
               onError={() => setMissing(true)}
             />
