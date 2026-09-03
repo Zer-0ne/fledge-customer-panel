@@ -445,6 +445,30 @@ export function ContactShareCard({
   // Sync rule: revoked/time-expired/views-exhausted grants render the expired
   // state (no timer, no View button) instead of a live-looking active card.
   const grantLive = grant?.status === 'approved' && grant.remainingViews !== 0;
+  // Owner side never shows the requester's view-expiry: views consumed means
+  // the requester saw the number (success), not an expired access.
+  const grantTimeExpired = grant?.status === 'expired' && (grant.remainingViews ?? 1) > 0;
+  if (isIncoming && grant && grant.status !== 'revoked' && !grantTimeExpired) {
+    const consumed = grant.status === 'expired';
+    return (
+      <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold text-xs">
+            <ShieldCheck className="size-4 shrink-0" />
+            Number {consumed ? 'viewed by requester' : 'shared with requester'}
+          </div>
+          {!consumed ? (
+            <Button variant="ghost" size="sm" onClick={handleRevokeGrant} disabled={isLoading} className="text-xs h-7 text-rose-600 hover:bg-rose-500/10">
+              <Ban className="size-3 mr-1" /> Revoke
+            </Button>
+          ) : null}
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          {consumed ? 'The requester has seen your number. Nothing more to do.' : 'The requester can view your number once. Revoke anytime to cancel access.'}
+        </p>
+      </div>
+    );
+  }
   if (grant?.status === 'expired' || grant?.status === 'revoked' || (request?.status === 'approved' && !grantLive)) {
     return (
       <div className="p-4 rounded-xl border border-border/60 bg-muted/30 space-y-2">
@@ -455,10 +479,12 @@ export function ContactShareCard({
         <p className="text-[11px] text-muted-foreground">
           {grant?.status === 'revoked' ? 'The owner revoked this access.' : 'Views are used up or the time limit passed. Send a fresh request to see the number again.'}
         </p>
+        {!isIncoming ? (
         <Button size="sm" variant="outline" disabled={isLoading} onClick={handleRequestAgain} className="text-xs h-8 gap-1.5">
           {isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <RefreshCw className="size-3.5" />}
           Request again
         </Button>
+        ) : null}
       </div>
     );
   }
