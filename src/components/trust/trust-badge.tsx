@@ -101,8 +101,8 @@ export function TrustBadge({
     const el = anchorRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const w = 256;
-    const h = 230;
+    const w = 288;
+    const h = 270;
     const cx = r.left + r.width / 2;
     const left = Math.min(Math.max(cx - w / 2, 8), window.innerWidth - w - 8);
     const below = r.top < h + 12;
@@ -141,7 +141,7 @@ export function TrustBadge({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 350, damping: 22 }}
             style={{ top: pos.top, left: pos.left, rotate, x: translateX, y: translateY }}
-            className="fixed z-[9999] w-64 rounded-2xl border border-border bg-popover p-4 text-center shadow-2xl"
+            className="fixed z-[9999] w-72 rounded-2xl border border-border bg-popover p-4 text-center shadow-2xl"
             onMouseEnter={openNow}
             onMouseLeave={closeSoon}
           >
@@ -149,8 +149,8 @@ export function TrustBadge({
             <img
               src={BADGE_SRC[resolved]}
               alt=""
-              width={96}
-              height={96}
+              width={128}
+              height={128}
               className="mx-auto drop-shadow-lg"
               onError={() => setMissing(true)}
             />
