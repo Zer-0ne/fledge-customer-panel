@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { showToast } from '@/components/ui/toast';
 import { Sparkles, Send } from 'lucide-react';
+import { LimitReachedDialog, type LimitFailure } from '@/components/limits/limit-reached-dialog';
+import { parseLimitError } from '@/lib/limits/unverified-limits';
 
 export interface RoommateInterestDialogProps {
   post: RoommatePost | null;
@@ -24,6 +26,7 @@ export function RoommateInterestDialog({
 }: RoommateInterestDialogProps) {
   const [message, setMessage] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [limitFailure, setLimitFailure] = React.useState<LimitFailure | null>(null);
 
   React.useEffect(() => {
     if (post) {
@@ -50,18 +53,25 @@ export function RoommateInterestDialog({
       if (onSubmitted) onSubmitted();
       onClose();
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'Could not submit interest';
-      showToast({
-        title: 'Submission Failed',
-        description: errorMsg,
-        variant: 'error',
-      });
+      const parsed = parseLimitError(err);
+      if (parsed && parsed.kind === 'contacts') {
+        onClose();
+        setLimitFailure({ kind: 'contacts', current: parsed.current, max: parsed.max });
+      } else {
+        const errorMsg = err instanceof Error ? err.message : 'Could not submit interest';
+        showToast({
+          title: 'Submission Failed',
+          description: errorMsg,
+          variant: 'error',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -118,5 +128,7 @@ export function RoommateInterestDialog({
         </form>
       </DialogContent>
     </Dialog>
+    <LimitReachedDialog failure={limitFailure} onClose={() => setLimitFailure(null)} />
+    </>
   );
 }

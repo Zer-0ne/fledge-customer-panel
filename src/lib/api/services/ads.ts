@@ -8,7 +8,7 @@
  */
 
 import { apiFetch } from '@/lib/api/client';
-import { sanitizeRedirectUrl } from '@/lib/ads/safe-redirect';
+import { adContactType, sanitizeAdDestinationUrl } from '@/lib/ads/safe-redirect';
 import {
   markImpressionRecorded,
   shouldRecordImpression,
@@ -105,6 +105,8 @@ export function normalizeAdSelection(res: unknown): AdCreative | null {
             : undefined,
     imageUrl,
     destinationUrl,
+    /** Contact action derived from the destination (wa.me → WHATSAPP, tel: → PHONE). */
+    contactType: adContactType(destinationUrl),
     sponsorName:
       typeof creativeRaw.sponsorName === 'string'
         ? creativeRaw.sponsorName
@@ -136,7 +138,7 @@ export function normalizeClickRedirect(res: unknown): string | null {
   if (!res) return null;
 
   if (typeof res === 'string') {
-    return sanitizeRedirectUrl(res);
+    return sanitizeAdDestinationUrl(res);
   }
 
   if (typeof res !== 'object') return null;
@@ -157,7 +159,7 @@ export function normalizeClickRedirect(res: unknown): string | null {
 
   for (const candidate of candidates) {
     if (typeof candidate === 'string') {
-      const safe = sanitizeRedirectUrl(candidate);
+      const safe = sanitizeAdDestinationUrl(candidate);
       if (safe) return safe;
     }
   }

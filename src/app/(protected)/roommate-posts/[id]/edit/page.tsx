@@ -18,6 +18,7 @@ import { MediaPicker } from '@/components/community/media-picker';
 import { resolveMediaUrl } from '@/components/roommates/roommate-post-media';
 import { ModerationBadge, getPostState } from '@/components/community/moderation-state';
 import { PostTypeSelect } from '@/components/community/post-type-select';
+import { ContactPreferenceForm } from '@/components/contact/contact-preference-form';
 
 interface PickedImage {
   mediaId: string;
@@ -306,6 +307,16 @@ export default function EditRoommatePostPage({ params }: { params: Promise<{ id:
             </Button>
           </div>
         </form>
+
+        <div className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8 shadow-xs">
+          <div className="space-y-1 mb-4">
+            <h2 className="text-sm font-bold text-foreground">Contact settings</h2>
+            <p className="text-xs text-muted-foreground">
+              Control how interested people reach you outside the in-app chat.
+            </p>
+          </div>
+          <ContactPreferenceForm entityType="roommate_post" entityId={postId} />
+        </div>
       </div>
     </div>
   );

@@ -39,7 +39,7 @@ function isNavActive(pathname: string, href: string) {
 }
 
 export function Header({
-  appName = 'Owl Sight',
+  appName = 'Fledge',
   user: propUser,
   unreadNotificationsCount: propUnreadNotifications,
   unreadMessagesCount: propUnreadMessages,

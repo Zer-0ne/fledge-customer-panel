@@ -23,6 +23,8 @@ import { LocationPicker } from '@/components/common/location-picker';
 import { PostTypeSelect } from '@/components/community/post-type-select';
 import { ContentRules } from '@/components/community/content-rules';
 import { MediaPicker } from '@/components/community/media-picker';
+import { LimitReachedDialog, type LimitFailure } from '@/components/limits/limit-reached-dialog';
+import { fetchPostingLimits, parseLimitError, type PostingLimits } from '@/lib/limits/unverified-limits';
 
 const DEFAULT_LAT = 28.6139;
 const DEFAULT_LNG = 77.209;
@@ -69,6 +71,10 @@ function CreateRoommatePostPageInner() {
   const [appealDetail, setAppealDetail] = React.useState('');
   const [appealing, setAppealing] = React.useState(false);
 
+  // Unverified cap state (dynamic — backend is the source of truth)
+  const [postingLimits, setPostingLimits] = React.useState<PostingLimits | null>(null);
+  const [limitFailure, setLimitFailure] = React.useState<LimitFailure | null>(null);
+
   React.useEffect(() => {
     async function load() {
       const [collegeList, restrictions] = await Promise.all([
@@ -82,6 +88,8 @@ function CreateRoommatePostPageInner() {
       if (hasPostingRestriction(restrictions)) {
         setPostingBlocked(true);
       }
+      const caps = await fetchPostingLimits().catch(() => null);
+      setPostingLimits(caps);
     }
     load();
   }, []);
@@ -170,9 +178,19 @@ function CreateRoommatePostPageInner() {
       }
       router.push('/roommate-posts');
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'Could not create the post';
-      // The backend returns a user-safe active-post-limit message; surface it as-is.
-      showToast({ title: 'Creation failed', description: errorMsg, variant: 'error' });
+      const parsed = parseLimitError(err);
+      if (parsed && (parsed.kind === 'posts' || parsed.kind === 'requests')) {
+        // Dynamic numbers from the error body win; the dialog falls back to fetched caps.
+        setLimitFailure({
+          kind: parsed.kind,
+          current: parsed.current,
+          max: parsed.max ?? (parsed.kind === 'posts' ? postingLimits?.maxActivePosts ?? null : postingLimits?.maxActiveRequests ?? null),
+        });
+      } else {
+        const errorMsg = err instanceof Error ? err.message : 'Could not create the post';
+        // The backend returns a user-safe active-post-limit message; surface it as-is.
+        showToast({ title: 'Creation failed', description: errorMsg, variant: 'error' });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -249,6 +267,24 @@ function CreateRoommatePostPageInner() {
               </Button>
             </div>
           </div>
+        )}
+
+        {postingLimits && !postingLimits.verified && postingLimits.allowed && (
+          <button
+            type="button"
+            onClick={() => router.push('/settings/verify/student')}
+            className="flex w-full items-start gap-3 rounded-2xl border border-primary/25 bg-primary/5 p-4 text-left transition-colors hover:border-primary/40"
+          >
+            <Sparkles className="mt-0.5 size-5 shrink-0 text-primary" />
+            <span className="space-y-0.5">
+              <span className="block text-sm font-semibold text-foreground">
+                Free plan: {postingLimits.maxActivePosts} active {postingLimits.maxActivePosts === 1 ? 'post' : 'posts'} ({postingLimits.activePosts} used)
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                Verify your student or faculty status for unlimited posting — it&apos;s free.
+              </span>
+            </span>
+          </button>
         )}
 
         <ContentRules />
@@ -526,6 +562,7 @@ function CreateRoommatePostPageInner() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <LimitReachedDialog failure={limitFailure} onClose={() => setLimitFailure(null)} />
     </div>
   );
 }

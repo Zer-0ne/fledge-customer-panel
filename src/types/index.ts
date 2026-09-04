@@ -446,7 +446,7 @@ export interface ChatMessage {
 
 export interface Conversation {
   id: string;
-  contextType: 'listing_interest' | 'roommate_interest';
+  contextType: 'listing_interest' | 'roommate_interest' | 'housing_request_response';
   contextId: string;
   /**
    * Chat expiry lifecycle: 'expired' when the source listing / roommate post /
@@ -652,8 +652,10 @@ export interface ContactShareRequest {
   status: ContactShareRequestStatus;
   requesterId: string;
   recipientId: string;
+  conversationId?: string;
   listingInterestId?: string;
   roommateInterestId?: string;
+  housingResponseId?: string;
   listingId?: string;
   roommatePostId?: string;
   requestedAt: string;
@@ -664,6 +666,7 @@ export interface ContactShareRequest {
 export interface CreateContactShareRequestPayload {
   listingInterestId?: string;
   roommateInterestId?: string;
+  housingResponseId?: string;
 }
 
 export type ContactSource = 'OWNER' | 'FALLBACK_CONTACT';
@@ -870,6 +873,7 @@ export interface NeedNowResponse {
   housingRequestId: string;
   responderId: string;
   listingId: string | null;
+  roommatePostId?: string | null;
   responseType: NeedNowResponseType;
   message: string | null;
   status: NeedNowResponseStatus;
@@ -882,6 +886,8 @@ export interface NeedNowResponse {
   canAccept: boolean;
   canDecline: boolean;
   canWithdraw: boolean;
+  /** Chat thread opened on accept. Null until accepted. */
+  conversationId?: string | null;
   request: {
     id: string;
     intentType: NeedNowIntentType;
@@ -894,6 +900,7 @@ export interface NeedNowResponse {
   };
   responder: NeedNowOwner;
   listing: NeedNowResponseListing | null;
+  roommatePost?: { id: string; title: string } | null;
 }
 
 export interface NeedNowFeedPage {
@@ -951,6 +958,7 @@ export interface UpdateNeedNowParams {
 export interface CreateNeedNowResponseParams {
   responseType: NeedNowResponseType;
   listingId?: string;
+  roommatePostId?: string;
   message?: string;
 }
 

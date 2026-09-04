@@ -40,6 +40,8 @@ describe('Customer BFF allowlist — Phase 12 community endpoints', () => {
     ['GET', '/api/v1/onboarding/questions'],
     ['POST', '/api/v1/onboarding/responses'],
     ['POST', '/api/v1/onboarding/skip'],
+    // Unverified posting limits (dynamic caps + live usage for limit hints)
+    ['GET', '/api/v1/housing/limits'],
   ];
 
   it.each(allowed)('%s %s is allowed', (method, path) => {

@@ -41,6 +41,7 @@ export interface ContactShareCardProps {
   currentUserId?: string;
   listingInterestId?: string;
   roommateInterestId?: string;
+  housingResponseId?: string;
   initialRequest?: ContactShareRequest | null;
   grantId?: string | null;
 }
@@ -50,6 +51,7 @@ export function ContactShareCard({
   currentUserId,
   listingInterestId,
   roommateInterestId,
+  housingResponseId,
   initialRequest = null,
   grantId: initialGrantId = null,
 }: ContactShareCardProps) {
@@ -96,7 +98,8 @@ export function ContactShareCard({
         const matching = list.find((r) => {
           if (listingInterestId && r.listingInterestId === listingInterestId) return true;
           if (roommateInterestId && r.roommateInterestId === roommateInterestId) return true;
-          if (conversationId && r.id === conversationId) return true;
+          if (housingResponseId && r.housingResponseId === housingResponseId) return true;
+          if (conversationId && r.conversationId === conversationId) return true;
           return false;
         });
 
@@ -118,7 +121,7 @@ export function ContactShareCard({
     return () => {
       isMounted = false;
     };
-  }, [initialRequest, listingInterestId, roommateInterestId, conversationId]);
+  }, [initialRequest, listingInterestId, roommateInterestId, housingResponseId, conversationId]);
 
   // Mandatory privacy cleanup: clear revealed phone on unmount
   React.useEffect(() => {
@@ -163,10 +166,10 @@ export function ContactShareCard({
 
   // Request contact share
   const handleCreateRequest = async () => {
-    if (!listingInterestId && !roommateInterestId) {
+    if (!listingInterestId && !roommateInterestId && !housingResponseId) {
       showToast({
         title: 'Action Unavailable',
-        description: 'An active accepted interest is required to request contact details.',
+        description: 'An accepted response or interest is required to request contact details.',
         variant: 'error',
       });
       return;
@@ -174,7 +177,11 @@ export function ContactShareCard({
 
     setIsLoading(true);
     try {
-      const payload = listingInterestId ? { listingInterestId } : { roommateInterestId };
+      const payload = housingResponseId
+        ? { housingResponseId }
+        : listingInterestId
+          ? { listingInterestId }
+          : { roommateInterestId: roommateInterestId! };
       const res = await createContactShareRequest(payload);
       setRequest(res);
       showToast({
@@ -198,17 +205,22 @@ export function ContactShareCard({
   const handleRequestAgain = async () => {
     const ctxListingId = request?.listingInterestId ?? listingInterestId;
     const ctxRoommateId = request?.roommateInterestId ?? roommateInterestId;
-    if (!ctxListingId && !ctxRoommateId) {
+    const ctxHousingId = request?.housingResponseId ?? housingResponseId;
+    if (!ctxListingId && !ctxRoommateId && !ctxHousingId) {
       showToast({
         title: 'Action Unavailable',
-        description: 'An active accepted interest is required to request contact details.',
+        description: 'An accepted response or interest is required to request contact details.',
         variant: 'error',
       });
       return;
     }
     setIsLoading(true);
     try {
-      const payload = ctxListingId ? { listingInterestId: ctxListingId } : { roommateInterestId: ctxRoommateId };
+      const payload = ctxHousingId
+        ? { housingResponseId: ctxHousingId }
+        : ctxListingId
+          ? { listingInterestId: ctxListingId }
+          : { roommateInterestId: ctxRoommateId! };
       const res = await createContactShareRequest(payload);
       setRequest(res);
       setGrant(res.accessGrant ?? null);

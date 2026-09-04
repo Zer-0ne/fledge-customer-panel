@@ -27,6 +27,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { showToast } from '@/components/ui/toast';
 import { LocationPicker } from '@/components/common/location-picker';
 import { createDraft, publishRequest, friendlyNeedNowError } from '@/lib/api/services/neednow';
+import { LimitReachedDialog, type LimitFailure } from '@/components/limits/limit-reached-dialog';
+import { fetchPostingLimits, parseLimitError, type PostingLimits } from '@/lib/limits/unverified-limits';
 import { fetchColleges, fetchCampuses } from '@/lib/api/services/discovery';
 import { College, Campus } from '@/types';
 import {
@@ -147,11 +149,17 @@ function NewNeedNowPageInner() {
   const [campuses, setCampuses] = React.useState<Campus[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState<'publish' | 'draft' | null>(null);
 
+  // Unverified cap state (dynamic — backend is the source of truth)
+  const [postingLimits, setPostingLimits] = React.useState<PostingLimits | null>(null);
+  const [limitFailure, setLimitFailure] = React.useState<LimitFailure | null>(null);
+
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
       const collegeList = await fetchColleges();
       if (!cancelled) setColleges(collegeList || []);
+      const caps = await fetchPostingLimits().catch(() => null);
+      if (!cancelled) setPostingLimits(caps);
     })();
     return () => {
       cancelled = true;
@@ -204,6 +212,12 @@ function NewNeedNowPageInner() {
         }
         if (!draft.moveInDate) {
           showToast({ title: 'Pick a move-in date', description: 'Choose when you want to move in.', variant: 'error' });
+          return false;
+        }
+        // Reject past dates
+        const today = new Date().toISOString().split('T')[0];
+        if (draft.moveInDate < today) {
+          showToast({ title: 'Invalid move-in date', description: 'Move-in date cannot be in the past.', variant: 'error' });
           return false;
         }
         if (!draft.stayDurationType) {
@@ -276,11 +290,20 @@ function NewNeedNowPageInner() {
       });
       router.push('/need-now');
     } catch (err) {
-      showToast({
-        title: 'Could not publish',
-        description: friendlyNeedNowError(err),
-        variant: 'error',
-      });
+      const parsed = parseLimitError(err);
+      if (parsed && (parsed.kind === 'requests' || parsed.kind === 'posts')) {
+        setLimitFailure({
+          kind: parsed.kind,
+          current: parsed.current,
+          max: parsed.max ?? (parsed.kind === 'requests' ? postingLimits?.maxActiveRequests ?? null : postingLimits?.maxActivePosts ?? null),
+        });
+      } else {
+        showToast({
+          title: 'Could not publish',
+          description: friendlyNeedNowError(err),
+          variant: 'error',
+        });
+      }
     } finally {
       setIsSubmitting(null);
     }
@@ -339,6 +362,24 @@ function NewNeedNowPageInner() {
             live for exactly 24 hours — no expiry dates to manage.
           </p>
         </div>
+
+        {postingLimits && !postingLimits.verified && postingLimits.allowed && (
+          <button
+            type="button"
+            onClick={() => router.push('/settings/verify/student')}
+            className="flex w-full items-start gap-3 rounded-2xl border border-primary/25 bg-primary/5 p-4 text-left transition-colors hover:border-primary/40"
+          >
+            <Sparkles className="mt-0.5 size-5 shrink-0 text-primary" />
+            <span className="space-y-0.5">
+              <span className="block text-sm font-semibold text-foreground">
+                Free plan: {postingLimits.maxActiveRequests} active {postingLimits.maxActiveRequests === 1 ? 'requirement' : 'requirements'} ({postingLimits.activeRequests} used)
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                Verify your student or faculty status for unlimited requests — it&apos;s free.
+              </span>
+            </span>
+          </button>
+        )}
 
         {/* Stepper */}
         <ol className="flex items-center gap-1.5 overflow-x-auto py-1" aria-label="Form steps">
@@ -821,6 +862,7 @@ function NewNeedNowPageInner() {
           Every requirement expires automatically after 24 hours. You can pause, renew, or remove it anytime.
         </p>
       </div>
+      <LimitReachedDialog failure={limitFailure} onClose={() => setLimitFailure(null)} />
     </div>
   );
 }

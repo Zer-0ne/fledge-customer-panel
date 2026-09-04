@@ -140,6 +140,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           );
         }
       },
+      onConversationCreated: (event) => {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('app:conversation_created', { detail: event })
+          );
+        }
+      },
     });
 
     const onVisibilityChange = () => {

@@ -20,7 +20,7 @@ describe('validateEnv', () => {
     const config = validateEnv();
 
     expect(config.BACKEND_API_BASE_URL).toBe('http://localhost:3000');
-    expect(config.NEXT_PUBLIC_APP_NAME).toBe('Flat Finder');
+    expect(config.NEXT_PUBLIC_APP_NAME).toBe('Fledge');
     expect(config.NEXT_PUBLIC_API_BASE_URL).toBe('/api/proxy');
     expect(config.NEXT_PUBLIC_SOCKET_URL).toBe('http://localhost:3000');
   });

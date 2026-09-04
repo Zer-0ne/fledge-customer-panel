@@ -54,7 +54,7 @@ export default function AccountSettingsPage() {
       <div>
         <h2 className="text-lg font-semibold text-foreground">Delete account</h2>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Permanently request deletion of your Owl Sight account
+          Permanently request deletion of your Fledge account
           {user?.displayName ? ` (${user.displayName})` : ''}. This cannot be undone.
         </p>
       </div>

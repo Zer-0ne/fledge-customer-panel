@@ -95,7 +95,7 @@ export async function requestPresignedUpload(
       mimeType: file.type as AllowedMimeType,
       sizeBytes: file.size,
       checksumSha256,
-      visibility: purpose === 'community' ? 'listing' : 'private',
+      visibility: 'private',
       purpose,
     },
   });

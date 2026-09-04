@@ -34,12 +34,20 @@ import { ErrorState } from '@/components/ui/error-state';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ReportDialog } from '@/components/chat/report-dialog';
 import { ContactShareCard } from '@/components/chat/contact-share-card';
+import { HousingResponseBanner } from '@/components/neednow/housing-response-banner';
+import {
+  fetchHousingResponse,
+  getRequest,
+  NEED_NOW_INTENT_LABELS,
+  formatBudgetRangePaise,
+} from '@/lib/api/services/neednow';
 import { showToast } from '@/components/ui/toast';
 import { InfoBanner } from '@/components/ui/info-banner';
 import Link from 'next/link';
 import {
   ArrowLeft,
   Send,
+  Timer,
   User,
   Users,
   Home,
@@ -179,6 +187,73 @@ export default function ChatThreadPage() {
   const pendingClientIdsRef = React.useRef<Set<string>>(new Set());
   const [listingTitle, setListingTitle] = React.useState<string | null>(null);
 
+  // Need Now threads: actual peer name + requirement context. Backend
+  // conversation list participants/history often resolve to a generic
+  // "Chat Participant" here (esp. responder view before the owner replies),
+  // so resolve via the housing response + its request.
+  const [housingPeer, setHousingPeer] = React.useState<{ id: string; displayName: string; avatarUrl?: string | null } | null>(null);
+  const [housingContext, setHousingContext] = React.useState<{ requestId: string; title: string; location: string; budget: string } | null>(null);
+
+  React.useEffect(() => {
+    if (conversation?.contextType !== 'housing_request_response' || !conversation.contextId) return;
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHousingPeer(null);
+    setHousingContext(null);
+    (async () => {
+      try {
+        const res = await fetchHousingResponse(conversation.contextId);
+        if (cancelled) return;
+        const rawReq = (res.request || {}) as unknown as Record<string, unknown>;
+        const intent = typeof rawReq.intentType === 'string' ? rawReq.intentType : '';
+        const locObj = rawReq.location as { name?: unknown } | undefined;
+        const locName =
+          typeof rawReq.primaryLocationName === 'string'
+            ? rawReq.primaryLocationName
+            : typeof locObj?.name === 'string'
+              ? locObj.name
+              : '';
+        const budgetObj = rawReq.budget as { minimumPaise?: unknown; maximumPaise?: unknown } | undefined;
+        const min = typeof budgetObj?.minimumPaise === 'number' ? budgetObj.minimumPaise : 0;
+        const max = typeof budgetObj?.maximumPaise === 'number' ? budgetObj.maximumPaise : 0;
+        const summary = {
+          requestId: res.housingRequestId,
+          title: (NEED_NOW_INTENT_LABELS as Record<string, string>)[intent] || 'Need Now requirement',
+          location: locName,
+          budget: min > 0 || max > 0 ? `${formatBudgetRangePaise(min, max)}/mo` : '',
+        };
+        if (res.direction === 'received') {
+          // Main owner hoon — saamne responder hai, uska actual naam dikhao.
+          if (res.responder?.id) {
+            setHousingPeer({ id: res.responder.id, displayName: res.responder.displayName || 'User', avatarUrl: res.responder.avatarUrl ?? null });
+          }
+          setHousingContext(summary);
+        } else {
+          // Maine response bheja — saamne request owner hai. Full request se
+          // owner ka naam + context lao; expired/removed par summary fallback.
+          try {
+            const req = await getRequest(res.housingRequestId);
+            if (cancelled) return;
+            setHousingPeer({ id: req.owner.id, displayName: req.owner.displayName || 'User', avatarUrl: req.owner.avatarUrl ?? null });
+            setHousingContext({
+              requestId: req.id,
+              title: NEED_NOW_INTENT_LABELS[req.intentType] || 'Need Now requirement',
+              location: req.location?.name || '',
+              budget: req.budget ? `${formatBudgetRangePaise(req.budget.minimumPaise, req.budget.maximumPaise)}/mo` : '',
+            });
+          } catch {
+            if (!cancelled) setHousingContext(summary);
+          }
+        }
+      } catch {
+        // Header generic fallback par rahega — thread kaam karta rahega.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversation?.contextType, conversation?.contextId]);
+
   // Peer participant
   const peer = React.useMemo(() => {
     if (!conversation) return null;
@@ -189,6 +264,9 @@ export default function ChatThreadPage() {
   }, [conversation, user?.id]);
 
   const peerDisplayName = React.useMemo(() => {
+    if (housingPeer?.displayName && housingPeer.displayName !== 'User') {
+      return housingPeer.displayName;
+    }
     if (
       peer?.displayName &&
       peer.displayName !== 'User' &&
@@ -207,26 +285,32 @@ export default function ChatThreadPage() {
 
     if (contextTitle) return contextTitle;
     if (peer?.displayName && peer.displayName !== 'User') return peer.displayName;
+    if (conversation?.contextType === 'housing_request_response') return housingContext?.title || 'Need Now chat';
     return conversation?.contextType === 'roommate_interest' ? 'Roommate' : 'Chat Participant';
-  }, [peer, listingTitle, conversation]);
+  }, [housingPeer, housingContext, peer, listingTitle, conversation]);
 
-  // Block state comes from the SERVER (GET /users/blocked + /users/blocked-by),
+  // Block/report Mutation対象: real user id — housing threads me peer
+  // participants se missing ho sakta hai, tab housingPeer (actual naam) use karo.
+  const actionablePeerId = React.useMemo(() => {
+    if (peer?.id && !peer.id.startsWith('listing-') && !peer.id.startsWith('roommate-')) return peer.id;
+    return housingPeer?.id || null;
+  }, [peer, housingPeer]);
   // never local storage — reloads and other devices must show the same truth.
   React.useEffect(() => {
-    if (!peer?.id || peer.id.startsWith('listing-') || peer.id.startsWith('roommate-')) return;
+    if (!actionablePeerId) return;
+    const resolvedId = actionablePeerId;
     let cancelled = false;
     Promise.all([fetchBlockedUsers(), fetchBlockedByUsers()])
       .then(([mine, theirs]) => {
         if (cancelled) return;
-        setIsBlocked(mine.includes(peer.id));
-        setIsBlockedByPeer(theirs.includes(peer.id));
+        setIsBlocked(mine.includes(resolvedId));
+        setIsBlockedByPeer(theirs.includes(resolvedId));
       })
       .catch(() => {});
     const onBlocked = (e: Event) => {
       const d = (e as CustomEvent).detail as {blockedId?: string; blockerId?: string; active?: boolean};
-      if (!peer?.id) return;
-      if (d.blockedId === peer.id) setIsBlocked(Boolean(d.active));
-      if (d.blockerId === peer.id) setIsBlockedByPeer(Boolean(d.active));
+      if (d.blockedId === resolvedId) setIsBlocked(Boolean(d.active));
+      if (d.blockerId === resolvedId) setIsBlockedByPeer(Boolean(d.active));
     };
     for (const evt of ['user:blocked','user:unblocked','user:blocked_by','user:unblocked_by'] as const) {
       window.addEventListener(evt, onBlocked);
@@ -237,7 +321,7 @@ export default function ChatThreadPage() {
         window.removeEventListener(evt, onBlocked);
       }
     };
-  }, [peer?.id]);
+  }, [actionablePeerId]);
 
   const cannotMessage = isBlocked || isBlockedByPeer;
   // Chat closed because the source post expired — history stays readable,
@@ -613,11 +697,11 @@ export default function ChatThreadPage() {
 
   // Block / Unblock handler
   const handleToggleBlock = async () => {
-    if (!peer?.id || peer.id.startsWith('listing-')) return;
+    if (!actionablePeerId) return;
     setIsBlocking(true);
     try {
       if (isBlocked) {
-        await unblockUser(peer.id);
+        await unblockUser(actionablePeerId);
         setIsBlocked(false);
         showToast({
           title: 'User Unblocked',
@@ -625,7 +709,7 @@ export default function ChatThreadPage() {
           variant: 'success',
         });
       } else {
-        await blockUser(peer.id);
+        await blockUser(actionablePeerId);
         setIsBlocked(true);
         showToast({
           title: 'User Blocked',
@@ -692,9 +776,9 @@ export default function ChatThreadPage() {
 
           <div className="relative shrink-0">
             <div className="size-10 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center">
-              {peer?.avatarUrl ? (
+              {peer?.avatarUrl || housingPeer?.avatarUrl ? (
                 <Image
-                  src={peer.avatarUrl}
+                  src={(peer?.avatarUrl || housingPeer?.avatarUrl) as string}
                   alt={peerDisplayName}
                   width={40}
                   height={40}
@@ -711,10 +795,18 @@ export default function ChatThreadPage() {
               <h2 className="font-bold text-sm sm:text-base text-foreground truncate">
                 {peerDisplayName}
               </h2>
-              {peer?.id && !peer.id.startsWith('listing-') && !peer.id.startsWith('roommate-') ? (
-                <TrustBadge userId={peer.id} size={16} />
+              {(peer?.id || housingPeer?.id) && !(peer?.id?.startsWith('listing-') || peer?.id?.startsWith('roommate-')) ? (
+                <TrustBadge userId={(peer?.id || housingPeer?.id) as string} size={16} />
               ) : null}
-              {conversation?.contextType && (
+              {conversation?.contextType === 'housing_request_response' ? (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[200px] sm:max-w-[300px] truncate border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  title={housingContext ? `${housingContext.title}${housingContext.location ? ` · ${housingContext.location}` : ''}` : 'Need Now'}
+                >
+                  Need Now{housingContext?.location ? `: ${housingContext.location}` : ''}
+                </Badge>
+              ) : conversation?.contextType && (
                 <Badge
                   variant="outline"
                   className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[200px] sm:max-w-[300px] truncate ${
@@ -813,6 +905,27 @@ export default function ChatThreadPage() {
           </div>
         );
       })()}
+      {conversation?.contextType === 'housing_request_response' && housingContext && (
+        <div className="relative z-10 border-x border-b border-white/20 bg-background/45 px-4 py-2.5 shadow-lg shadow-primary/5 supports-[backdrop-filter]:bg-background/35"
+          style={{ backdropFilter: 'blur(18px) saturate(150%)', WebkitBackdropFilter: 'blur(18px) saturate(150%)' }}>
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.07] px-3.5 py-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Timer className="size-4 shrink-0 text-amber-500" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Related Need Now requirement</p>
+                <p className="truncate text-xs font-semibold text-foreground">
+                  {housingContext.title}
+                  {housingContext.location ? <span className="font-normal text-muted-foreground"> · {housingContext.location}</span> : null}
+                  {housingContext.budget ? <span className="font-normal text-muted-foreground"> · {housingContext.budget}</span> : null}
+                </p>
+              </div>
+            </div>
+            <Link href={`/need-now/${housingContext.requestId}`} className="shrink-0 text-[11px] font-medium text-primary hover:underline">
+              View requirement
+            </Link>
+          </div>
+        </div>
+      )}
       </div>
 
       {/* Main Chat Area */}
@@ -834,12 +947,18 @@ export default function ChatThreadPage() {
           </div>
         )}
 
+        {/* Housing-response lifecycle strip — accept/decline/withdraw inline */}
+        {conversation?.contextType === 'housing_request_response' && conversation.contextId && (
+          <HousingResponseBanner responseId={conversation.contextId} onChanged={() => void loadInitialData()} />
+        )}
+
         {/* Contact Share Card */}
         <ContactShareCard
           conversationId={conversationId}
           currentUserId={user?.id}
           listingInterestId={conversation?.contextType === 'listing_interest' ? conversation.contextId : undefined}
           roommateInterestId={conversation?.contextType === 'roommate_interest' ? conversation.contextId : undefined}
+          housingResponseId={conversation?.contextType === 'housing_request_response' ? conversation.contextId : undefined}
         />
 
         {hasMore && isLoadingMore && (
@@ -982,12 +1101,12 @@ export default function ChatThreadPage() {
       />
 
       {/* Report Content Dialog */}
-      {peer && !peer.id.startsWith('listing-') && (
+      {actionablePeerId && (
         <ReportDialog
           isOpen={showReportDialog}
           onClose={() => setShowReportDialog(false)}
           targetType="user"
-          targetId={peer.id}
+          targetId={actionablePeerId}
           targetTitle={peerDisplayName}
         />
       )}

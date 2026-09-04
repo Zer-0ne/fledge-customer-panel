@@ -18,7 +18,7 @@ export function validateEnv(): EnvConfig {
     'http://localhost:3000';
 
   const NEXT_PUBLIC_APP_NAME =
-    process.env.NEXT_PUBLIC_APP_NAME || 'Owl Sight';
+    process.env.NEXT_PUBLIC_APP_NAME || 'Fledge';
 
   const NEXT_PUBLIC_API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || '/api/proxy';

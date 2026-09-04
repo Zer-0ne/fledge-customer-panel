@@ -14,7 +14,6 @@ import { showToast } from '@/components/ui/toast';
 import {
   ArrowLeft,
   BadgeCheck,
-  FileImage,
   FileText,
   Loader2,
   Shield,
@@ -24,18 +23,64 @@ import {
   Clock,
   AlertTriangle,
   RefreshCw,
+  GraduationCap,
+  Briefcase,
+  Smartphone,
+  MailCheck,
 } from 'lucide-react';
+import VerificationExplainer from '../verification-explainer';
 
-type VerifyMethod = 'STUDENT_ID_CARD' | 'FEE_RECEIPT';
+type VerifyMethod = 'STUDENT_ID_CARD' | 'FEE_RECEIPT' | 'FACULTY_ID' | 'FACULTY_FEE_RECEIPT' | 'UPI_OTM' | 'COLLEGE_EMAIL_OTP';
+// OTP phone verification is parked until SMS delivery is enabled
+// (backend OTP_DELIVERY_MODE). Uncomment to re-enable as a method:
+// | 'PHONE_OTP';
+
+// UPI has its own mandate flow on a dedicated page — selecting it navigates away.
+const UPI_VERIFY_PATH = '/settings/verify/upi';
+// College email OTP also has its own page (instant code flow, no upload).
+const COLLEGE_VERIFY_PATH = '/settings/verify/college-email';
+
+interface MethodOption {
+  id: VerifyMethod;
+  title: string;
+  subtitle: string;
+  icon: typeof BadgeCheck;
+  uploadTitle: string;
+  uploadHint: string;
+  accept: string;
+}
+
+const METHOD_OPTIONS: MethodOption[] = [
+  { id: 'COLLEGE_EMAIL_OTP', title: 'College Email', subtitle: 'Instant 6-digit code', icon: MailCheck, uploadTitle: '', uploadHint: '', accept: '' },
+  { id: 'STUDENT_ID_CARD', title: 'Student ID Card', subtitle: 'Photo of your college ID', icon: BadgeCheck, uploadTitle: 'Upload ID card photo', uploadHint: 'JPG, PNG, or WebP — max 10 MB', accept: 'image/*' },
+  { id: 'FEE_RECEIPT', title: 'Fee Receipt', subtitle: 'PDF or image of receipt', icon: FileText, uploadTitle: 'Upload fee receipt', uploadHint: 'PDF, JPG, PNG — max 10 MB', accept: 'image/*,.pdf' },
+  { id: 'FACULTY_ID', title: 'Faculty ID Card', subtitle: 'Photo of your faculty ID', icon: GraduationCap, uploadTitle: 'Upload faculty ID photo', uploadHint: 'JPG, PNG, or WebP — max 10 MB', accept: 'image/*' },
+  { id: 'FACULTY_FEE_RECEIPT', title: 'Salary Slip', subtitle: 'PDF or image of payslip', icon: Briefcase, uploadTitle: 'Upload salary slip', uploadHint: 'PDF, JPG, PNG — max 10 MB', accept: 'image/*,.pdf' },
+  { id: 'UPI_OTM', title: 'UPI Verification', subtitle: 'Instant via ₹1 mandate', icon: Smartphone, uploadTitle: '', uploadHint: '', accept: '' },
+  // OTP phone verification (hidden until SMS delivery is enabled):
+  // { id: 'PHONE_OTP', title: 'Phone OTP', subtitle: 'Verify via SMS code', icon: Smartphone, uploadTitle: '', uploadHint: '', accept: '' },
+];
 
 interface Verification {
   id: string;
   status: string;
   method?: string;
+  collegeEmail?: string;
   rejectionReason?: string;
   requestedAt?: string;
   verifiedAt?: string;
 }
+
+const METHOD_LABELS: Record<string, string> = {
+  STUDENT_ID_CARD: 'Student ID card',
+  ACADEMIC_DOCUMENT: 'Academic document',
+  FEE_RECEIPT: 'Fee receipt',
+  MANUAL_OCR: 'Document',
+  FACULTY_ID: 'Faculty ID card',
+  FACULTY_FEE_RECEIPT: 'Salary slip',
+  UPI_OTM: 'UPI mandate',
+  COLLEGE_EMAIL_OTP: 'College email',
+};
 
 const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; label: string }> = {
   VERIFIED: { icon: CheckCircle2, color: 'text-emerald-500', label: 'Verified' },
@@ -175,40 +220,45 @@ export default function StudentVerifyPage() {
           </p>
         </div>
 
+        <VerificationExplainer />
+
         {/* Method selector */}
         <div className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground">Choose verification method</p>
           <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => { setMethod('STUDENT_ID_CARD'); handleRemoveFile(); }}
-              className={`flex items-center gap-2.5 rounded-xl border p-3.5 text-left transition-colors ${
-                method === 'STUDENT_ID_CARD'
-                  ? 'border-primary/50 bg-primary/5 text-foreground'
-                  : 'border-border/60 bg-card text-muted-foreground hover:border-primary/30'
-              }`}
-            >
-              <BadgeCheck className="size-5 shrink-0" />
-              <div>
-                <p className="text-sm font-medium">Student ID Card</p>
-                <p className="text-[10px] text-muted-foreground">Photo of your college ID</p>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMethod('FEE_RECEIPT'); handleRemoveFile(); }}
-              className={`flex items-center gap-2.5 rounded-xl border p-3.5 text-left transition-colors ${
-                method === 'FEE_RECEIPT'
-                  ? 'border-primary/50 bg-primary/5 text-foreground'
-                  : 'border-border/60 bg-card text-muted-foreground hover:border-primary/30'
-              }`}
-            >
-              <FileText className="size-5 shrink-0" />
-              <div>
-                <p className="text-sm font-medium">Fee Receipt</p>
-                <p className="text-[10px] text-muted-foreground">PDF or image of receipt</p>
-              </div>
-            </button>
+            {METHOD_OPTIONS.map((option) => {
+              const OptionIcon = option.icon;
+              const selected = method === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => {
+                    if (option.id === 'UPI_OTM') {
+                      router.push(UPI_VERIFY_PATH);
+                      return;
+                    }
+                    if (option.id === 'COLLEGE_EMAIL_OTP') {
+                      router.push(COLLEGE_VERIFY_PATH);
+                      return;
+                    }
+                    setMethod(option.id);
+                    handleRemoveFile();
+                  }}
+                  className={`flex items-center gap-2.5 rounded-xl border p-3.5 text-left transition-colors ${
+                    selected
+                      ? 'border-primary/50 bg-primary/5 text-foreground'
+                      : 'border-border/60 bg-card text-muted-foreground hover:border-primary/30'
+                  }`}
+                >
+                  <OptionIcon className="size-5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">{option.title}</p>
+                    <p className="text-[10px] text-muted-foreground">{option.subtitle}</p>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -223,12 +273,10 @@ export default function StudentVerifyPage() {
               <Upload className="size-8" />
               <div className="text-center">
                 <p className="text-sm font-medium">
-                  {method === 'STUDENT_ID_CARD' ? 'Upload ID card photo' : 'Upload fee receipt'}
+                  {METHOD_OPTIONS.find((o) => o.id === method)?.uploadTitle ?? 'Upload document'}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {method === 'STUDENT_ID_CARD'
-                    ? 'JPG, PNG, or WebP — max 10 MB'
-                    : 'PDF, JPG, PNG — max 10 MB'}
+                  {METHOD_OPTIONS.find((o) => o.id === method)?.uploadHint ?? 'JPG, PNG, or WebP — max 10 MB'}
                 </p>
               </div>
             </button>
@@ -295,6 +343,12 @@ export default function StudentVerifyPage() {
                     <Icon className={`size-5 shrink-0 mt-0.5 ${cfg.color}`} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-foreground">{cfg.label}</p>
+                      {v.method && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {METHOD_LABELS[v.method] ?? v.method}
+                          {v.collegeEmail ? ` · ${v.collegeEmail}` : ''}
+                        </p>
+                      )}
                       {v.rejectionReason && (
                         <p className="text-xs text-red-500 mt-0.5">{v.rejectionReason}</p>
                       )}
@@ -323,7 +377,7 @@ export default function StudentVerifyPage() {
         <input
           ref={fileRef}
           type="file"
-          accept={method === 'STUDENT_ID_CARD' ? 'image/*' : 'image/*,.pdf'}
+          accept={METHOD_OPTIONS.find((o) => o.id === method)?.accept || 'image/*'}
           onChange={handleFileChange}
           className="hidden"
         />

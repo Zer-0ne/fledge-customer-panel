@@ -558,6 +558,98 @@ export async function reportContent(params: {
 }
 
 /**
+ * Message requests (insta-style DM requests) — unknown senders land in
+ * Requests, never the inbox. Seen receipts stay hidden until accept.
+ */
+export interface MessageRequestItem {
+  id: string;
+  sender?: { id: string; displayName: string; avatarUrl?: string | null };
+  recipient?: { id: string; displayName: string };
+  listingId?: string | null;
+  listingTitle?: string | null;
+  roommatePostId?: string | null;
+  roommatePostTitle?: string | null;
+  body?: string | null;
+  status: 'pending' | 'accepted' | 'declined' | 'expired';
+  conversationId?: string | null;
+  createdAt: string;
+}
+
+function mapRawToMessageRequest(item: unknown): MessageRequestItem {
+  const raw = (item || {}) as Record<string, unknown>;
+  const sender = (raw.sender || {}) as Record<string, unknown>;
+  const recipient = (raw.recipient || {}) as Record<string, unknown>;
+  const asStr = (v: unknown, fb = ''): string => (typeof v === 'string' ? v : fb);
+  const asOptStr = (v: unknown): string | null => (typeof v === 'string' ? v : null);
+  return {
+    id: asStr(raw.id),
+    sender: raw.sender
+      ? { id: asStr(sender.id), displayName: asStr(sender.displayName, 'User'), avatarUrl: asOptStr(sender.avatarUrl) }
+      : undefined,
+    recipient: raw.recipient
+      ? { id: asStr(recipient.id), displayName: asStr(recipient.displayName, 'User') }
+      : undefined,
+    listingId: asOptStr(raw.listingId),
+    listingTitle: asOptStr(raw.listingTitle),
+    roommatePostId: asOptStr(raw.roommatePostId),
+    roommatePostTitle: asOptStr(raw.roommatePostTitle),
+    body: asOptStr(raw.body),
+    status: (raw.status as MessageRequestItem['status']) || 'pending',
+    conversationId: asOptStr(raw.conversationId),
+    createdAt: asStr(raw.createdAt, new Date().toISOString()),
+  };
+}
+
+function extractRequestItems(res: unknown): unknown[] {
+  if (Array.isArray(res)) return res;
+  if (res && typeof res === 'object') {
+    const obj = res as Record<string, unknown>;
+    if (Array.isArray(obj.data)) return obj.data;
+    if (Array.isArray(obj.items)) return obj.items;
+  }
+  return [];
+}
+
+/** GET /message-requests — pending requests I received. */
+export async function fetchMessageRequests(): Promise<MessageRequestItem[]> {
+  const res = await apiFetch<unknown>({ path: '/api/v1/message-requests', method: 'GET' });
+  return extractRequestItems(res).map(mapRawToMessageRequest);
+}
+
+/** GET /message-requests/sent — requests I sent. */
+export async function fetchSentMessageRequests(): Promise<MessageRequestItem[]> {
+  const res = await apiFetch<unknown>({ path: '/api/v1/message-requests/sent', method: 'GET' });
+  return extractRequestItems(res).map(mapRawToMessageRequest);
+}
+
+/** GET /message-requests/:id — full request incl. decrypted body. */
+export async function fetchMessageRequest(id: string): Promise<MessageRequestItem> {
+  const res = await apiFetch<unknown>({ path: `/api/v1/message-requests/${id}`, method: 'GET' });
+  const raw = res && typeof res === 'object' && 'data' in res
+    ? (res as { data: unknown }).data
+    : res;
+  return mapRawToMessageRequest(raw);
+}
+
+/** POST /message-requests/:id/accept — accept and open the chat. */
+export async function acceptMessageRequest(id: string): Promise<MessageRequestItem> {
+  const res = await apiFetch<unknown>({ path: `/api/v1/message-requests/${id}/accept`, method: 'POST' });
+  const raw = res && typeof res === 'object' && 'data' in res
+    ? (res as { data: unknown }).data
+    : res;
+  return mapRawToMessageRequest(raw);
+}
+
+/** POST /message-requests/:id/decline. */
+export async function declineMessageRequest(id: string): Promise<MessageRequestItem> {
+  const res = await apiFetch<unknown>({ path: `/api/v1/message-requests/${id}/decline`, method: 'POST' });
+  const raw = res && typeof res === 'object' && 'data' in res
+    ? (res as { data: unknown }).data
+    : res;
+  return mapRawToMessageRequest(raw);
+}
+
+/**
  * Enriches conversations with peer display names + listing titles.
  * Backend conversation list only returns { id, contextType, contextId, createdAt }.
  */

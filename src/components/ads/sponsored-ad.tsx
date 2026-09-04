@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ArrowUpRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, MessageCircle, Phone, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AdCreative, AdPlacement } from '@/types';
 import {
@@ -10,7 +10,7 @@ import {
   trackAdViewable,
   queueAdImpressions,
 } from '@/lib/api/services/ads';
-import { sanitizeRedirectUrl } from '@/lib/ads/safe-redirect';
+import { sanitizeAdDestinationUrl } from '@/lib/ads/safe-redirect';
 
 export type TierFilter = 'all' | 'maximum' | 'premium' | 'boost' | 'standard';
 
@@ -85,6 +85,30 @@ const hideOnError = (e: React.SyntheticEvent<HTMLImageElement>) => {
   e.currentTarget.style.display = 'none';
 };
 
+/** Card CTA follows the contact action — WhatsApp / Call instead of Learn More. */
+function AdCta({ ad, className }: { ad: AdCreative; className?: string }) {
+  const cls = cn('inline-flex items-center gap-1.5', className);
+  if (ad.contactType === 'WHATSAPP') {
+    return (
+      <span className={cls}>
+        Chat on WhatsApp <MessageCircle className="size-4" />
+      </span>
+    );
+  }
+  if (ad.contactType === 'PHONE') {
+    return (
+      <span className={cls}>
+        Call Now <Phone className="size-4" />
+      </span>
+    );
+  }
+  return (
+    <span className={cls}>
+      Learn More <ArrowUpRight className="size-4" />
+    </span>
+  );
+}
+
 function HeroImg({ src, alt, className }: { src?: string | null; alt: string; className?: string }) {
   if (!src) return null;
   return (
@@ -136,7 +160,7 @@ function StandardCard({ ad }: { ad: AdCreative }) {
             <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-white/50">{ad.description}</p>
           )}
           <div className="mt-2 flex items-center justify-between">
-            <span className="font-mono-jb text-[11px] font-bold text-[#d2bbff]">Learn More</span>
+            <AdCta ad={ad} className="font-mono-jb text-[11px] font-bold text-[#d2bbff]" />
             <ChevronRight className="size-4 text-[#d2bbff]" />
           </div>
         </div>
@@ -182,7 +206,7 @@ function BoostCard({ ad }: { ad: AdCreative }) {
           <p className="mb-5 line-clamp-2 text-sm leading-relaxed text-white/55">{ad.description}</p>
         )}
         <span className="flex w-full items-center justify-center gap-2 rounded bg-[#e9c349] py-3.5 text-xs font-bold uppercase tracking-widest text-[#3c2f00] shadow-lg shadow-[#e9c349]/10">
-          Learn More <ArrowUpRight className="size-4" />
+          <AdCta ad={ad} className="contents" />
         </span>
       </div>
     </div>
@@ -265,9 +289,10 @@ function HeroCard({ ad, tier }: { ad: AdCreative; tier: string }) {
             </div>
           )}
           <div className="flex items-center gap-3">
-            <span className="flex flex-1 items-center justify-center gap-2 rounded bg-white py-4 text-xs font-bold uppercase tracking-widest text-black shadow-2xl transition-all duration-300">
-              Learn More <ArrowUpRight className="size-4" />
-            </span>
+            <AdCta
+              ad={ad}
+              className="flex flex-1 items-center justify-center gap-2 rounded bg-white py-4 text-xs font-bold uppercase tracking-widest text-black shadow-2xl transition-all duration-300"
+            />
           </div>
         </div>
       </div>
@@ -533,12 +558,15 @@ export function SponsoredAd({
       // Clicks MUST use the dedicated click token — the click endpoint rejects
       // the impression token (signed type mismatch → event never recorded).
       const fromClick = await trackAdClick(item.clickToken || item.token);
-      const fallback = sanitizeRedirectUrl(item.destinationUrl);
+      const fallback = sanitizeAdDestinationUrl(item.destinationUrl);
       const target = fromClick || fallback;
 
       if (target) {
         if (target.startsWith('/')) {
           window.location.assign(target);
+        } else if (target.startsWith('tel:')) {
+          // Dialer links must navigate the tab — window.open drops them on desktop.
+          window.location.href = target;
         } else {
           window.open(target, '_blank', 'noopener,noreferrer');
         }

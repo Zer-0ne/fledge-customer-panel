@@ -49,3 +49,32 @@ export function sanitizeRedirectUrl(url: string | null | undefined): string | nu
   if (!isSafeRedirectUrl(url)) return null;
   return (url as string).trim();
 }
+
+/**
+ * Normalizes a validated AD destination for navigation.
+ * Same rules as {@link sanitizeRedirectUrl}, plus `tel:+E.164` links —
+ * the backend stores PHONE contact actions as `tel:` destinations and the
+ * ad card dialer must survive sanitization. Everything else blocked.
+ */
+export function sanitizeAdDestinationUrl(url: string | null | undefined): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (/^tel:\+[1-9]\d{7,14}$/.test(trimmed)) return trimmed;
+  return sanitizeRedirectUrl(trimmed);
+}
+
+/**
+ * Derives the contact action from a stored creative destination.
+ * Mirrors the backend resolver: wa.me links are WhatsApp, tel: is phone.
+ */
+export function adContactType(destinationUrl: string | null | undefined): 'WEBSITE' | 'WHATSAPP' | 'PHONE' {
+  if (!destinationUrl || typeof destinationUrl !== 'string') return 'WEBSITE';
+  const trimmed = destinationUrl.trim().toLowerCase();
+  if (trimmed.startsWith('tel:')) return 'PHONE';
+  try {
+    if (new URL(trimmed).hostname === 'wa.me') return 'WHATSAPP';
+  } catch {
+    return 'WEBSITE';
+  }
+  return 'WEBSITE';
+}

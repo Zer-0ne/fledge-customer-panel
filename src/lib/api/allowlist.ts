@@ -26,6 +26,7 @@ export const CUSTOMER_ALLOWLIST: AllowlistRule[] = [
   // Auth sessions + verification (customer self-service)
   { method: 'GET', pattern: /^\/api\/v1\/auth\/me$/ },
   { method: 'GET', pattern: /^\/api\/v1\/auth\/bootstrap$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/auth\/config$/ },
   { method: 'POST', pattern: /^\/api\/v1\/auth\/phone\/verify$/ },
   { method: 'POST', pattern: /^\/api\/v1\/auth\/logout$/ },
   { method: 'GET', pattern: /^\/api\/v1\/auth\/sessions$/ },
@@ -168,8 +169,10 @@ export const CUSTOMER_ALLOWLIST: AllowlistRule[] = [
   // Need Now — 24h housing requests, responses, saves, and owner/manager
   // properties (offer-listing flow). Nearby/campus feeds are public; the rest
   // are session-guarded on the backend.
+  // Posting limits (dynamic unverified caps + live usage for limit hints).
+  { method: 'GET', pattern: /^\/api\/v1\/housing\/limits$/ },
   { method: 'POST', pattern: /^\/api\/v1\/housing-requests$/ },
-  { method: 'GET', pattern: /^\/api\/v1\/housing-requests\/me$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/housing-requests\/mine$/ },
   { method: 'GET', pattern: /^\/api\/v1\/housing-requests\/nearby$/ },
   { method: 'GET', pattern: /^\/api\/v1\/housing-requests\/campus$/ },
   { method: 'GET', pattern: /^\/api\/v1\/housing-requests\/[^\/]+$/ },
@@ -179,8 +182,14 @@ export const CUSTOMER_ALLOWLIST: AllowlistRule[] = [
   { method: 'GET', pattern: /^\/api\/v1\/housing-requests\/[^\/]+\/responses$/ },
   { method: 'POST', pattern: /^\/api\/v1\/housing-requests\/[^\/]+\/save$/ },
   { method: 'DELETE', pattern: /^\/api\/v1\/housing-requests\/[^\/]+\/save$/ },
-  { method: 'GET', pattern: /^\/api\/v1\/housing-request-responses\/(sent|received)$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/housing-request-responses\/(sent|received|[0-9a-f-]{36})$/ },
   { method: 'POST', pattern: /^\/api\/v1\/housing-request-responses\/[^\/]+\/(accept|decline|withdraw)$/ },
+  // Message requests (insta-style DM requests) — inbox + request tab.
+  { method: 'POST', pattern: /^\/api\/v1\/message-requests$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/message-requests$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/message-requests\/sent$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/message-requests\/[^\/]+$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/message-requests\/[^\/]+\/(accept|decline)$/ },
   { method: 'GET', pattern: /^\/api\/v1\/properties$/ },
   { method: 'GET', pattern: /^\/api\/v1\/properties\/[^/]+\/listings$/ },
 

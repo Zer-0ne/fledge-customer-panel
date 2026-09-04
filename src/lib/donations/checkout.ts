@@ -60,7 +60,7 @@ export async function openDonationCheckout(order: DonationOrder, prefill?: { nam
       key: order.razorpayKeyId,
       amount: order.amountPaise,
       currency: order.currency ?? 'INR',
-      name: 'Owl Sight',
+      name: 'Fledge',
       description: `Donation (${order.frequency === 'monthly' ? 'monthly' : 'one-time'})`,
       prefill,
       modal: { ondismiss: () => resolve({ phase: 'failed', message: 'Checkout closed before payment completed' }) },

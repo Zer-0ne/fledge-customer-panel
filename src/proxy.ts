@@ -9,7 +9,8 @@
  *     a session cookie.
  *   - Public exceptions: auth pages (/login /signup /otp), the token-based
  *     contact-approval email deep link, the static ad-style design preview,
- *     and company/legal pages (/about /faq /contact /privacy /terms).
+ *     the offline fallback page (/offline), and company/legal pages
+ *     (/about /faq /contact /privacy /terms).
  *
  * This is NOT an authorization decision — the backend's 401/403 always win
  * (the `(protected)` layout + auth provider handle expired sessions).
@@ -20,7 +21,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
 
 const PUBLIC_PATH_PATTERN =
-  /^\/(login|signup|otp|contact-approval|ad-style-preview|about|faq|contact|privacy|terms)(\/|$)/;
+  /^\/(login|signup|otp|contact-approval|ad-style-preview|offline|about|faq|contact|privacy|terms)(\/|$)/;
 
 export type ProxyDecision =
   | { type: "pass" }

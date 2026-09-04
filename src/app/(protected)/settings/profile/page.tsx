@@ -30,6 +30,7 @@ export default function ProfileSettingsPage() {
   const [methods, setMethods] = React.useState<{ phoneOtpEnabled: boolean; upiEnabled: boolean } | null>(null);
   const [studentVerified, setStudentVerified] = React.useState(false);
   const [upiVerified, setUpiVerified] = React.useState(false);
+  const [collegeEmailVerified, setCollegeEmailVerified] = React.useState<string | null>(null);
 
   const loadProfile = React.useCallback(async () => {
     setIsLoading(true);
@@ -65,7 +66,13 @@ export default function ProfileSettingsPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const list = Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : Array.isArray(d?.data) ? d.data : [];
-        if (!cancelled) setStudentVerified(list.some((v: { status?: string; verifiedAt?: string }) => v?.status === 'VERIFIED' || !!v?.verifiedAt));
+        if (!cancelled) {
+          setStudentVerified(list.some((v: { status?: string; verifiedAt?: string }) => v?.status === 'VERIFIED' || !!v?.verifiedAt));
+          const college = (list as Array<{ status?: string; method?: string; collegeEmail?: string }>).find(
+            (v) => v?.method === 'COLLEGE_EMAIL_OTP' && v?.status === 'VERIFIED',
+          );
+          setCollegeEmailVerified(college?.collegeEmail ?? null);
+        }
       })
       .catch(() => {});
     fetch('/api/proxy/api/v1/auth/me')
@@ -145,6 +152,7 @@ export default function ProfileSettingsPage() {
               <VerifyRow icon="📱" label="Phone" done={!!data?.phoneVerifiedAt} route="/settings/verify/phone" />
             )}
             <VerifyRow icon="✉️" label="Email" done={!!data?.emailVerifiedAt} subtitle={data?.emailVerifiedAt ? 'Verified via Google Sign-In' : 'Not verified'} />
+            <VerifyRow icon="🏫" label="College Email" done={collegeEmailVerified !== null} route={collegeEmailVerified ? undefined : "/settings/verify/college-email"} subtitle={collegeEmailVerified ?? 'Instant code on your college address'} />
             <VerifyRow icon="🎓" label="Student ID" done={studentVerified} route={studentVerified ? undefined : "/settings/verify/student"} subtitle="Upload college ID card photo" />
             <VerifyRow icon="💳" label="UPI" done={upiVerified} route={upiVerified ? undefined : "/settings/verify/upi"} subtitle={methods?.upiEnabled ? "Verify via ₹1 UPI mandate" : "UPI unavailable in test mode"} />
           </div>

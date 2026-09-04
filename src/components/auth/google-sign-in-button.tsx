@@ -49,20 +49,29 @@ interface GoogleSignInButtonProps {
   onError?: (message: string) => void;
 }
 
+const GOOGLE_SIGNIN_ERROR =
+  'Google sign-in failed to load — check your connection and try again.';
+
 /**
- * "Continue with Google" — loads Google Identity Services at runtime and
- * renders a THEME-AWARE button (app Button outline variant + Google G mark;
- * adapts to light/dark via CSS tokens). The real GIS button is rendered
- * invisibly and clicked programmatically to open the account chooser. The ID
- * token (+ `g_csrf_token` fingerprint) goes to the app's `/api/auth/google`
- * route (same HttpOnly cookie session as password login). Renders `null`
- * when `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is unset.
+ * "Continue with Google" — Google Identity Services, popup UX (default).
+ *
+ * Fix 2026-09-04: the previous implementation rendered the GIS button
+ * invisibly (opacity-0 + pointer-events-none) and forwarded a programmatic
+ * click to it. In FIREFOX the cross-origin iframe click does not propagate
+ * user activation, so the popup never opens and the login page just sits
+ * there silently (no popup, no toast, no redirect) — while Chrome worked.
+ * The REAL GIS button is now layered ON TOP of the decorative shell so real
+ * user clicks land on the Google iframe itself, keeping the cross-origin
+ * activation intact (popup opens in every browser — incl. installed-PWA
+ * windows). The token still goes to `/api/auth/google` (same HttpOnly cookie
+ * session).
  */
 export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: GoogleSignInButtonProps) {
   const router = useRouter();
   const { googleLogin, isAuthenticated } = useAuth();
   const { addToast } = useToast();
   const [googleReady, setGoogleReady] = React.useState(false);
+  const [googleLoadFailed, setGoogleLoadFailed] = React.useState(false);
   const [googleBusy, setGoogleBusy] = React.useState(false);
 
   const handleGoogleCredential = React.useCallback(
@@ -87,6 +96,9 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
     [googleLogin, googleBusy, returnUrl, addToast, onError, router]
   );
 
+  // Redirect-mode return: gsi/client replays the `#credential` fragment into
+  // the callback once initialize() has run — make sure the SDK finished
+  // loading before we initialize (the SDK buffers the fragment until then).
   React.useEffect(() => {
     if (!GOOGLE_CLIENT_ID || !googleReady || typeof window === 'undefined') return;
     if (!window.google?.accounts?.id) return;
@@ -95,6 +107,7 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleCredential,
       auto_select: false,
+      // Popup UX — real clicks on the GIS iframe (above) open the chooser.
     });
 
     const host = document.getElementById('google-signin-button');
@@ -115,14 +128,12 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
     }
   }, [googleReady, handleGoogleCredential, isAuthenticated]);
 
-  if (!GOOGLE_CLIENT_ID) return null;
+  React.useEffect(() => {
+    if (googleLoadFailed) onError?.(GOOGLE_SIGNIN_ERROR);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [googleLoadFailed]);
 
-  const openGoogleChooser = () => {
-    if (!googleReady || googleBusy) return;
-    const host = document.getElementById('google-signin-button');
-    const gsiButton = host?.querySelector<HTMLElement>('[role="button"]');
-    gsiButton?.click();
-  };
+  if (!GOOGLE_CLIENT_ID) return null;
 
   return (
     <>
@@ -130,24 +141,30 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
         onLoad={() => setGoogleReady(true)}
+        onError={() => setGoogleLoadFailed(true)}
       />
       <div className="relative">
-        {/* Hidden GIS button — exists only to open the account chooser. */}
+        {/* Decorative shell (underlay, visual only — never intercepts clicks). */}
+        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 w-full font-medium gap-2.5"
+            tabIndex={-1}
+          >
+            <GoogleG className="size-4" />
+            <span>Continue with Google</span>
+          </Button>
+        </div>
+        {/* REAL GIS button on top — real user clicks land on the Google iframe
+            itself, so the cross-origin activation is intact in every browser. */}
         <div
           id="google-signin-button"
+          className={`relative h-9 w-full overflow-hidden ${
+            googleReady && !googleBusy ? 'opacity-0' : 'pointer-events-none opacity-0'
+          }`}
           aria-hidden="true"
-          className="absolute inset-0 opacity-0 pointer-events-none"
         />
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full h-9 font-medium gap-2.5"
-          disabled={googleBusy || !googleReady}
-          onClick={openGoogleChooser}
-        >
-          <GoogleG className="size-4" />
-          <span>Continue with Google</span>
-        </Button>
       </div>
     </>
   );

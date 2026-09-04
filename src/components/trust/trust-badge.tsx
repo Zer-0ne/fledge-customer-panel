@@ -31,11 +31,11 @@ export const TRUST_TIER_INFO: Record<TrustBadgeKey, { label: string; description
   },
   gold: {
     label: 'Gold Member',
-    description: 'Long verified history. One of the most trusted members on Owl Sight.',
+    description: 'Long verified history. One of the most trusted members on Fledge.',
   },
   diamond: {
     label: 'Diamond Member',
-    description: 'Spotless record across 10+ posts. The highest trust on Owl Sight.',
+    description: 'Spotless record across 10+ posts. The highest trust on Fledge.',
   },
 };
 
@@ -67,7 +67,8 @@ export function TrustBadge({
   size?: number;
   preview?: boolean;
 }) {
-  const [resolved, setResolved] = React.useState<TrustBadgeKey | null>(badge ?? null);
+  const [fetched, setFetched] = React.useState<TrustBadgeKey | null>(null);
+  const resolved = badge !== undefined ? badge : fetched;
   const [missing, setMissing] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [pos, setPos] = React.useState({ top: 0, left: 0 });
@@ -90,14 +91,10 @@ export function TrustBadge({
   const translateY = useSpring(useTransform(mouseY, [-60, 60], [-14, 14]), { stiffness: 180, damping: 16 });
 
   React.useEffect(() => {
-    if (badge !== undefined) {
-      setResolved(badge);
-      return;
-    }
-    if (!userId) return;
+    if (badge !== undefined || !userId) return;
     let live = true;
     fetchBadgeForUser(userId).then((b) => {
-      if (live) setResolved(b);
+      if (live) setFetched(b);
     });
     return () => {
       live = false;

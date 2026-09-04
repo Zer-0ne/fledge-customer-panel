@@ -23,6 +23,7 @@ import {
   Smartphone,
   Info,
 } from 'lucide-react';
+import VerificationExplainer from '../verification-explainer';
 
 export default function UpiVerifyPage() {
   const router = useRouter();
@@ -270,6 +271,8 @@ export default function UpiVerifyPage() {
             </p>
           </div>
         </div>
+
+        <VerificationExplainer />
       </div>
     </div>
   );

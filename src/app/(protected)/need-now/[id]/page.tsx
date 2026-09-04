@@ -13,6 +13,7 @@ import {
   Eye,
   Loader2,
   MapPin,
+  MessageCircle,
   Pause,
   Pencil,
   Play,
@@ -22,7 +23,10 @@ import {
   Timer,
   Trash2,
   Users,
+  MessageSquare,
+  Undo2,
 } from 'lucide-react';
+import { useAuth } from '@/components/providers/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TrustBadge } from '@/components/trust/trust-badge';
@@ -48,6 +52,8 @@ import {
   saveRequest,
   unsaveRequest,
   createResponse,
+  sentResponses,
+  withdrawResponse,
   fetchMyListings,
   friendlyNeedNowError,
   formatBudgetRangePaise,
@@ -64,20 +70,25 @@ import {
   SLEEP_SCHEDULE_LABELS,
   CLEANLINESS_LABELS,
 } from '@/lib/api/services/neednow';
-import { NeedNowRequest, NeedNowResponse, Listing } from '@/types';
+import { fetchMyRoommatePosts } from '@/lib/api/services/roommates';
+import { NeedNowRequest, NeedNowResponse, Listing, RoommatePost } from '@/types';
 
 export default function NeedNowDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { can } = useAuth();
+  const isPartner = can('listing.manage_own') || can('property.manage_own');
   const id = React.use(params).id;
 
   const [request, setRequest] = React.useState<NeedNowRequest | null>(null);
   const [responses, setResponses] = React.useState<NeedNowResponse[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [myResponse, setMyResponse] = React.useState<NeedNowResponse | null>(null);
   const [busyAction, setBusyAction] = React.useState<string | null>(null);
   const [editOpen, setEditOpen] = React.useState(false);
   const [removeOpen, setRemoveOpen] = React.useState(false);
   const [offerOpen, setOfferOpen] = React.useState(false);
+  const [messageOpen, setMessageOpen] = React.useState(false);
   // const [joinOpen, setJoinOpen] = React.useState(false); // JOIN_SEARCH disabled — not needed yet
 
   const load = React.useCallback(async () => {
@@ -87,8 +98,18 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
       if (req.viewerRelationship.isOwner) {
         const resps = await requestResponses(id);
         setResponses(resps);
+        setMyResponse(null);
       } else {
         setResponses([]);
+        // Responder view: surface the sender's own response (message, status,
+        // conversation link) — it used to vanish after the dialog closed.
+        const myId = req.viewerRelationship.existingResponseId;
+        if (myId) {
+          const sent = await sentResponses();
+          setMyResponse(sent.find((r) => r.id === myId) ?? null);
+        } else {
+          setMyResponse(null);
+        }
       }
       setError(null);
     } catch (err) {
@@ -179,6 +200,16 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
 
   const rel = request.viewerRelationship;
   const isEditable = ['DRAFT', 'ACTIVE', 'PAUSED'].includes(request.status);
+  // Request bhejne ke baad btn hide na ho: backend `canOfferListing` ko
+  // PENDING/ACCEPTED response ke baad false kar deta hai (alreadyResponded),
+  // isliye visibility sirf uspe depend nahi karegi. Active + not-owner +
+  // not-blocked me button hamesha dikhega — chahe response bhej diya ho.
+  // Duplicate second attempt backend `RESPONSE_DUPLICATE` se friendly error dega.
+  const showRespondActions =
+    request.status === 'ACTIVE' &&
+    !rel.isOwner &&
+    !rel.isBlocked &&
+    (rel.canOfferListing || !!rel.existingResponseId);
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -339,11 +370,24 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
               </>
             ) : (
               <>
-                {rel.canOfferListing && (
+                {/* Partner: Offer a listing | Student: do alag options — offer ya direct message */}
+                {showRespondActions && isPartner && (
                   <Button size="sm" onClick={() => setOfferOpen(true)} className="gap-1.5 rounded-xl font-semibold">
                     <Building2 className="size-3.5" />
                     Offer a listing
                   </Button>
+                )}
+                {showRespondActions && !isPartner && (
+                  <>
+                    <Button size="sm" onClick={() => setOfferOpen(true)} className="gap-1.5 rounded-xl font-semibold border-primary/20 bg-primary/10 text-primary hover:bg-primary/15">
+                      <Building2 className="size-3.5" />
+                      Offer a listing
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setMessageOpen(true)} className="gap-1.5 rounded-xl">
+                      <MessageCircle className="size-3.5" />
+                      Send a Message
+                    </Button>
+                  </>
                 )}
                 {/* JOIN_SEARCH disabled — not needed yet
                 {rel.canJoinSearch && (
@@ -506,9 +550,83 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
         )}
 
         {!rel.isOwner && rel.existingResponseId && (
-          <p className="text-xs text-muted-foreground text-center">
-            You have already responded to this requirement.
-          </p>
+          <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Your response
+              </span>
+              {myResponse && (
+                <Badge
+                  variant={myResponse.status === 'ACCEPTED' ? 'success' : myResponse.status === 'DECLINED' ? 'destructive' : myResponse.status === 'WITHDRAWN' || myResponse.status === 'EXPIRED' ? 'outline' : 'secondary'}
+                  className="text-[10px]"
+                >
+                  {myResponse.status.charAt(0) + myResponse.status.slice(1).toLowerCase()}
+                </Badge>
+              )}
+            </div>
+
+            {myResponse === null ? (
+              <Skeleton className="h-12 rounded-xl" />
+            ) : (
+              <>
+                {myResponse.message && (
+                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                    {myResponse.message}
+                  </p>
+                )}
+                {myResponse.listing && (
+                  <p className="text-xs text-muted-foreground">
+                    Offered listing: <span className="font-medium text-foreground">{myResponse.listing.title}</span>
+                  </p>
+                )}
+                {myResponse.roommatePost && (
+                  <p className="text-xs text-muted-foreground">
+                    Offered post: <span className="font-medium text-foreground">{myResponse.roommatePost.title}</span>
+                  </p>
+                )}
+
+                {myResponse.status === 'PENDING' && (
+                  <p className="text-xs text-muted-foreground">
+                    The owner has been notified — you&apos;ll get a chat thread when they accept.
+                  </p>
+                )}
+                {myResponse.status === 'DECLINED' && (
+                  <p className="text-xs text-muted-foreground">
+                    The owner declined this offer. You can still message other requirements.
+                  </p>
+                )}
+                {myResponse.conversationId && (
+                  <Button
+                    onClick={() => router.push(`/messages/${myResponse.conversationId}`)}
+                    className="rounded-xl gap-2 w-full"
+                  >
+                    <MessageSquare className="size-4" />
+                    {myResponse.status === 'ACCEPTED' ? 'Open conversation' : 'Open chat'}
+                  </Button>
+                )}
+                {myResponse.canWithdraw && (
+                  <Button
+                    variant="outline"
+                    className="rounded-xl w-full"
+                    disabled={busyAction === 'withdraw'}
+                    onClick={() => {
+                      setBusyAction('withdraw');
+                      withdrawResponse(myResponse.id)
+                        .then(() => {
+                          showToast({ title: 'Response withdrawn', variant: 'success' });
+                          return load();
+                        })
+                        .catch((err: unknown) => showToast({ title: 'Could not withdraw', description: friendlyNeedNowError(err), variant: 'error' }))
+                        .finally(() => setBusyAction(null));
+                    }}
+                  >
+                    {busyAction === 'withdraw' ? <Loader2 className="size-4 animate-spin" /> : <Undo2 className="size-4" />}
+                    Withdraw response
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         )}
       </div>
 
@@ -540,6 +658,13 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
         onResponded={() => void load()}
       />
 
+      <MessageDialog
+        open={messageOpen}
+        onOpenChange={setMessageOpen}
+        requestId={request.id}
+        onResponded={() => void load()}
+      />
+
       {/* JOIN_SEARCH disabled — not needed yet
       <JoinSearchDialog
         open={joinOpen}
@@ -555,6 +680,7 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
 // ─── Offer listing dialog ───────────────────────────────────────────────────
 
 function OfferListingDialog({
+  // isPartner passed from page via closure — re-check inside
   open,
   onOpenChange,
   requestId,
@@ -565,22 +691,31 @@ function OfferListingDialog({
   requestId: string;
   onResponded: () => void;
 }) {
+  const router = useRouter();
   const [listings, setListings] = React.useState<Listing[] | null>(null);
+  const [roommatePosts, setRoommatePosts] = React.useState<RoommatePost[] | null>(null);
   const [selectedListingId, setSelectedListingId] = React.useState('');
+  const [selectedPostId, setSelectedPostId] = React.useState('');
   const [message, setMessage] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
+  // Role check inside dialog — only partners can offer listings
+  const { can: canCheck } = useAuth();
+  const isDialogPartner = canCheck('listing.manage_own') || canCheck('property.manage_own');
 
   React.useEffect(() => {
     if (!open) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setListings(null);
+    setRoommatePosts(null);
     setSelectedListingId('');
+    setSelectedPostId('');
     setMessage('');
     let cancelled = false;
     (async () => {
-      const mine = await fetchMyListings();
+      const [mine, posts] = await Promise.all([fetchMyListings(), fetchMyRoommatePosts()]);
       if (!cancelled) {
         setListings(mine);
+        setRoommatePosts(posts);
         setSelectedListingId(mine[0]?.id ?? '');
       }
     })();
@@ -589,23 +724,60 @@ function OfferListingDialog({
     };
   }, [open]);
 
+  const noListingsForFooter = listings !== null && listings.length === 0;
+  const noPostsForFooter = !roommatePosts || roommatePosts.length === 0;
+  const isMessageOnlyForFooter = noListingsForFooter && noPostsForFooter;
+  // Message-only offer me listing/post nahi hota — sirf message se Send
+  // enable hona chahiye, warna btn dikhega par click kabhi nahi hoga.
+  const isOfferSubmitDisabled =
+    submitting ||
+    (!selectedListingId && !selectedPostId && (!isMessageOnlyForFooter || !message.trim()));
+
   const handleSubmit = async () => {
-    if (!selectedListingId) {
-      showToast({ title: 'Choose a listing', description: 'Pick which listing you want to offer.', variant: 'error' });
+    const noListings = listings !== null && listings.length === 0;
+    const noPosts = !roommatePosts || roommatePosts.length === 0;
+    const isMessageOnlyOffer = noListings && noPosts;
+    
+    if (!selectedListingId && !selectedPostId && !isMessageOnlyOffer) {
+      showToast({ title: 'Choose an option', description: 'Pick a listing or roommate post to offer.', variant: 'error' });
+      return;
+    }
+    if (isMessageOnlyOffer && !message.trim()) {
+      showToast({ title: 'Add a message', description: 'Describe your room — e.g. location, rent, availability.', variant: 'error' });
       return;
     }
     setSubmitting(true);
     try {
-      await createResponse(requestId, {
+      const res = await createResponse(requestId, {
         responseType: 'OFFER_LISTING',
-        listingId: selectedListingId,
+        ...(selectedListingId ? { listingId: selectedListingId } : {}),
+        ...(selectedPostId ? { roommatePostId: selectedPostId } : {}),
         message: message.trim() || undefined,
       });
-      showToast({ title: 'Listing offered', description: 'The seeker will see your offer.', variant: 'success' });
+      // Chat-first UX: land in the thread immediately (message = seed).
+      if (res.conversationId) {
+        router.push(`/messages/${res.conversationId}`);
+        onOpenChange(false);
+        return;
+      }
+      showToast({ 
+        title: selectedPostId ? 'Post offered' : (selectedListingId ? 'Listing offered' : 'Message sent'), 
+        description: 'The owner will see your offer.', 
+        variant: 'success' 
+      });
       onResponded();
       onOpenChange(false);
     } catch (err) {
-      showToast({ title: 'Could not send offer', description: friendlyNeedNowError(err), variant: 'error' });
+      // Request bhejne ke baad btn hide nahi hota, to double-click / retry par
+      // backend RESPONSE_DUPLICATE dega — usko error nahi, refresh samjho.
+      const code = (err as { code?: string })?.code;
+      if (code === 'RESPONSE_DUPLICATE' || code === 'HOUSING_REQUEST_RESPONSE_DUPLICATE') {
+        showToast({ title: 'Already sent', description: 'Your response is already with the owner.', variant: 'success' });
+        onResponded();
+        onOpenChange(false);
+      } else {
+        showToast({ title: 'Could not send', description: friendlyNeedNowError(err), variant: 'error' });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -615,9 +787,11 @@ function OfferListingDialog({
     <Dialog open={open} onOpenChange={(next) => !next && !submitting && onOpenChange(false)}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Offer a listing</DialogTitle>
+          <DialogTitle>{isDialogPartner ? 'Offer a listing' : 'Send a Message — I have a room'}</DialogTitle>
           <DialogDescription>
-            The seeker will see your listing and can accept or decline your offer.
+            {isDialogPartner
+              ? 'Select your listing — the owner can accept or decline.'
+              : 'Send a direct message — the owner will see it right away, no listing needed.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -626,50 +800,104 @@ function OfferListingDialog({
             <Skeleton className="h-14 rounded-xl" />
             <Skeleton className="h-14 rounded-xl" />
           </div>
-        ) : listings.length === 0 ? (
-          <EmptyState
-            icon={Building2}
-            title="No listings to offer"
-            description="You don't have any published listings yet. Publish a listing first, then come back to offer it."
-          />
+        ) : listings.length === 0 && (!roommatePosts || roommatePosts.length === 0) ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+              You don't have a published listing or roommate post yet — send a direct message instead.
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-foreground" htmlFor="offer-message-empty">
+                Message <span className="text-amber-700">(required — describe your room)</span>
+              </label>
+              <Textarea
+                id="offer-message-empty"
+                rows={4}
+                maxLength={1000}
+                placeholder="e.g. I have a room available in Ghaziabad, ₹6000/mo, furnished, available from tomorrow..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="rounded-xl resize-none text-sm"
+                autoFocus
+              />
+            </div>
+          </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-2" role="radiogroup" aria-label="Choose a listing">
-              {listings.map((listing) => {
-                const selected = selectedListingId === listing.id;
-                return (
-                  <button
-                    key={listing.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => setSelectedListingId(listing.id)}
-                    className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
-                      selected ? 'border-primary/60 bg-primary/5' : 'border-border/60 bg-card hover:border-border'
-                    }`}
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-foreground">{listing.title}</span>
-                      <span className="block text-xs text-muted-foreground">
-                        {new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(listing.monthlyRentPaise / 100)} ₹/mo
-                      </span>
-                    </span>
-                    <span
-                      className={`flex size-4 shrink-0 items-center justify-center rounded-full border ${
-                        selected ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+            {/* Listings section */}
+            {listings && listings.length > 0 && (
+              <div className="space-y-2" role="radiogroup" aria-label="Choose a listing">
+                <p className="text-xs font-medium text-muted-foreground">Your listings</p>
+                {listings.map((listing) => {
+                  const selected = selectedListingId === listing.id && !selectedPostId;
+                  return (
+                    <button
+                      key={listing.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => { setSelectedListingId(listing.id); setSelectedPostId(''); }}
+                      className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                        selected ? 'border-primary/60 bg-primary/5' : 'border-border/60 bg-card hover:border-border'
                       }`}
-                      aria-hidden
                     >
-                      {selected && <span className="size-1.5 rounded-full bg-primary-foreground" />}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-foreground">{listing.title}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(listing.monthlyRentPaise / 100)} ₹/mo
+                        </span>
+                      </span>
+                      <span
+                        className={`flex size-4 shrink-0 items-center justify-center rounded-full border ${
+                          selected ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                        }`}
+                        aria-hidden
+                      >
+                        {selected && <span className="size-1.5 rounded-full bg-primary-foreground" />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Roommate posts section */}
+            {roommatePosts && roommatePosts.length > 0 && (
+              <div className="space-y-2" role="radiogroup" aria-label="Choose a roommate post">
+                <p className="text-xs font-medium text-muted-foreground">Your roommate posts</p>
+                {roommatePosts.map((post) => {
+                  const selected = selectedPostId === post.id;
+                  return (
+                    <button
+                      key={post.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => { setSelectedPostId(post.id); setSelectedListingId(""); }}
+                      className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors ${
+                        selected ? 'border-primary/60 bg-primary/5' : 'border-border/60 bg-card hover:border-border'
+                      }`}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-foreground">{post.title}</span>
+                        <span className="block text-xs text-muted-foreground">{post.postType}</span>
+                      </span>
+                      <span
+                        className={`flex size-4 shrink-0 items-center justify-center rounded-full border ${
+                          selected ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                        }`}
+                        aria-hidden
+                      >
+                        {selected && <span className="size-1.5 rounded-full bg-primary-foreground" />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-foreground" htmlFor="offer-message">
-                Message <span className="text-muted-foreground">(optional)</span>
+                Message <span className="text-muted-foreground">(optional — extra detail)</span>
               </label>
               <Textarea
                 id="offer-message"
@@ -688,9 +916,103 @@ function OfferListingDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting} className="rounded-xl">
             Cancel
           </Button>
-          <Button onClick={() => void handleSubmit()} disabled={submitting || !selectedListingId} className="rounded-xl gap-2">
+          <Button onClick={() => void handleSubmit()} disabled={isOfferSubmitDisabled} className="rounded-xl gap-2">
             {submitting && <Loader2 className="size-4 animate-spin" />}
-            {submitting ? 'Offering…' : 'Offer listing'}
+            {submitting ? 'Offering…' : (selectedPostId ? 'Offer post' : isMessageOnlyForFooter ? 'Send Message' : 'Offer listing')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Message dialog (student direct message) ─────────────────────────────────
+
+function MessageDialog({
+  open,
+  onOpenChange,
+  requestId,
+  onResponded,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  requestId: string;
+  onResponded: () => void;
+}) {
+  const router = useRouter();
+  const [message, setMessage] = React.useState('');
+  const [submitting, setSubmitting] = React.useState(false);
+
+  React.useEffect(() => {
+    if (open) setMessage('');
+  }, [open]);
+
+  const handleSubmit = async () => {
+    if (!message.trim()) {
+      showToast({ title: 'Add a message', description: 'Describe your room — e.g. location, rent, availability.', variant: 'error' });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await createResponse(requestId, {
+        responseType: 'OFFER_LISTING',
+        message: message.trim(),
+      });
+      // Chat-first UX: land in the thread immediately — the message is the
+      // seed, so it feels like the conversation already started.
+      if (res.conversationId) {
+        router.push(`/messages/${res.conversationId}`);
+        onOpenChange(false);
+        return;
+      }
+      showToast({ title: 'Message sent', description: 'The owner will see it right away.', variant: 'success' });
+      onResponded();
+      onOpenChange(false);
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      if (code === 'RESPONSE_DUPLICATE' || code === 'HOUSING_REQUEST_RESPONSE_DUPLICATE') {
+        showToast({ title: 'Already sent', description: 'Your message is already with the owner.', variant: 'success' });
+        onResponded();
+        onOpenChange(false);
+      } else {
+        showToast({ title: 'Could not send', description: friendlyNeedNowError(err), variant: 'error' });
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && !submitting && onOpenChange(false)}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Send a Message</DialogTitle>
+          <DialogDescription>
+            Send a direct message — the owner will see it right away, no listing needed.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-foreground" htmlFor="direct-message">
+            Message <span className="text-amber-700">(required — describe your room)</span>
+          </label>
+          <Textarea
+            id="direct-message"
+            rows={4}
+            maxLength={1000}
+            placeholder="e.g. I have a room available in Ghaziabad, ₹6000/mo, furnished, available from tomorrow..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="rounded-xl resize-none text-sm"
+            autoFocus
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting} className="rounded-xl">
+            Cancel
+          </Button>
+          <Button onClick={() => void handleSubmit()} disabled={submitting || !message.trim()} className="rounded-xl gap-2">
+            {submitting && <Loader2 className="size-4 animate-spin" />}
+            {submitting ? 'Sending…' : 'Send Message'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -714,6 +1036,9 @@ function JoinSearchDialog({
 }) {
   const [message, setMessage] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
+  // Role check inside dialog — only partners can offer listings
+  const { can: canCheck } = useAuth();
+  const isDialogPartner = canCheck('listing.manage_own') || canCheck('property.manage_own');
 
   React.useEffect(() => {
     if (open) {

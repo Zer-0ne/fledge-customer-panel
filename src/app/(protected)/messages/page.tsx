@@ -3,10 +3,26 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { fetchConversations, enrichConversations } from '@/lib/api/services/chat';
-import { ConversationUpdatedState } from '@/lib/api/services/chat-socket';
-import { Conversation } from '@/types';
+import { ConversationUpdatedState, ConversationCreatedState } from '@/lib/api/services/chat-socket';
+import {
+  fetchMessageRequests,
+  fetchMessageRequest,
+  acceptMessageRequest,
+  declineMessageRequest,
+  type MessageRequestItem,
+} from '@/lib/api/services/chat';
+import {
+  receivedResponses,
+  sentResponses,
+  getRequest,
+  acceptResponse,
+  declineResponse,
+  friendlyNeedNowError,
+} from '@/lib/api/services/neednow';
+import { Conversation, NeedNowResponse } from '@/types';
 import { formatDate } from '@/lib/formatting';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +37,7 @@ import {
   Search,
   Building2,
   Users,
+  UserPlus,
   ChevronRight,
   User,
   Shield,
@@ -28,13 +45,24 @@ import {
 
 export default function MessagesPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [conversations, setConversations] = React.useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [activeTab, setActiveTab] = React.useState<'all' | 'listing_interest' | 'roommate_interest'>('all');
+  const [activeTab, setActiveTab] = React.useState<'all' | 'listing_interest' | 'roommate_interest' | 'requests'>('all');
+  // Insta-style requests: unknown senders land here, never the inbox.
+  const [needNowRequests, setNeedNowRequests] = React.useState<NeedNowResponse[]>([]);
+  const [messageRequests, setMessageRequests] = React.useState<MessageRequestItem[]>([]);
+  const [requestsLoading, setRequestsLoading] = React.useState(false);
+  const [requestsError, setRequestsError] = React.useState<string | null>(null);
+  const [busyRequestId, setBusyRequestId] = React.useState<string | null>(null);
 
   const userId = user?.id;
+  // Need Now threads: responseId (= housing contextId) → actual peer + location.
+  // enrichConversations listing/roommate interests ko resolve karta hai, housing
+  // ko nahi — isliye list me "Chat Participant"/"Roommate" generic dikhta tha.
+  const [housingMeta, setHousingMeta] = React.useState<Map<string, { peerId?: string; peerName?: string; location?: string; accepted?: boolean }>>(new Map());
   const loadConversations = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -42,6 +70,60 @@ export default function MessagesPage() {
       const data = await fetchConversations();
       const enriched = userId ? await enrichConversations(data, userId) : data;
       setConversations(enriched);
+      // Housing meta best-effort: owner view me responder, responder view me
+      // request owner (getRequest) — taaki same user ke alag threads bhi
+      // actual naam + Need Now context ke saath dikhein.
+      try {
+        const [recAll, sentAll] = await Promise.all([receivedResponses(), sentResponses()]);
+        const meta = new Map<string, { peerId?: string; peerName?: string; location?: string; accepted?: boolean }>();
+        const locOf = (r: unknown): string => {
+          const req = (r as { request?: unknown })?.request as Record<string, unknown> | undefined;
+          if (!req) return '';
+          const loc = req.location as { name?: unknown } | undefined;
+          if (loc && typeof loc.name === 'string') return loc.name;
+          return typeof req.primaryLocationName === 'string' ? req.primaryLocationName : '';
+        };
+        for (const r of recAll as unknown[]) {
+          const rec = r as { id?: string; status?: string; responder?: { id?: string; displayName?: string } };
+          if (!rec?.id) continue;
+          meta.set(rec.id, {
+            peerId: rec.responder?.id,
+            peerName: rec.responder?.displayName,
+            location: locOf(r),
+            accepted: rec.status === 'ACCEPTED',
+          });
+        }
+        const sentList = sentAll as unknown[];
+        const needOwner = sentList.filter((s) => {
+          const rec = s as { id?: string; housingRequestId?: string };
+          return rec?.id && rec?.housingRequestId && !meta.has(rec.id);
+        });
+        const owners = await Promise.allSettled(
+          needOwner.map(async (s) => {
+            const rec = s as { id: string; status?: string; housingRequestId: string };
+            const req = await getRequest(rec.housingRequestId);
+            return { id: rec.id, accepted: rec.status === 'ACCEPTED', owner: req.owner, location: req.location?.name || locOf(s) };
+          })
+        );
+        for (const o of owners) {
+          if (o.status !== 'fulfilled') continue;
+          meta.set(o.value.id, {
+            peerId: o.value.owner?.id,
+            peerName: o.value.owner?.displayName,
+            location: o.value.location,
+            accepted: o.value.accepted,
+          });
+        }
+        // Pending sent jinka request fetch fail ho (expired/removed) — location fallback.
+        for (const s of sentList) {
+          const rec = s as { id?: string; status?: string };
+          if (!rec?.id || meta.has(rec.id)) continue;
+          meta.set(rec.id, { location: locOf(s), accepted: rec.status === 'ACCEPTED' });
+        }
+        setHousingMeta(meta);
+      } catch {
+        // Meta na mile to list generic fallback par chalegi — thread nahi tootega.
+      }
       // Note: the header/nav unread message badge is driven exclusively by the
       // socket-pushed `user:unread_counts` event via AuthProvider. Do not overwrite
       // it here with a locally-derived sum, or it will race with the server's count.
@@ -57,6 +139,127 @@ export default function MessagesPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadConversations();
   }, [loadConversations]);
+
+  const loadRequests = React.useCallback(async () => {
+    setRequestsLoading(true);
+    setRequestsError(null);
+    try {
+      const [received, msgReqs] = await Promise.all([
+        receivedResponses(),
+        fetchMessageRequests(),
+      ]);
+      setNeedNowRequests(received.filter((r) => r.status === 'PENDING'));
+      // Pending message requests, newest first, with bodies for preview.
+      const pending = msgReqs
+        .filter((m) => m.status === 'pending')
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      const withBodies = await Promise.all(
+        pending.map(async (m) => {
+          if (m.body) return m;
+          try {
+            return await fetchMessageRequest(m.id);
+          } catch {
+            return m;
+          }
+        })
+      );
+      setMessageRequests(withBodies);
+    } catch (err: unknown) {
+      setRequestsError(err instanceof Error ? err.message : 'Failed to load requests.');
+    } finally {
+      setRequestsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadRequests();
+  }, [loadRequests]);
+
+  const handleAcceptNeedNow = React.useCallback(async (id: string) => {
+    setBusyRequestId(id);
+    try {
+      const updated = await acceptResponse(id);
+      if (updated.conversationId) {
+        router.push(`/messages/${updated.conversationId}`);
+        return;
+      }
+      await loadRequests();
+      await loadConversations();
+    } catch (err: unknown) {
+      setRequestsError(friendlyNeedNowError(err));
+    } finally {
+      setBusyRequestId(null);
+    }
+  }, [router, loadRequests, loadConversations]);
+
+  const handleDeclineNeedNow = React.useCallback(async (id: string) => {
+    setBusyRequestId(id);
+    try {
+      await declineResponse(id);
+      await loadRequests();
+    } catch (err: unknown) {
+      setRequestsError(friendlyNeedNowError(err));
+    } finally {
+      setBusyRequestId(null);
+    }
+  }, [loadRequests]);
+
+  const handleAcceptMessageRequest = React.useCallback(async (id: string) => {
+    setBusyRequestId(id);
+    try {
+      const updated = await acceptMessageRequest(id);
+      if (updated.conversationId) {
+        router.push(`/messages/${updated.conversationId}`);
+        return;
+      }
+      await loadRequests();
+      await loadConversations();
+    } catch (err: unknown) {
+      setRequestsError(err instanceof Error ? err.message : 'Could not accept the request.');
+    } finally {
+      setBusyRequestId(null);
+    }
+  }, [router, loadRequests, loadConversations]);
+
+  const handleDeclineMessageRequest = React.useCallback(async (id: string) => {
+    setBusyRequestId(id);
+    try {
+      await declineMessageRequest(id);
+      await loadRequests();
+    } catch (err: unknown) {
+      setRequestsError(err instanceof Error ? err.message : 'Could not decline the request.');
+    } finally {
+      setBusyRequestId(null);
+    }
+  }, [loadRequests]);
+
+  // Jisse pehle se hi chat ho rha hai, woh request me nahi jana chahiye:
+  // established threads (listing/roommate/message-request, ya ACCEPTED Need Now)
+  // wale peers ke Need Now PENDING Requests tab me nahi dikhenge — unka thread
+  // inbox me already hai aur accept/decline banner wahin milta hai.
+  const establishedPeerIds = React.useMemo(() => {
+    const set = new Set<string>();
+    for (const conv of conversations) {
+      if (conv.contextType !== 'housing_request_response') {
+        for (const p of conv.participants) {
+          if (p.id && p.id !== userId && !p.id.startsWith('listing-') && !p.id.startsWith('roommate-')) {
+            set.add(p.id);
+          }
+        }
+      }
+    }
+    for (const [, m] of housingMeta) {
+      if (m.accepted && m.peerId) set.add(m.peerId);
+    }
+    return set;
+  }, [conversations, housingMeta, userId]);
+
+  const visibleNeedNowRequests = React.useMemo(
+    () => needNowRequests.filter((r) => !establishedPeerIds.has(r.responder.id)),
+    [needNowRequests, establishedPeerIds]
+  );
+  const visibleRequestsCount = visibleNeedNowRequests.length + messageRequests.length;
 
   // Listen for realtime conversation updates over socket
   React.useEffect(() => {
@@ -96,6 +299,20 @@ export default function MessagesPage() {
     };
   }, [loadConversations]);
 
+  // A newly opened chat (request accepted anywhere) lands in the inbox live.
+  React.useEffect(() => {
+    const handleConversationCreated = (evt: Event) => {
+      const customEvt = evt as CustomEvent<ConversationCreatedState>;
+      if (!customEvt.detail?.conversationId) return;
+      void loadConversations();
+      void loadRequests();
+    };
+    window.addEventListener('app:conversation_created', handleConversationCreated);
+    return () => {
+      window.removeEventListener('app:conversation_created', handleConversationCreated);
+    };
+  }, [loadConversations, loadRequests]);
+
   // Filter conversations & sort by newest message
   const filteredConversations = React.useMemo(() => {
     const list = conversations.filter((conv) => {
@@ -107,15 +324,18 @@ export default function MessagesPage() {
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
         const peer = conv.participants.find((p) => p.id !== user?.id) || conv.participants[0];
-        const peerName = peer?.displayName?.toLowerCase() || '';
+        const housing = conv.contextType === 'housing_request_response' ? housingMeta.get(conv.contextId) : undefined;
+        const peerName = housing?.peerName || peer?.displayName?.toLowerCase() || '';
         const lastMsg = conv.lastMessage?.content?.toLowerCase() || '';
         const listTitle = conv.listingTitle?.toLowerCase() || conv.listing?.title?.toLowerCase() || '';
         const rmTitle = conv.roommatePostTitle?.toLowerCase() || conv.roommatePost?.title?.toLowerCase() || '';
+        const housingTitle = housing?.location?.toLowerCase() || '';
         return (
           peerName.includes(query) ||
           lastMsg.includes(query) ||
           listTitle.includes(query) ||
-          rmTitle.includes(query)
+          rmTitle.includes(query) ||
+          housingTitle.includes(query)
         );
       }
       return true;
@@ -126,7 +346,7 @@ export default function MessagesPage() {
       const timeB = new Date(b.lastMessage?.createdAt || b.updatedAt || b.createdAt).getTime();
       return timeB - timeA;
     });
-  }, [conversations, activeTab, searchQuery, user?.id]);
+  }, [conversations, activeTab, searchQuery, user?.id, housingMeta]);
 
   const totalUnread = React.useMemo(() => {
     return conversations.reduce((acc, curr) => acc + (curr.unreadCount || 0), 0);
@@ -231,8 +451,41 @@ export default function MessagesPage() {
           <Users className="size-4" />
           Roommates
         </button>
+
+        <button
+          onClick={() => setActiveTab('requests')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'requests'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+          }`}
+        >
+          <UserPlus className="size-4" />
+          Requests
+          {visibleRequestsCount > 0 && (
+            <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-[11px] font-semibold text-white">
+              {visibleRequestsCount}
+            </span>
+          )}
+        </button>
       </div>
 
+      {/* Requests (insta-style) / Conversation List */}
+      {activeTab === 'requests' ? (
+        <RequestsPanel
+          needNowRequests={visibleNeedNowRequests}
+          messageRequests={messageRequests}
+          loading={requestsLoading}
+          error={requestsError}
+          busyId={busyRequestId}
+          onRetry={loadRequests}
+          onAcceptNeedNow={handleAcceptNeedNow}
+          onDeclineNeedNow={handleDeclineNeedNow}
+          onAcceptMessageRequest={handleAcceptMessageRequest}
+          onDeclineMessageRequest={handleDeclineMessageRequest}
+        />
+      ) : (
+      <>
       {/* Conversation List */}
       {filteredConversations.length === 0 ? (
         <EmptyState
@@ -274,26 +527,40 @@ export default function MessagesPage() {
                 (p) => p.id !== user?.id && !p.id.startsWith('listing-') && !p.id.startsWith('roommate-')
               ) || conv.participants.find((p) => p.id !== user?.id) || conv.participants[0];
 
-            const contextTitle =
-              conv.contextType === 'listing_interest'
+            const isHousing = conv.contextType === 'housing_request_response';
+            const housing = isHousing ? housingMeta.get(conv.contextId) : undefined;
+
+            const contextTitle = isHousing
+              ? housing?.location || 'Need Now requirement'
+              : conv.contextType === 'listing_interest'
                 ? conv.listingTitle || conv.listing?.title
                 : conv.roommatePostTitle || conv.roommatePost?.title;
 
             const peerName =
-              peer?.displayName && peer.displayName !== 'User'
-                ? peer.displayName
-                : contextTitle || peer?.displayName || 'User';
+              housing?.peerName && housing.peerName !== 'User'
+                ? housing.peerName
+                : peer?.displayName && peer.displayName !== 'User'
+                  ? peer.displayName
+                  : isHousing
+                    ? 'Need Now chat'
+                    : contextTitle || peer?.displayName || 'User';
 
             const peerAvatar = peer?.avatarUrl;
 
-            const listingLabel =
-              conv.contextType === 'listing_interest'
+            const trustUserId =
+              peer?.id && !peer.id.startsWith('listing-') && !peer.id.startsWith('roommate-')
+                ? peer.id
+                : housing?.peerId;
+
+            const listingLabel = isHousing
+              ? 'Need Now'
+              : conv.contextType === 'listing_interest'
                 ? contextTitle
                   ? `Listing: ${contextTitle}`
                   : 'Listing'
                 : contextTitle
-                ? `Roommate: ${contextTitle}`
-                : 'Roommate';
+                  ? `Roommate: ${contextTitle}`
+                  : 'Roommate';
 
             const isLastFromMe = conv.lastMessage?.senderId === user?.id;
             const effectiveUnread = conv.unreadCount || 0;
@@ -344,15 +611,18 @@ export default function MessagesPage() {
                       }`}>
                         {peerName}
                       </h3>
-                      {peer?.id && !peer.id.startsWith('listing-') ? (
-                        <TrustBadge userId={peer.id} size={15} />
+                      {trustUserId ? (
+                        <TrustBadge userId={trustUserId} size={15} />
                       ) : null}
                       <Badge
                         variant="outline"
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        title={listingLabel}
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium max-w-[150px] truncate ${
                           conv.contextType === 'listing_interest'
                             ? 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                            : 'border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                            : isHousing
+                              ? 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                              : 'border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400'
                         }`}
                       >
                         {listingLabel}
@@ -399,6 +669,7 @@ export default function MessagesPage() {
           })}
         </div>
       )}
+      </>)}
 
       {/* Safety Notice Footer */}
       <div className="p-4 rounded-xl border border-border bg-card/50 flex items-start gap-3 text-xs text-muted-foreground">
@@ -409,5 +680,188 @@ export default function MessagesPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+// ─── Requests panel (insta-style) ───────────────────────────────────────────
+// Unknown senders land here. Accept opens the chat, decline removes the
+// request. The sender never sees read receipts while pending.
+
+function RequestsPanel({
+  needNowRequests,
+  messageRequests,
+  loading,
+  error,
+  busyId,
+  onRetry,
+  onAcceptNeedNow,
+  onDeclineNeedNow,
+  onAcceptMessageRequest,
+  onDeclineMessageRequest,
+}: {
+  needNowRequests: NeedNowResponse[];
+  messageRequests: MessageRequestItem[];
+  loading: boolean;
+  error: string | null;
+  busyId: string | null;
+  onRetry: () => void;
+  onAcceptNeedNow: (id: string) => void;
+  onDeclineNeedNow: (id: string) => void;
+  onAcceptMessageRequest: (id: string) => void;
+  onDeclineMessageRequest: (id: string) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-24 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        title="Unable to Load Requests"
+        description={error}
+        onRetry={onRetry}
+      />
+    );
+  }
+
+  if (needNowRequests.length === 0 && messageRequests.length === 0) {
+    return (
+      <EmptyState
+        icon={UserPlus}
+        title="No message requests"
+        description="When someone new messages you, it will appear here first. Nothing is marked seen until you accept."
+      />
+    );
+  }
+
+  const responseKindLabel = (r: NeedNowResponse): string => {
+    if (r.listing) return `Offered: ${r.listing.title}`;
+    if (r.roommatePost) return `Shared post: ${r.roommatePost.title}`;
+    return 'Sent you a message';
+  };
+
+  const msgRequestSubtitle = (m: MessageRequestItem): string => {
+    if (m.body) return m.body;
+    if (m.listingTitle) return `Offered: ${m.listingTitle}`;
+    if (m.roommatePostTitle) return `Shared post: ${m.roommatePostTitle}`;
+    return 'Sent you a message request';
+  };
+
+  return (
+    <div className="space-y-6">
+      {needNowRequests.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Need Now responses ({needNowRequests.length})
+          </h2>
+          {needNowRequests.map((r) => {
+            const busy = busyId === r.id;
+            return (
+              <div
+                key={r.id}
+                className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-xs"
+              >
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold text-foreground truncate">
+                      {r.responder.displayName}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                      {responseKindLabel(r)}
+                    </Badge>
+                  </div>
+                  {r.message ? (
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                      {r.message}
+                    </p>
+                  ) : null}
+                  <p className="text-[11px] text-muted-foreground">
+                    {formatDate(r.createdAt)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => onDeclineNeedNow(r.id)}
+                    variant="outline"
+                    className="rounded-xl"
+                  >
+                    Decline
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => onAcceptNeedNow(r.id)}
+                    className="rounded-xl"
+                  >
+                    Accept
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {messageRequests.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Direct messages ({messageRequests.length})
+          </h2>
+          {messageRequests.map((m) => {
+            const busy = busyId === m.id;
+            return (
+              <div
+                key={m.id}
+                className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-xs"
+              >
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold text-foreground truncate">
+                      {m.sender?.displayName || 'User'}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                      Message request
+                    </Badge>
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                    {msgRequestSubtitle(m)}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {formatDate(m.createdAt)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => onDeclineMessageRequest(m.id)}
+                    variant="outline"
+                    className="rounded-xl"
+                  >
+                    Decline
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => onAcceptMessageRequest(m.id)}
+                    className="rounded-xl"
+                  >
+                    Accept
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
+    </div>
   );
 }

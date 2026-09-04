@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { showToast } from '@/components/ui/toast';
 import { ArrowLeft, Loader2, Phone, ShieldCheck } from 'lucide-react';
+import VerificationExplainer from '../verification-explainer';
 import { initializeApp, getApps } from 'firebase/app';
 import {
   getAuth,
@@ -319,6 +320,8 @@ export default function PhoneVerifyPage() {
             </p>
           </div>
         </div>
+
+        <VerificationExplainer />
       </div>
     </div>
   );

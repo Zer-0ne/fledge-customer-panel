@@ -7,6 +7,7 @@ import type {
 } from './chat-socket';
 import {
   parseChatMessage,
+  parseConversationCreated,
   parseDeliveredState,
   parseReadState,
   parseUnreadCounts,
@@ -213,6 +214,11 @@ export class WsConversationSocket {
         case 'conversation:updated':
           this.handlers.onConversationUpdated?.(parseConversationUpdated(payload));
           break;
+        case 'conversation:created': {
+          const created = parseConversationCreated(payload);
+          if (created.conversationId) this.handlers.onConversationCreated?.(created);
+          break;
+        }
         case 'notification:created':
           this.handlers.onNotificationCreated?.(parseNotificationCreated(payload));
           break;

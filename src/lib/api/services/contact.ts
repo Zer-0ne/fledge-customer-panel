@@ -119,7 +119,7 @@ export async function approveContactShareRequest(requestId: string, phoneNumber?
   const res = await apiFetch<ContactAccessGrantSummary>({
     path: `/api/v1/contact-share-requests/${requestId}/approve`,
     method: 'POST',
-    body: phoneNumber ? { phoneNumber } : {},
+    ...(phoneNumber ? { body: { phoneNumber } } : {}),
   });
   return res;
 }

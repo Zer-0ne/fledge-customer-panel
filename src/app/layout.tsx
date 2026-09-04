@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Owl Sight',
+    title: 'Fledge',
   },
   icons: {
     icon: [{ url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' }],

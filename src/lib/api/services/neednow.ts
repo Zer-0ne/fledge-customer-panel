@@ -130,6 +130,7 @@ const NEED_NOW_ERROR_MESSAGES: Record<string, string> = {
   RATE_LIMITED: 'Too many attempts — please try again later.',
   HOUSING_REQUEST_RATE_LIMITED: 'Too many attempts — please try again later.',
   RESPONSE_DUPLICATE: 'You have already responded to this requirement.',
+  HOUSING_REQUEST_RESPONSE_DUPLICATE: 'You have already responded to this requirement.',
   RESPONSE_NOT_ALLOWED: 'You cannot respond to this requirement.',
   LISTING_INVALID: 'This listing is not valid for an offer.',
 };
@@ -215,6 +216,17 @@ function asNullableString(value: unknown): string | null {
   return typeof value === 'string' ? value : null;
 }
 
+// Counter for unique fallback IDs (avoids React key collisions if backend omits ID)
+let _hrSeq = 0;
+let _hrrSeq = 0;
+
+function hrFallbackId(): string {
+  return `hr_${Date.now()}_${++_hrSeq}`;
+}
+function hrrFallbackId(): string {
+  return `hrr_${Date.now()}_${++_hrrSeq}`;
+}
+
 export function mapRawToNeedNowRequest(item: unknown): NeedNowRequest {
   const raw = (item || {}) as Record<string, unknown>;
   const location = (raw.location || {}) as Record<string, unknown>;
@@ -223,7 +235,7 @@ export function mapRawToNeedNowRequest(item: unknown): NeedNowRequest {
   const viewer = (raw.viewerRelationship || {}) as Record<string, unknown>;
 
   return {
-    id: asString(raw.id, `hr_${Math.random().toString(36).substring(2, 9)}`),
+    id: asString(raw.id, hrFallbackId()),
     intentType: (raw.intentType as NeedNowRequest['intentType']) || 'FLEXIBLE',
     campusId: asNullableString(raw.campusId),
     location: {
@@ -286,12 +298,16 @@ export function mapRawToNeedNowResponse(item: unknown): NeedNowResponse {
   const listing = raw.listing && typeof raw.listing === 'object'
     ? (raw.listing as Record<string, unknown>)
     : null;
+  const roommatePost = raw.roommatePost && typeof raw.roommatePost === 'object'
+    ? (raw.roommatePost as Record<string, unknown>)
+    : null;
 
   return {
-    id: asString(raw.id, `hrr_${Math.random().toString(36).substring(2, 9)}`),
+    id: asString(raw.id, hrrFallbackId()),
     housingRequestId: asString(raw.housingRequestId),
     responderId: asString(raw.responderId),
     listingId: asNullableString(raw.listingId),
+    roommatePostId: asNullableString(raw.roommatePostId),
     responseType: (raw.responseType as NeedNowResponse['responseType']) || 'JOIN_SEARCH',
     message: asNullableString(raw.message),
     status: (raw.status as NeedNowResponse['status']) || 'PENDING',
@@ -305,6 +321,7 @@ export function mapRawToNeedNowResponse(item: unknown): NeedNowResponse {
     canAccept: asBoolean(raw.canAccept),
     canDecline: asBoolean(raw.canDecline),
     canWithdraw: asBoolean(raw.canWithdraw),
+    conversationId: asNullableString(raw.conversationId),
     request: {
       id: asString(request.id),
       intentType: (request.intentType as NeedNowResponse['request']['intentType']) || 'FLEXIBLE',
@@ -333,6 +350,12 @@ export function mapRawToNeedNowResponse(item: unknown): NeedNowResponse {
           title: asString(listing.title, 'Listing'),
           rentPaise: asNumber(listing.rentPaise, 0),
           status: asString(listing.status),
+        }
+      : null,
+    roommatePost: roommatePost
+      ? {
+          id: asString(roommatePost.id),
+          title: asString(roommatePost.title, 'Roommate post'),
         }
       : null,
   };
@@ -509,16 +532,37 @@ export async function campusFeed(params: CampusFeedParams): Promise<NeedNowFeedP
 
 /**
  * Fetches the caller's own published listings for the "offer a listing"
- * selector (GET /listings?owner=me).
+ * selector. Uses the property-management flow:
+ *   1. GET /properties  → owned/managed properties
+ *   2. GET /properties/:id/listings  → published listings per property
+ * The old GET /listings?owner=me never worked (no owner filter on that endpoint).
  */
 export async function fetchMyListings(): Promise<Listing[]> {
   try {
-    const res = await apiFetch<unknown>({
-      path: '/api/v1/listings',
+    const propsRes = await apiFetch<unknown>({
+      path: '/api/v1/properties',
       method: 'GET',
-      params: { owner: 'me', limit: 50 },
     });
-    return extractItems(res).map(normalizeListingItem);
+    const properties = extractItems(propsRes);
+    const allListings: Listing[] = [];
+    for (const prop of properties) {
+      const propObj = (prop || {}) as Record<string, unknown>;
+      const propId = asString(propObj.id);
+      if (!propId) continue;
+      try {
+        const listRes = await apiFetch<unknown>({
+          path: `/api/v1/properties/${propId}/listings`,
+          method: 'GET',
+        });
+        const items = extractItems(listRes)
+          .map(normalizeListingItem)
+          .filter((l: Listing) => l.status === 'published');
+        allListings.push(...items);
+      } catch {
+        // Skip properties where listings fetch fails (manager without full access)
+      }
+    }
+    return allListings;
   } catch (error) {
     console.error('Failed to fetch my listings:', error);
     return [];
@@ -538,6 +582,7 @@ export async function createResponse(
     body: {
       responseType: params.responseType,
       listingId: params.listingId,
+      roommatePostId: params.roommatePostId,
       message: params.message,
     },
   });
@@ -555,11 +600,15 @@ export async function requestResponses(id: string): Promise<NeedNowResponse[]> {
 
 /** GET /housing-request-responses/sent — responses where I am the responder. */
 export async function sentResponses(): Promise<NeedNowResponse[]> {
-  const res = await apiFetch<unknown>({
-    path: '/api/v1/housing-request-responses/sent',
-    method: 'GET',
-  });
-  return extractItems(res).map(mapRawToNeedNowResponse);
+  const res = await apiFetch<unknown>({ path: '/api/v1/housing-request-responses/sent', method: 'GET' });
+  return Array.isArray(res) ? (res as NeedNowResponse[]) : ((res as { items?: NeedNowResponse[] }).items ?? []);
+}
+
+/// GET /housing-request-responses/:id — one response for owner or responder
+/// (powers the in-chat accept/decline banner).
+export async function fetchHousingResponse(id: string): Promise<NeedNowResponse> {
+  const res = await apiFetch<unknown>({ path: `/api/v1/housing-request-responses/${id}`, method: 'GET', cache: 'no-store' });
+  return res as NeedNowResponse;
 }
 
 /** GET /housing-request-responses/received — responses where I own the request. */

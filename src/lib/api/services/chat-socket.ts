@@ -39,6 +39,12 @@ export type RealtimeNotificationPayload = {
   createdAt: string;
 };
 
+export type ConversationCreatedState = {
+  conversationId: string;
+  housingResponseId?: string | null;
+  requestId?: string | null;
+};
+
 export type ChatSocketHandlers = {
   onMessage?: (message: ChatMessage) => void;
   onDelivered?: (state: DeliveredState & { userId: string }) => void;
@@ -55,6 +61,7 @@ export type ChatSocketHandlers = {
   }) => void;
   onUserUnreadCounts?: (counts: UnreadCountsState) => void;
   onConversationUpdated?: (event: ConversationUpdatedState) => void;
+  onConversationCreated?: (event: ConversationCreatedState) => void;
   onNotificationCreated?: (notification: RealtimeNotificationPayload) => void;
   onStatus?: (status: SocketStatus) => void;
   onError?: (message: string) => void;
@@ -235,6 +242,17 @@ export function parseConversationUpdated(payload: unknown): ConversationUpdatedS
   };
 }
 
+export function parseConversationCreated(payload: unknown): ConversationCreatedState {
+  const raw = (payload && typeof payload === 'object' ? payload : {}) as Record<string, unknown>;
+  const data = (raw.data && typeof raw.data === 'object' ? raw.data : raw) as Record<string, unknown>;
+  const asOpt = (v: unknown): string | null => (typeof v === 'string' ? v : null);
+  return {
+    conversationId: String(data.conversationId || data.conversation_id || ''),
+    housingResponseId: asOpt(data.housingResponseId ?? data.housing_response_id),
+    requestId: asOpt(data.requestId ?? data.request_id),
+  };
+}
+
 export function parseNotificationCreated(payload: unknown): RealtimeNotificationPayload {
   const raw = (payload && typeof payload === 'object' ? payload : {}) as Record<string, unknown>;
   const data = (raw.data && typeof raw.data === 'object' ? raw.data : raw) as Record<string, unknown>;
@@ -331,7 +349,13 @@ export class ConversationSocket {
         void this.join(conversationId).catch(() => undefined);
       }
     });
-    socket.on('connect_error', () => this.handlers.onStatus?.('failed'));
+    socket.on('connect_error', () => {
+      // Reconnect attempts reuse the ORIGINAL handshake token — refresh it
+      // up front so an expired JWT doesn't trap the socket in permanent
+      // rejection (worker/backend 1008) until the page reloads.
+      void this.renewAuth();
+      this.handlers.onStatus?.('failed');
+    });
     socket.on('disconnect', () =>
       this.handlers.onStatus?.(this.disposed ? 'disconnected' : 'reconnecting')
     );
@@ -378,6 +402,14 @@ export class ConversationSocket {
         this.handlers.onConversationUpdated?.(parseConversationUpdated(payload));
       } catch {
         this.handlers.onError?.('Ignored invalid conversation updated event');
+      }
+    });
+    socket.on('conversation:created', (payload: unknown) => {
+      try {
+        const created = parseConversationCreated(payload);
+        if (created.conversationId) this.handlers.onConversationCreated?.(created);
+      } catch {
+        this.handlers.onError?.('Ignored invalid conversation created event');
       }
     });
     socket.on('notification:created', (payload: unknown) => {
@@ -575,6 +607,7 @@ const sharedHandlerProxy: ChatSocketHandlers = {
   onPresence: (value) => notify('onPresence', value),
   onUserUnreadCounts: (value) => notify('onUserUnreadCounts', value),
   onConversationUpdated: (value) => notify('onConversationUpdated', value),
+  onConversationCreated: (value) => notify('onConversationCreated', value),
   onNotificationCreated: (value) => notify('onNotificationCreated', value),
   onStatus: (value) => notify('onStatus', value),
   onError: (value) => notify('onError', value),

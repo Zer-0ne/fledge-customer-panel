@@ -116,6 +116,12 @@ export function EditRequestDialog({ request, open, onOpenChange, onSaved }: Edit
       showToast({ title: 'Missing move-in date', description: 'Choose when you want to move in.', variant: 'error' });
       return;
     }
+    // Reject past dates (compare as YYYY-MM-DD strings to avoid timezone issues)
+    const today = new Date().toISOString().split('T')[0];
+    if (moveInDate < today) {
+      showToast({ title: 'Invalid move-in date', description: 'Move-in date cannot be in the past.', variant: 'error' });
+      return;
+    }
     if (!description.trim() || description.trim().length < 10) {
       showToast({ title: 'Short description', description: 'Description must be at least 10 characters.', variant: 'error' });
       return;
@@ -127,7 +133,7 @@ export function EditRequestDialog({ request, open, onOpenChange, onSaved }: Edit
         intentType,
         budgetMinPaise: Math.round(min * 100),
         budgetMaxPaise: Math.round(max * 100),
-        moveInDate,
+        moveInDate: moveInDate || null,
         stayDurationType,
         radiusMeters,
         preferredRoomTypes: roomTypes,
@@ -195,7 +201,7 @@ export function EditRequestDialog({ request, open, onOpenChange, onSaved }: Edit
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-foreground">Move-in date</label>
-              <Input type="date" value={moveInDate} onChange={(e) => setMoveInDate(e.target.value)} className="rounded-xl" />
+              <Input type="date" value={moveInDate} onChange={(e) => setMoveInDate(e.target.value)} min={new Date().toISOString().split('T')[0]} className="rounded-xl" />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-foreground">Stay duration</label>
