@@ -83,7 +83,7 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
       try {
         await googleLogin(response.credential, readGcsrfToken());
         addToast('Success', 'Log in successful!', 'success');
-        router.push(returnUrl);
+        window.location.href = returnUrl;
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : 'Google sign-in failed. Please try again.';
@@ -93,7 +93,7 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
         setGoogleBusy(false);
       }
     },
-    [googleLogin, googleBusy, returnUrl, addToast, onError, router]
+    [googleLogin, googleBusy, returnUrl, addToast, onError]
   );
 
   // Redirect-mode return: gsi/client replays the `#credential` fragment into

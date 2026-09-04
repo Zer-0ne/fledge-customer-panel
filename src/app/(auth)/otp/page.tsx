@@ -23,9 +23,9 @@ export default function OtpPage() {
 
   React.useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/dashboard');
+      window.location.href = '/dashboard';
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated]);
 
   React.useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -72,7 +72,7 @@ export default function OtpPage() {
       setIsSubmitting(true);
       await otpLogin(identifier.trim(), code.trim());
       addToast('Login Successful', 'Welcome back!', 'success');
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid or expired OTP code.';
       setErrorMsg(message);

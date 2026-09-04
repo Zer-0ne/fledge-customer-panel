@@ -2,80 +2,71 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Email/password signup — TEMPORARILY DISABLED (2026-08-10, Google-only login;
-// new Google users are auto-provisioned by the backend).
-// Restore by uncommenting: the imports below, the form state + handleSubmit,
-// and the <form>…</form> block in the JSX.
-// ─────────────────────────────────────────────────────────────────────────────
-// import { Button } from '@/components/ui/button';
-// import { Input } from '@/components/ui/input';
-// import { useToast } from '@/components/ui/toast';
-// import { User as UserIcon, Mail, Phone, Lock, Eye, EyeOff, UserPlus, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/toast';
+import { User as UserIcon, Mail, Phone, Lock, Eye, EyeOff, UserPlus, CheckCircle2 } from 'lucide-react';
 
 export default function SignupPage() {
-  const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { signup, isAuthenticated } = useAuth();
+  const { addToast } = useToast();
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
-  // ── Email/password form state (disabled) ──
-  // const [displayName, setDisplayName] = React.useState('');
-  // const [email, setEmail] = React.useState('');
-  // const [phone, setPhone] = React.useState('');
-  // const [password, setPassword] = React.useState('');
-  // const [showPassword, setShowPassword] = React.useState(false);
-  // const [isSubmitting, setIsSubmitting] = React.useState(false);
-  // const passwordLengthValid = password.length >= 8;
-  // const hasSpecialOrNum = /[0-9!@#$%^&*]/.test(password);
+  // Email/password form state
+  const [displayName, setDisplayName] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [phone, setPhone] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const passwordLengthValid = password.length >= 8;
+  const hasSpecialOrNum = /[0-9!@#$%^&*]/.test(password);
 
   React.useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/dashboard');
+      window.location.href = '/dashboard';
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated]);
 
-  // ── Email/password submit (disabled) ──
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setErrorMsg(null);
-  //
-  //   if (!displayName.trim()) {
-  //     setErrorMsg('Full name is required.');
-  //     return;
-  //   }
-  //
-  //   if (!email.trim() && !phone.trim()) {
-  //     setErrorMsg('Please provide either an email address or phone number.');
-  //     return;
-  //   }
-  //
-  //   if (password.length < 8) {
-  //     setErrorMsg('Password must be at least 8 characters long.');
-  //     return;
-  //   }
-  //
-  //   try {
-  //     setIsSubmitting(true);
-  //     await signup(
-  //       displayName.trim(),
-  //       password,
-  //       email.trim() ? email.trim() : undefined,
-  //       phone.trim() ? phone.trim() : undefined
-  //     );
-  //     addToast('Account Created', 'Welcome to Fledge!', 'success');
-  //     router.push('/dashboard');
-  //   } catch (err: unknown) {
-  //     const message = err instanceof Error ? err.message : 'Registration failed. Please check your information.';
-  //     setErrorMsg(message);
-  //     addToast('Signup Failed', message, 'error');
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+
+    if (!displayName.trim()) {
+      setErrorMsg('Full name is required.');
+      return;
+    }
+
+    if (!email.trim() && !phone.trim()) {
+      setErrorMsg('Please provide either an email address or phone number.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMsg('Password must be at least 8 characters long.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await signup(
+        displayName.trim(),
+        password,
+        email.trim() ? email.trim() : undefined,
+        phone.trim() ? phone.trim() : undefined
+      );
+      addToast('Account Created', 'Welcome to Fledge!', 'success');
+      window.location.href = '/dashboard';
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Registration failed. Please check your information.';
+      setErrorMsg(message);
+      addToast('Signup Failed', message, 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleGoogleError = React.useCallback((message: string) => {
     setErrorMsg(message);
@@ -86,7 +77,7 @@ export default function SignupPage() {
       <div className="space-y-1">
         <h2 className="text-xl font-bold tracking-tight text-foreground">Create an account</h2>
         <p className="text-xs text-muted-foreground">
-          Sign up with your Google account — it only takes a moment.
+          Sign up to get started.
         </p>
       </div>
 
@@ -98,7 +89,16 @@ export default function SignupPage() {
 
       <GoogleSignInButton returnUrl="/dashboard" onError={handleGoogleError} />
 
-      {/* ── Email/password signup form (temporarily disabled 2026-08-10 — Google-only login) ──
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-border/60" />
+        </div>
+        <div className="relative flex justify-center text-[11px] uppercase">
+          <span className="bg-background px-2 text-muted-foreground">Or sign up with email</span>
+        </div>
+      </div>
+
+      {/* Email/password signup form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="displayName" className="text-xs font-semibold text-foreground">
@@ -153,7 +153,7 @@ export default function SignupPage() {
             <Input
               id="phone"
               type="tel"
-              placeholder="+919****3210"
+              placeholder="+919876543210"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="pl-9 text-sm"
@@ -221,7 +221,6 @@ export default function SignupPage() {
           )}
         </Button>
       </form>
-      ── end of disabled email/password signup form ── */}
 
       <div className="space-y-4 pt-2 border-t border-border/60">
         <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
