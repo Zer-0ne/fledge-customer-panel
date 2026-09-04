@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { env } from '@/lib/env';
@@ -29,7 +29,6 @@ export const metadata: Metadata = {
   description:
     'Find student apartments, room rentals, and compatible roommates near top colleges and university campuses.',
   manifest: '/manifest.webmanifest',
-  themeColor: '#0c0e12',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -39,6 +38,10 @@ export const metadata: Metadata = {
     icon: [{ url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' }],
     apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#0c0e12',
 };
 
 export default function RootLayout({
