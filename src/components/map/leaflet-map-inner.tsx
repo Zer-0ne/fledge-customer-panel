@@ -209,7 +209,7 @@ export function LeafletMapInner({
   }, [flyZoom, centerLat, centerLng]);
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm ${className}`}>
+    <div className={`relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm isolate z-0 ${className}`}>
       <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
         <div className="flex items-center gap-2">
           <Compass className="size-5 text-primary" />
@@ -260,7 +260,7 @@ export function LeafletMapInner({
         </div>
       </div>
 
-      <div className={`relative w-full ${heightClass} overflow-hidden z-0`}>
+      <div className={`relative w-full ${heightClass} overflow-hidden isolate z-0`}>
         <MapContainer
           center={[centerLat, centerLng]}
           zoom={DEFAULT_ZOOM}
@@ -269,7 +269,7 @@ export function LeafletMapInner({
           scrollWheelZoom={true}
           zoomControl={false}
           attributionControl={false}
-          className="h-full w-full z-0"
+          className="h-full w-full isolate z-0"
         >
           <MapInstanceBridge onReady={handleMapReady} />
           <MapCenterController lat={centerLat} lng={centerLng} targetZoom={flyZoom} />

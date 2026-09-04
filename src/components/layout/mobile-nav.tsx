@@ -48,7 +48,7 @@ export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNav
 
   return (
     <nav
-      className="fixed right-0 bottom-0 left-0 z-40 border-t border-border/70 bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl supports-[backdrop-filter]:bg-background/70 dark:border-white/10 md:hidden"
+      className="fixed right-0 bottom-0 left-0 z-50 border-t border-border/70 bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl supports-[backdrop-filter]:bg-background/70 dark:border-white/10 md:hidden"
       aria-label="Mobile navigation"
     >
       <div className="flex h-14 items-center justify-around px-1">

@@ -325,3 +325,22 @@
     margin-right: auto;
   }
 }
+
+/* Leaflet map containment & z-index isolation (prevents bleeding over sticky header/navbar) */
+.leaflet-container {
+  isolation: isolate;
+  z-index: 0 !important;
+}
+.leaflet-pane {
+  z-index: 10 !important;
+}
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 20 !important;
+}
+.leaflet-control {
+  z-index: 20 !important;
+}
+.leaflet-popup-pane {
+  z-index: 30 !important;
+}

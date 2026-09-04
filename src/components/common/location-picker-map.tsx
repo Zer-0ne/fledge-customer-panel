@@ -276,11 +276,11 @@ export function LocationPickerMap({
   const isSynced = themeMode === 'sync';
 
   return (
-    <div className={cn('relative', className)}>
-      <div ref={mapRef} className="absolute inset-0 h-full w-full" />
+    <div className={cn('relative isolate z-0', className)}>
+      <div ref={mapRef} className="absolute inset-0 h-full w-full isolate z-0" />
 
       {showThemeToggle && (
-        <div className="absolute top-2 right-2 z-[1000] flex items-center gap-1 rounded-md border border-border bg-background/90 p-0.5 shadow-sm backdrop-blur-sm">
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 rounded-md border border-border bg-background/90 p-0.5 shadow-sm backdrop-blur-sm">
           <Button
             type="button"
             variant="ghost"
