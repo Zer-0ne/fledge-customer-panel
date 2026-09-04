@@ -90,16 +90,16 @@ export function Header({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-background/60 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/40 dark:border-white/5">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-1.5 px-3 sm:gap-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+        <Link href="/" className="flex shrink-0 items-center gap-1.5 sm:gap-2 transition-opacity hover:opacity-80">
+          <div className="flex size-7.5 sm:size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
             <Building2 className="size-4" />
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-base font-bold tracking-tight text-foreground">{appName}</span>
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <span className="text-sm sm:text-base font-bold tracking-tight text-foreground">{appName}</span>
             {isBeta && (
-              <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-primary ring-1 ring-inset ring-primary/20">
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold tracking-wide text-primary ring-1 ring-inset ring-primary/20">
                 Beta
               </span>
             )}
@@ -139,8 +139,8 @@ export function Header({
         </nav>
 
         {/* Right side actions */}
-        <div className="flex shrink-0 items-center gap-0.5">
-          <ThemeToggle className="rounded-full" />
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+          <ThemeToggle className="size-8 sm:size-9 rounded-full" />
 
           {user ? (
             <>
@@ -150,10 +150,10 @@ export function Header({
                   nativeButton={false}
                   variant="ghost"
                   size="icon"
-                  className="hidden size-9 rounded-full lg:inline-flex"
+                  className="hidden size-8 sm:size-9 rounded-full lg:inline-flex"
                   aria-label="Partner portal"
                 >
-                  <Building2 className="size-[18px] text-muted-foreground" />
+                  <Building2 className="size-4 sm:size-[18px] text-muted-foreground" />
                 </Button>
               ) : null}
 
@@ -162,12 +162,12 @@ export function Header({
                 nativeButton={false}
                 variant="ghost"
                 size="icon"
-                className="relative size-9 rounded-full"
+                className="relative size-8 sm:size-9 rounded-full"
                 aria-label="Messages"
               >
-                <MessageSquare className="size-[18px] text-muted-foreground" />
+                <MessageSquare className="size-4 sm:size-[18px] text-muted-foreground" />
                 {unreadMessagesCount > 0 && (
-                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                  <span className="absolute right-0.5 top-0.5 sm:right-1 sm:top-1 flex h-3.5 sm:h-4 min-w-3.5 sm:min-w-4 items-center justify-center rounded-full bg-primary px-0.5 sm:px-1 text-[9px] sm:text-[10px] font-bold text-primary-foreground">
                     {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
                   </span>
                 )}
@@ -178,12 +178,12 @@ export function Header({
                 nativeButton={false}
                 variant="ghost"
                 size="icon"
-                className="relative size-9 rounded-full"
+                className="relative size-8 sm:size-9 rounded-full"
                 aria-label="Notifications"
               >
-                <Bell className="size-[18px] text-muted-foreground" />
+                <Bell className="size-4 sm:size-[18px] text-muted-foreground" />
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-destructive" />
+                  <span className="absolute right-1 top-1 sm:right-1.5 sm:top-1.5 size-2 rounded-full bg-destructive" />
                 )}
               </Button>
 
@@ -192,7 +192,7 @@ export function Header({
                 nativeButton={false}
                 variant="ghost"
                 size="icon"
-                className="ml-1 hidden size-9 rounded-full sm:inline-flex"
+                className="ml-0.5 hidden size-8 sm:size-9 rounded-full sm:inline-flex"
                 aria-label="Profile"
               >
                 {user.avatarUrl ? (
@@ -200,11 +200,11 @@ export function Header({
                   <img
                     src={user.avatarUrl}
                     alt=""
-                    className="size-7 rounded-full object-cover ring-2 ring-background"
+                    className="size-6 sm:size-7 rounded-full object-cover ring-2 ring-background"
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  <span className="flex size-6 sm:size-7 items-center justify-center rounded-full bg-primary/10 text-[11px] sm:text-xs font-semibold text-primary">
                     {user.displayName.charAt(0).toUpperCase()}
                   </span>
                 )}
@@ -215,7 +215,7 @@ export function Header({
               render={<Link href="/login" />}
               nativeButton={false}
               size="sm"
-              className="rounded-full"
+              className="h-8 text-xs px-2.5 sm:h-9 sm:text-sm sm:px-3 rounded-full"
             >
               Sign in
             </Button>

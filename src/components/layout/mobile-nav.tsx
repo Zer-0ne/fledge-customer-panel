@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, Search, Users, MessageSquare, User, HeartHandshake, Timer } from 'lucide-react';
+import { Home, Search, Users, Timer, User } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 
 export interface MobileNavProps {
@@ -12,21 +12,21 @@ export interface MobileNavProps {
 }
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Home', icon: Home },
+  { href: '/', label: 'Explore', icon: Home },
   { href: '/search', label: 'Flats', icon: Search },
   { href: '/roommates', label: 'Roommates', icon: Users },
   { href: '/need-now', label: 'Need Now', icon: Timer },
-  { href: '/donate', label: 'Donate', icon: HeartHandshake },
-  { href: '/messages', label: 'Chat', icon: MessageSquare },
-  { href: '/dashboard', label: 'Profile', icon: User },
+  { href: '/dashboard', label: 'Account', icon: User },
 ] as const;
 
 export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNavProps) {
   let contextUnreadMessages = 0;
+  let contextUser = null;
 
   try {
     const auth = useAuth();
     contextUnreadMessages = auth.unreadMessageCount;
+    contextUser = auth.user;
   } catch {
     // Rendered outside AuthProvider
   }
@@ -35,14 +35,27 @@ export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNav
     propUnreadMessages !== undefined ? propUnreadMessages : contextUnreadMessages;
   const pathname = usePathname();
 
+  // Hide on active chat threads and auth pages to preserve keyboard / viewport space
+  const isAuthPage =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/otp');
+  const isChatThread = pathname.startsWith('/messages/') && pathname !== '/messages';
+
+  if (isAuthPage || isChatThread) {
+    return null;
+  }
+
   return (
-    <nav className="fixed right-0 bottom-0 left-0 z-40 border-t border-white/10 bg-background/60 pb-safe backdrop-blur-2xl dark:border-white/5 md:hidden">
+    <nav
+      className="fixed right-0 bottom-0 left-0 z-40 border-t border-border/70 bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl supports-[backdrop-filter]:bg-background/70 dark:border-white/10 md:hidden"
+      aria-label="Mobile navigation"
+    >
       <div className="flex h-14 items-center justify-around px-1">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive =
             pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-          const badge = item.href === '/messages' ? unreadMessagesCount : 0;
 
           return (
             <Link
@@ -50,24 +63,33 @@ export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNav
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'flex w-full flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-medium transition-colors',
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                'relative flex flex-1 flex-col items-center justify-center py-1 text-[10px] font-medium transition-colors',
+                isActive ? 'text-primary font-semibold' : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <span
                 className={cn(
                   'relative flex size-8 items-center justify-center rounded-xl transition-all duration-200',
-                  isActive && 'bg-primary/15 text-primary shadow-sm ring-1 ring-primary/20 backdrop-blur-md scale-105'
+                  isActive &&
+                    'bg-primary/15 text-primary shadow-xs ring-1 ring-primary/25 backdrop-blur-md scale-105'
                 )}
               >
-                <Icon className="size-[18px]" strokeWidth={isActive ? 2.2 : 1.8} />
-                {badge > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex size-3.5 items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground">
-                    {badge > 9 ? '9+' : badge}
-                  </span>
+                {item.href === '/dashboard' && contextUser?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={contextUser.avatarUrl}
+                    alt=""
+                    className={cn(
+                      'size-5 rounded-full object-cover ring-1',
+                      isActive ? 'ring-primary' : 'ring-muted'
+                    )}
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <Icon className="size-[18px]" strokeWidth={isActive ? 2.3 : 1.8} />
                 )}
               </span>
-              <span className={cn('leading-tight', isActive && 'font-semibold')}>{item.label}</span>
+              <span className="leading-tight mt-0.5 tracking-tight">{item.label}</span>
             </Link>
           );
         })}
@@ -75,3 +97,4 @@ export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNav
     </nav>
   );
 }
+

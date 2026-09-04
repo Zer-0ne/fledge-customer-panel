@@ -64,7 +64,7 @@ export default function MyNeedNowPage() {
   }, [load]);
 
   return (
-    <div className="min-h-screen bg-background py-8">
+    <div className="min-h-screen bg-background py-8 pb-20 md:pb-8">
       <div className="container mx-auto max-w-4xl px-4 sm:px-6 space-y-6">
         <Button
           variant="ghost"

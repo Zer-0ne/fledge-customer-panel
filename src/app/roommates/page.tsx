@@ -114,7 +114,7 @@ export default function RoommateDiscoveryPage() {
   }, [filteredPosts, user]);
 
   return (
-    <div className="min-h-screen bg-background py-8">
+    <div className="min-h-screen bg-background py-8 pb-20 md:pb-8">
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Banner Section */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-700 dark:from-indigo-950 dark:via-purple-950 dark:to-slate-900 p-8 text-white shadow-xl border border-white/10 dark:border-purple-500/20">

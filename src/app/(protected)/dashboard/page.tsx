@@ -179,7 +179,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 pb-20 md:pb-8">
       <AnnouncementCenter variant="dashboard" />
 
       {/* Trust Score Card */}

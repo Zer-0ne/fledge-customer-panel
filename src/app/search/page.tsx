@@ -28,8 +28,14 @@ function SearchContent() {
   const [nextCursor, setNextCursor] = React.useState<string | null>(null);
 
   // View Mode: 'grid' | 'map' | 'split'
-  const [viewMode, setViewMode] = React.useState<'grid' | 'map' | 'split'>('split');
+  const [viewMode, setViewMode] = React.useState<'grid' | 'map' | 'split'>('grid');
   const [selectedListingId, setSelectedListingId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      setViewMode('split');
+    }
+  }, []);
 
   // Interest Modal state
   const [selectedListingForInterest, setSelectedListingForInterest] = React.useState<Listing | null>(null);
@@ -135,7 +141,7 @@ function SearchContent() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 pb-20 md:pb-8">
       {/* Header & View Mode Switcher */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
