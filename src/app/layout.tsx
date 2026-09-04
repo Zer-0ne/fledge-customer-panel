@@ -10,6 +10,7 @@ import { Header } from '@/components/layout/header';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { Footer } from '@/components/layout/footer';
 import { AnalyticsInit } from '@/components/providers/analytics-init';
+import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register';
 import { PushBootstrap } from '@/components/push/push-bootstrap';
 import { getFirebaseWebConfig } from '@/lib/push/push-config';
 
@@ -27,6 +28,17 @@ export const metadata: Metadata = {
   title: `${env.NEXT_PUBLIC_APP_NAME} - Student Housing & Flat Sharing`,
   description:
     'Find student apartments, room rentals, and compatible roommates near top colleges and university campuses.',
+  manifest: '/manifest.webmanifest',
+  themeColor: '#0c0e12',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Owl Sight',
+  },
+  icons: {
+    icon: [{ url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' }],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
 };
 
 export default function RootLayout({
@@ -43,6 +55,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AnalyticsInit />
+        <ServiceWorkerRegister />
         <ThemeProvider>
           <PushBootstrap firebaseConfig={firebaseConfig} />
           <AuthProvider>
