@@ -21,6 +21,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 
 export interface HeaderProps {
   appName?: string;
+  isBeta?: boolean;
   user?: { displayName: string; avatarUrl?: string | null } | null;
   unreadNotificationsCount?: number;
   unreadMessagesCount?: number;
@@ -40,10 +41,20 @@ function isNavActive(pathname: string, href: string) {
 
 export function Header({
   appName = 'Fledge',
+  isBeta: propIsBeta,
   user: propUser,
   unreadNotificationsCount: propUnreadNotifications,
   unreadMessagesCount: propUnreadMessages,
 }: HeaderProps) {
+  const isBeta =
+    propIsBeta !== undefined
+      ? propIsBeta
+      : (process.env.NEXT_PUBLIC_IS_BETA ??
+         process.env.NEXT_PUBLIC_SHOW_BETA_TAG ??
+         'true') !== 'false' &&
+        (process.env.NEXT_PUBLIC_IS_BETA ??
+         process.env.NEXT_PUBLIC_SHOW_BETA_TAG ??
+         'true') !== '0';
   let contextUser = null;
   let contextUserPermissions: string[] = [];
   let contextUnreadNotifications = 0;
@@ -85,7 +96,14 @@ export function Header({
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <Building2 className="size-4" />
           </div>
-          <span className="text-base font-bold tracking-tight text-foreground">{appName}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-base font-bold tracking-tight text-foreground">{appName}</span>
+            {isBeta && (
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-primary ring-1 ring-inset ring-primary/20">
+                Beta
+              </span>
+            )}
+          </div>
         </Link>
 
         {/* Desktop nav — pill bar */}
@@ -193,25 +211,14 @@ export function Header({
               </Button>
             </>
           ) : (
-            <>
-              <Button
-                render={<Link href="/login" />}
-                nativeButton={false}
-                variant="ghost"
-                size="sm"
-                className="hidden rounded-full sm:inline-flex"
-              >
-                Log in
-              </Button>
-              <Button
-                render={<Link href="/signup" />}
-                nativeButton={false}
-                size="sm"
-                className="rounded-full"
-              >
-                Sign up
-              </Button>
-            </>
+            <Button
+              render={<Link href="/login" />}
+              nativeButton={false}
+              size="sm"
+              className="rounded-full"
+            >
+              Sign in
+            </Button>
           )}
         </div>
       </div>

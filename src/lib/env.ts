@@ -7,6 +7,7 @@ export interface EnvConfig {
   NEXT_PUBLIC_APP_NAME: string;
   NEXT_PUBLIC_API_BASE_URL: string;
   NEXT_PUBLIC_SOCKET_URL: string;
+  NEXT_PUBLIC_IS_BETA: boolean;
   IS_PRODUCTION: boolean;
   IS_DEVELOPMENT: boolean;
 }
@@ -26,6 +27,17 @@ export function validateEnv(): EnvConfig {
   const NEXT_PUBLIC_SOCKET_URL =
     process.env.NEXT_PUBLIC_SOCKET_URL || BACKEND_API_BASE_URL;
 
+  const rawIsBeta =
+    process.env.NEXT_PUBLIC_IS_BETA ??
+    process.env.NEXT_PUBLIC_SHOW_BETA_TAG ??
+    process.env.NEXT_PUBLIC_BETA ??
+    'true';
+
+  const NEXT_PUBLIC_IS_BETA =
+    rawIsBeta === 'true' ||
+    rawIsBeta === '1' ||
+    rawIsBeta === 'yes';
+
   const nodeEnv = process.env.NODE_ENV || 'development';
 
   return {
@@ -33,6 +45,7 @@ export function validateEnv(): EnvConfig {
     NEXT_PUBLIC_APP_NAME,
     NEXT_PUBLIC_API_BASE_URL,
     NEXT_PUBLIC_SOCKET_URL,
+    NEXT_PUBLIC_IS_BETA,
     IS_PRODUCTION: nodeEnv === 'production',
     IS_DEVELOPMENT: nodeEnv === 'development',
   };

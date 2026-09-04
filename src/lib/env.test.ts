@@ -23,6 +23,7 @@ describe('validateEnv', () => {
     expect(config.NEXT_PUBLIC_APP_NAME).toBe('Fledge');
     expect(config.NEXT_PUBLIC_API_BASE_URL).toBe('/api/proxy');
     expect(config.NEXT_PUBLIC_SOCKET_URL).toBe('http://localhost:3000');
+    expect(config.NEXT_PUBLIC_IS_BETA).toBe(true);
   });
 
   it('uses environment variables when provided', () => {
@@ -30,6 +31,7 @@ describe('validateEnv', () => {
     process.env.NEXT_PUBLIC_APP_NAME = 'Custom Student Housing';
     process.env.NEXT_PUBLIC_API_BASE_URL = '/custom-api';
     process.env.NEXT_PUBLIC_SOCKET_URL = 'https://api.flatfinder.com';
+    process.env.NEXT_PUBLIC_IS_BETA = 'false';
 
     const config = validateEnv();
 
@@ -37,5 +39,6 @@ describe('validateEnv', () => {
     expect(config.NEXT_PUBLIC_APP_NAME).toBe('Custom Student Housing');
     expect(config.NEXT_PUBLIC_API_BASE_URL).toBe('/custom-api');
     expect(config.NEXT_PUBLIC_SOCKET_URL).toBe('https://api.flatfinder.com');
+    expect(config.NEXT_PUBLIC_IS_BETA).toBe(false);
   });
 });

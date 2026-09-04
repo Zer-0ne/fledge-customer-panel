@@ -137,15 +137,10 @@ export default function FavoritesPage() {
         <p className="text-sm text-muted-foreground">
           Save your favorite flat listings and access them anytime across all your devices.
         </p>
-        <div className="pt-2 flex justify-center gap-3">
+        <div className="pt-2 flex justify-center">
           <Link href="/login">
             <Button size="lg" className="rounded-xl shadow-xs">
-              Log In
-            </Button>
-          </Link>
-          <Link href="/signup">
-            <Button variant="outline" size="lg" className="rounded-xl">
-              Create Account
+              Sign In
             </Button>
           </Link>
         </div>

@@ -159,15 +159,10 @@ export default function InterestsPage() {
         <p className="text-sm text-muted-foreground">
           Track your inquiries sent to flat owners and manage incoming requests for your listings.
         </p>
-        <div className="pt-2 flex justify-center gap-3">
+        <div className="pt-2 flex justify-center">
           <Link href="/login">
             <Button size="lg" className="rounded-xl shadow-xs">
-              Log In
-            </Button>
-          </Link>
-          <Link href="/signup">
-            <Button variant="outline" size="lg" className="rounded-xl">
-              Create Account
+              Sign In
             </Button>
           </Link>
         </div>

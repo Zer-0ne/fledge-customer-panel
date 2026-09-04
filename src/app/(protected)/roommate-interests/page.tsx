@@ -173,15 +173,10 @@ export default function RoommateInterestsPage() {
         <p className="text-sm text-muted-foreground">
           Manage your sent roommate connection requests and review incoming interest from students.
         </p>
-        <div className="pt-2 flex justify-center gap-3">
+        <div className="pt-2 flex justify-center">
           <Link href="/login">
             <Button size="lg" className="rounded-xl shadow-xs">
-              Log In
-            </Button>
-          </Link>
-          <Link href="/signup">
-            <Button variant="outline" size="lg" className="rounded-xl">
-              Create Account
+              Sign In
             </Button>
           </Link>
         </div>
