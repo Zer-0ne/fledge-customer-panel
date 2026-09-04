@@ -39,17 +39,17 @@ export const TRUST_TIER_INFO: Record<TrustBadgeKey, { label: string; description
   },
 };
 
-async function fetchBadgeForUser(userId: string): Promise<TrustBadgeKey | null> {
-  try {
-    const res = await fetch(`/api/proxy/api/v1/users/${userId}/public`, { cache: 'no-store' });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { trustBadge?: TrustBadgeKey | null };
-    const badge = data?.trustBadge;
-    return badge === 'bronze' || badge === 'silver' || badge === 'gold' || badge === 'diamond' ? badge : null;
-  } catch {
-    return null;
-  }
-}
+// async function fetchBadgeForUser(userId: string): Promise<TrustBadgeKey | null> {
+//   try {
+//     const res = await fetch(`/api/proxy/api/v1/users/${userId}/public`, { cache: 'no-store' });
+//     if (!res.ok) return null;
+//     const data = (await res.json()) as { trustBadge?: TrustBadgeKey | null };
+//     const badge = data?.trustBadge;
+//     return badge === 'bronze' || badge === 'silver' || badge === 'gold' || badge === 'diamond' ? badge : null;
+//   } catch {
+//     return null;
+//   }
+// }
 
 /**
  * Owl trust badge shown after a user's name, sized to the surrounding text.
@@ -58,7 +58,8 @@ async function fetchBadgeForUser(userId: string): Promise<TrustBadgeKey | null> 
  */
 export function TrustBadge({
   badge,
-  userId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  userId: _userId,
   size = 16,
   preview = true,
 }: {
@@ -67,7 +68,7 @@ export function TrustBadge({
   size?: number;
   preview?: boolean;
 }) {
-  const [fetched, setFetched] = React.useState<TrustBadgeKey | null>(null);
+  const [fetched] = React.useState<TrustBadgeKey | null>(null);
   const resolved = badge !== undefined ? badge : fetched;
   const [missing, setMissing] = React.useState(false);
   const [open, setOpen] = React.useState(false);
@@ -90,16 +91,17 @@ export function TrustBadge({
   const translateX = useSpring(useTransform(mouseX, [-80, 80], [-36, 36]), { stiffness: 180, damping: 16 });
   const translateY = useSpring(useTransform(mouseY, [-60, 60], [-14, 14]), { stiffness: 180, damping: 16 });
 
-  React.useEffect(() => {
-    if (badge !== undefined || !userId) return;
-    let live = true;
-    fetchBadgeForUser(userId).then((b) => {
-      if (live) setFetched(b);
-    });
-    return () => {
-      live = false;
-    };
-  }, [badge, userId]);
+  // Disabled badge fetching API call for now
+  // React.useEffect(() => {
+  //   if (badge !== undefined || !_userId) return;
+  //   let live = true;
+  //   fetchBadgeForUser(_userId).then((b) => {
+  //     if (live) setFetched(b);
+  //   });
+  //   return () => {
+  //     live = false;
+  //   };
+  // }, [badge, _userId]);
 
   const place = () => {
     const el = anchorRef.current;
