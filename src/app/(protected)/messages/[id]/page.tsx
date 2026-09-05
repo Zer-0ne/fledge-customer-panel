@@ -498,12 +498,12 @@ export default function ChatThreadPage() {
         await socket.connect();
         await socket.join(conversationId);
         socket.setPresence(conversationId, true);
-        // Presence heartbeat: the edge worker's ephemeral presence key lasts
-        // ~90s — without re-announcing, the peer flips back to "Offline" while
-        // this thread stays open (the Flutter app heartbeats every 60s).
+        // Presence heartbeat: re-announce every 90s so the peer never flips
+        // back to "Offline" while this thread stays open (all apps heartbeat
+        // every 90s; the server reaps only after 5 min of total silence).
         const presenceHeartbeat = window.setInterval(
           () => socketRef.current?.setPresence(conversationId, true),
-          40_000
+          90_000
         );
         presenceCleanupRef.current = () => window.clearInterval(presenceHeartbeat);
         if (lastIncoming) {
