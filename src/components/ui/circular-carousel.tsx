@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +29,20 @@ export function CircularCarousel({ items, className }: CircularCarouselProps) {
   const count = items.length;
   const [active, setActive] = React.useState(0);
   const dragX = React.useRef<number | null>(null);
+  const swiped = React.useRef(false);
+  const [paused, setPaused] = React.useState(false);
+  const [hovered, setHovered] = React.useState(false);
+
+  React.useEffect(() => {
+    if (count < 2 || paused || hovered) return;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const timer = window.setInterval(() => {
+      if (!document.hidden && !motion.matches && dragX.current === null) {
+        setActive((index) => (index + 1) % count);
+      }
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [count, paused, hovered, active]);
 
   const go = (next: number) => {
     if (count === 0) return;
@@ -47,7 +61,10 @@ export function CircularCarousel({ items, className }: CircularCarouselProps) {
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
+    if (!e.isPrimary || e.button !== 0) return;
+    swiped.current = false;
     dragX.current = e.clientX;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
@@ -55,6 +72,7 @@ export function CircularCarousel({ items, className }: CircularCarouselProps) {
     const dx = e.clientX - dragX.current;
     dragX.current = null;
     if (Math.abs(dx) < 40) return;
+    swiped.current = true;
     go(dx > 0 ? active - 1 : active + 1);
   };
 
@@ -67,13 +85,23 @@ export function CircularCarousel({ items, className }: CircularCarouselProps) {
     <div
       className={cn('flex w-full flex-col items-center gap-6', className)}
       onKeyDown={onKeyDown}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocusCapture={() => setPaused(true)}
       tabIndex={0}
       role="region"
       aria-roledescription="carousel"
       aria-label="Platform features"
     >
       <div
-        className="relative h-[280px] w-full max-w-4xl overflow-hidden [perspective:1100px] [transform-style:preserve-3d] sm:h-[300px]"
+        className="relative h-[280px] w-full max-w-4xl touch-pan-y select-none overflow-hidden [perspective:1100px] [transform-style:preserve-3d] sm:h-[300px]"
+        onClickCapture={(e) => {
+          if (swiped.current) {
+            e.preventDefault();
+            e.stopPropagation();
+            swiped.current = false;
+          }
+        }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={() => {
@@ -121,12 +149,22 @@ export function CircularCarousel({ items, className }: CircularCarouselProps) {
         })}
       </div>
 
-      <p className="tabular-nums text-muted-foreground" aria-live="polite">
+      <p className="tabular-nums text-muted-foreground" aria-live={paused ? 'polite' : 'off'}>
         <span className="text-2xl font-semibold text-foreground">{current}</span>
         <span className="ml-1.5 text-sm">of {total}</span>
       </p>
 
       <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="rounded-full"
+          aria-label={paused ? 'Play slideshow' : 'Pause slideshow'}
+          onClick={() => setPaused(!paused)}
+        >
+          {paused ? <Play /> : <Pause />}
+        </Button>
         <Button
           type="button"
           variant="ghost"
