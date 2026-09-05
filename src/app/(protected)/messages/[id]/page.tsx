@@ -498,13 +498,13 @@ export default function ChatThreadPage() {
         await socket.connect();
         await socket.join(conversationId);
         socket.setPresence(conversationId, true);
-        // Presence heartbeat: re-announce every 90s so the peer never flips
-        // back to "Offline" while this thread stays open (all apps heartbeat
-        // every 90s; the server reaps only after 5 min of total silence).
-        const presenceHeartbeat = window.setInterval(
-          () => socketRef.current?.setPresence(conversationId, true),
-          90_000
-        );
+        // Presence heartbeat: foreground-only and deliberately infrequent;
+        // the server allows two missed 4-minute heartbeats before expiry.
+        const presenceHeartbeat = window.setInterval(() => {
+          if (document.visibilityState === 'visible') {
+            socketRef.current?.setPresence(conversationId, true);
+          }
+        }, 240_000);
         presenceCleanupRef.current = () => window.clearInterval(presenceHeartbeat);
         if (lastIncoming) {
           ackPeerReceipts(conversationId, lastIncoming.id, socket);

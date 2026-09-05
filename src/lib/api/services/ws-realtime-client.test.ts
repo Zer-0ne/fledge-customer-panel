@@ -15,6 +15,7 @@ import { WsConversationSocket } from './ws-realtime-client';
 
 class FakeWebSocket {
   static readonly OPEN = 1;
+  static urls: string[] = [];
   readonly readyState = FakeWebSocket.OPEN;
   onopen: ((event: Event) => void) | null = null;
   onclose: ((event: CloseEvent) => void) | null = null;
@@ -22,7 +23,8 @@ class FakeWebSocket {
   onmessage: ((event: MessageEvent) => void) | null = null;
   readonly sent: string[] = [];
 
-  constructor() {
+  constructor(url: string | URL) {
+    FakeWebSocket.urls.push(String(url));
     queueMicrotask(() => this.onopen?.(new Event('open')));
   }
 
@@ -46,6 +48,7 @@ describe('Cloudflare edge realtime client', () => {
   beforeEach(() => {
     vi.stubEnv('NEXT_PUBLIC_SOCKET_URL', 'https://edge.test');
     vi.stubGlobal('WebSocket', FakeWebSocket);
+    FakeWebSocket.urls = [];
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ token: 'test-token' }),
@@ -77,5 +80,30 @@ describe('Cloudflare edge realtime client', () => {
 
     expect(sendMessage).toHaveBeenCalledWith('conversation-2', 'hello', 'client-2');
     expect((client as unknown as { ws: FakeWebSocket }).ws.sent.map((frame) => JSON.parse(frame).event)).toEqual(['typing']);
+  });
+
+  it('uses the server route URL and transport instead of the static client mode', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        token: 'routed-token',
+        url: 'https://routed-edge.test/realtime',
+        transport: 'cloudflare-edge',
+        routeVersion: 'hybrid-v1:3/4',
+      }),
+    }));
+    sendMessage.mockResolvedValue({ id: 'message-3' });
+    const client = new WsConversationSocket({}, false);
+
+    await client.join('conversation-3');
+    await client.send('conversation-3', 'client-3', 'hello');
+    client.setTyping('conversation-3', true);
+
+    expect(FakeWebSocket.urls).toEqual([
+      'wss://routed-edge.test/realtime?token=routed-token',
+    ]);
+    expect(sendMessage).toHaveBeenCalledWith('conversation-3', 'hello', 'client-3');
+    expect((client as unknown as { ws: FakeWebSocket }).ws.sent.map((frame) => JSON.parse(frame).event)).toEqual(['typing']);
+    client.disconnect();
   });
 });
