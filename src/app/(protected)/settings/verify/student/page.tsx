@@ -11,6 +11,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { showToast } from '@/components/ui/toast';
+import { browserApiFetch } from '@/lib/api/client';
 import {
   ArrowLeft,
   BadgeCheck,
@@ -110,7 +111,7 @@ export default function StudentVerifyPage() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch('/api/proxy/api/v1/student-verifications/mine');
+        const res = await browserApiFetch('/api/v1/student-verifications/mine');
         if (!res.ok) throw new Error('Failed');
         const data = await res.json();
         const list = Array.isArray(data) ? data : data?.data ?? [];
@@ -155,7 +156,7 @@ export default function StudentVerifyPage() {
       await confirmUploadComplete(upload.id);
 
       // 2. Submit verification — backend waits up to 12s if media is still processing (no frontend polling needed)
-      const res = await fetch('/api/proxy/api/v1/student-verifications', {
+      const res = await browserApiFetch('/api/v1/student-verifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mediaId: upload.id, method }),
@@ -173,7 +174,7 @@ export default function StudentVerifyPage() {
       showToast('Verification submitted! We\'ll review it within 24 hours.');
       handleRemoveFile();
       // Reload history
-      const historyRes = await fetch('/api/proxy/api/v1/student-verifications/mine');
+      const historyRes = await browserApiFetch('/api/v1/student-verifications/mine');
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         setVerifications(Array.isArray(historyData) ? historyData : historyData?.data ?? []);

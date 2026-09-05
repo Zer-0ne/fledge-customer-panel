@@ -46,6 +46,24 @@ export function serializeQueryParams(params?: Record<string, unknown>): string {
   return queryString ? `?${queryString}` : '';
 }
 
+export function resolveApiBaseUrl(): string {
+  return typeof window === 'undefined' ? env.BACKEND_API_BASE_URL : env.NEXT_PUBLIC_API_BASE_URL;
+}
+
+export function buildApiUrl(path: string, baseUrl: string = resolveApiBaseUrl(), params?: Record<string, unknown>): string {
+  const queryString = serializeQueryParams(params);
+  const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${cleanBaseUrl}${cleanPath}${queryString}`;
+}
+
+export async function browserApiFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  return fetch(buildApiUrl(input), {
+    ...init,
+    credentials: typeof window !== 'undefined' ? 'include' : init.credentials ?? 'omit',
+  });
+}
+
 /**
  * Low-level API fetch wrapper with timeout, header management, and error normalization.
  * Security notice: Never logs access tokens or secrets.
@@ -64,13 +82,8 @@ export async function apiFetch<T = unknown>(options: ApiFetchOptions): Promise<T
     ...fetchOptions
   } = options;
 
-  const queryString = serializeQueryParams(params);
-  const targetBaseUrl =
-    baseUrl || (typeof window === 'undefined' ? env.BACKEND_API_BASE_URL : env.NEXT_PUBLIC_API_BASE_URL);
-  
-  // Ensure path is properly formatted
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  const fullUrl = `${targetBaseUrl}${cleanPath}${queryString}`;
+  const targetBaseUrl = baseUrl || resolveApiBaseUrl();
+  const fullUrl = buildApiUrl(path, targetBaseUrl, params);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -96,7 +109,7 @@ export async function apiFetch<T = unknown>(options: ApiFetchOptions): Promise<T
       headers,
       body: body && !(body instanceof FormData) ? JSON.stringify(body) : (body as BodyInit),
       signal: controller.signal,
-      // Include cookies for same-origin proxy requests (cp_access_token session cookie)
+      // Include cookies for browser requests (same-origin proxy in dev, direct API origin in prod)
       credentials: typeof window !== 'undefined' ? 'include' : 'omit',
     });
 

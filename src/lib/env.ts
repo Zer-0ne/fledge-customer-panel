@@ -13,19 +13,27 @@ export interface EnvConfig {
 }
 
 export function validateEnv(): EnvConfig {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const isProduction = nodeEnv === 'production';
+  const defaultBackendApiBaseUrl = isProduction ? 'https://api-fledge.nearestz.com' : 'http://localhost:3000';
+
   const BACKEND_API_BASE_URL =
     process.env.BACKEND_API_BASE_URL ||
     process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL ||
-    'http://localhost:3000';
+    defaultBackendApiBaseUrl;
 
   const NEXT_PUBLIC_APP_NAME =
     process.env.NEXT_PUBLIC_APP_NAME || 'Fledge';
 
   const NEXT_PUBLIC_API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL || '/api/proxy';
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL ||
+    (isProduction ? BACKEND_API_BASE_URL : '/api/proxy');
 
   const NEXT_PUBLIC_SOCKET_URL =
-    process.env.NEXT_PUBLIC_SOCKET_URL || BACKEND_API_BASE_URL;
+    process.env.NEXT_PUBLIC_SOCKET_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_API_BASE_URL ||
+    BACKEND_API_BASE_URL;
 
   const rawIsBeta =
     process.env.NEXT_PUBLIC_IS_BETA ??
@@ -37,8 +45,6 @@ export function validateEnv(): EnvConfig {
     rawIsBeta === 'true' ||
     rawIsBeta === '1' ||
     rawIsBeta === 'yes';
-
-  const nodeEnv = process.env.NODE_ENV || 'development';
 
   return {
     BACKEND_API_BASE_URL,

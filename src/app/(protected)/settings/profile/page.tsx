@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/auth-provider';
+import { browserApiFetch } from '@/lib/api/client';
 import { fetchOwnProfile } from '@/lib/api/services/account';
 import { User } from '@/types';
 import { formatDate } from '@/lib/formatting';
@@ -54,7 +55,7 @@ export default function ProfileSettingsPage() {
 
   React.useEffect(() => {
     let cancelled = false;
-    fetch('/api/proxy/api/v1/auth/config')
+    browserApiFetch('/api/v1/auth/config')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!cancelled && d) setMethods({ phoneOtpEnabled: d.phoneOtpEnabled ?? d.otpEnabled ?? true, upiEnabled: d.upiEnabled ?? false });
@@ -62,7 +63,7 @@ export default function ProfileSettingsPage() {
       .catch(() => {});
     // Real verification status (was hardcoded false): student VERIFIED flag
     // from my verifications, UPI from the auth profile's verification method.
-    fetch('/api/proxy/api/v1/student-verifications/mine')
+    browserApiFetch('/api/v1/student-verifications/mine')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const list = Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : Array.isArray(d?.data) ? d.data : [];
@@ -75,7 +76,7 @@ export default function ProfileSettingsPage() {
         }
       })
       .catch(() => {});
-    fetch('/api/proxy/api/v1/auth/me')
+    browserApiFetch('/api/v1/auth/me')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const method = d?.user?.verificationMethod ?? d?.verificationMethod;

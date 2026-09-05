@@ -12,8 +12,8 @@ Customer-facing Next.js app of the flat-system project: student housing discover
 
 - `pnpm dev` — Next dev server. Default :3000 is often taken by the Flutter web customer port → Next auto-increments to :3001. Check `ss -tlnp` before assuming the port.
 - Backend must be up at `http://localhost:4001` (`/api/v1`); partner portal :3002, admin-panel :3001.
-- Env: copy `.env.example` → `.env.local` (`BACKEND_API_BASE_URL=http://localhost:4001`, `NEXT_PUBLIC_API_BASE_URL=/api/proxy`, `NEXT_PUBLIC_SOCKET_URL=http://localhost:4001`).
-- All API calls go through the same-origin BFF proxy (`/api/proxy/...`, no CORS). Call the FULL backend path: `/api/proxy/api/v1/colleges` — do not double-prefix (`resolveProxyBackendPath` in `src/lib/api/allowlist.ts` maps it).
+- Env: copy `.env.example` → `.env.local` (`BACKEND_API_BASE_URL=http://localhost:4001`, `NEXT_PUBLIC_BACKEND_API_BASE_URL=http://localhost:4001`, `NEXT_PUBLIC_API_BASE_URL=/api/proxy`, `NEXT_PUBLIC_SOCKET_URL=http://localhost:4001`).
+- Browser API calls use `NEXT_PUBLIC_API_BASE_URL` (local dev proxy) or the direct API origin via `NEXT_PUBLIC_BACKEND_API_BASE_URL` in production; route handlers still use `BACKEND_API_BASE_URL`.
 
 ## Build & test (exact)
 

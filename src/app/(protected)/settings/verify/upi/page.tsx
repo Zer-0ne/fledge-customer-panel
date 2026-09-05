@@ -11,6 +11,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { showToast } from '@/components/ui/toast';
+import { browserApiFetch } from '@/lib/api/client';
 import {
   ArrowLeft,
   ExternalLink,
@@ -42,7 +43,7 @@ export default function UpiVerifyPage() {
     setError(null);
     setUpiUnavailable(false);
     try {
-      const res = await fetch('/api/proxy/api/v1/verification/upi/initiate', {
+      const res = await browserApiFetch('/api/v1/verification/upi/initiate', {
         method: 'POST',
       });
       if (!res.ok) {
@@ -78,7 +79,7 @@ export default function UpiVerifyPage() {
     setLoading(true);
     setError(null);
     try {
-      await fetch('/api/proxy/api/v1/verification/upi/cancel', { method: 'POST' });
+      await browserApiFetch('/api/v1/verification/upi/cancel', { method: 'POST' });
     } catch {
       // best-effort
     }
@@ -90,7 +91,7 @@ export default function UpiVerifyPage() {
   async function handleCheck() {
     setChecking(true);
     try {
-      const res = await fetch('/api/proxy/api/v1/auth/me');
+      const res = await browserApiFetch('/api/v1/auth/me');
       if (!res.ok) throw new Error('Failed to check status');
       const data = await res.json();
       const method = data?.user?.verificationMethod ?? data?.verificationMethod;

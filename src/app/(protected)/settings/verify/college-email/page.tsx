@@ -12,6 +12,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { showToast } from '@/components/ui/toast';
+import { browserApiFetch } from '@/lib/api/client';
 import {
   ArrowLeft,
   BadgeCheck,
@@ -58,7 +59,7 @@ export default function CollegeEmailVerifyPage() {
     }
     setBusy(true);
     try {
-      const res = await fetch('/api/proxy/api/v1/student-verifications/college-email/request', {
+      const res = await browserApiFetch('/api/v1/student-verifications/college-email/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: trimmed }),
@@ -86,7 +87,7 @@ export default function CollegeEmailVerifyPage() {
     }
     setBusy(true);
     try {
-      const res = await fetch('/api/proxy/api/v1/student-verifications/college-email/verify', {
+      const res = await browserApiFetch('/api/v1/student-verifications/college-email/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase(), code: code.trim() }),

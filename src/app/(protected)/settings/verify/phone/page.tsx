@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { showToast } from '@/components/ui/toast';
+import { browserApiFetch } from '@/lib/api/client';
 import { ArrowLeft, Loader2, Phone, ShieldCheck } from 'lucide-react';
 import VerificationExplainer from '../verification-explainer';
 import { initializeApp, getApps } from 'firebase/app';
@@ -142,7 +143,7 @@ export default function PhoneVerifyPage() {
       const idToken = await userCredential.user.getIdToken(true);
 
       // Send to backend
-      const res = await fetch('/api/proxy/api/v1/auth/phone/verify', {
+      const res = await browserApiFetch('/api/v1/auth/phone/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),

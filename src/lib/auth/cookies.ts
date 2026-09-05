@@ -16,16 +16,23 @@ export interface CookieOptions {
   secure: boolean;
   sameSite: 'lax' | 'strict' | 'none';
   path: string;
+  domain?: string;
   maxAge?: number;
 }
 
-export function getCookieConfig(maxAge?: number): CookieOptions {
+function getSharedCookieDomain(): string | undefined {
+  const isProd = process.env.NODE_ENV === 'production';
+  return process.env.COOKIE_DOMAIN || (isProd ? '.nearestz.com' : undefined);
+}
+
+export function getCookieConfig(maxAge?: number, domain?: string): CookieOptions {
   const isProd = process.env.NODE_ENV === 'production';
   return {
     httpOnly: true,
     secure: isProd,
     sameSite: 'lax',
     path: '/',
+    ...(domain ? { domain } : {}),
     ...(maxAge !== undefined ? { maxAge } : {}),
   };
 }
@@ -45,10 +52,17 @@ export function setAuthCookies(
   cookieStore: MinimalCookieStore,
   tokens: { accessToken: string; refreshToken?: string }
 ): void {
+  const sharedDomain = getSharedCookieDomain();
   cookieStore.set(ACCESS_TOKEN_COOKIE, tokens.accessToken, getCookieConfig(ACCESS_TOKEN_MAX_AGE));
+  if (sharedDomain) {
+    cookieStore.set(ACCESS_TOKEN_COOKIE, tokens.accessToken, getCookieConfig(ACCESS_TOKEN_MAX_AGE, sharedDomain));
+  }
 
   if (tokens.refreshToken) {
     cookieStore.set(REFRESH_TOKEN_COOKIE, tokens.refreshToken, getCookieConfig(REFRESH_TOKEN_MAX_AGE));
+    if (sharedDomain) {
+      cookieStore.set(REFRESH_TOKEN_COOKIE, tokens.refreshToken, getCookieConfig(REFRESH_TOKEN_MAX_AGE, sharedDomain));
+    }
   }
 }
 
@@ -56,8 +70,13 @@ export function setAuthCookies(
  * Clears access and refresh token cookies.
  */
 export function clearAuthCookies(cookieStore: MinimalCookieStore): void {
+  const sharedDomain = getSharedCookieDomain();
   cookieStore.set(ACCESS_TOKEN_COOKIE, '', getCookieConfig(0));
   cookieStore.set(REFRESH_TOKEN_COOKIE, '', getCookieConfig(0));
+  if (sharedDomain) {
+    cookieStore.set(ACCESS_TOKEN_COOKIE, '', getCookieConfig(0, sharedDomain));
+    cookieStore.set(REFRESH_TOKEN_COOKIE, '', getCookieConfig(0, sharedDomain));
+  }
   cookieStore.delete(ACCESS_TOKEN_COOKIE);
   cookieStore.delete(REFRESH_TOKEN_COOKIE);
 }

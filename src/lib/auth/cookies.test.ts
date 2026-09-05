@@ -27,6 +27,29 @@ describe('Cookie Management', () => {
     expect(store.get(ACCESS_TOKEN_COOKIE)?.options.httpOnly).toBe(true);
   });
 
+  it('sets the shared nearestz cookie domain in production', () => {
+    const originalEnv = process.env;
+    process.env = { ...originalEnv, NODE_ENV: 'production' };
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const store = new Map<string, { name: string; value: string; options?: any }>();
+      const mockCookieStore = {
+        set: vi.fn((name, value, options) => {
+          store.set(name, { name, value, options });
+        }),
+        get: vi.fn((name) => store.get(name)),
+        delete: vi.fn((name) => store.delete(name)),
+      };
+
+      setAuthCookies(mockCookieStore, { accessToken: 'acc_test' });
+
+      expect(store.get(ACCESS_TOKEN_COOKIE)?.options.domain).toBe('.nearestz.com');
+    } finally {
+      process.env = originalEnv;
+    }
+  });
+
   it('reads cookies via getAuthCookies', () => {
     const store = new Map<string, { name: string; value: string }>();
     store.set(ACCESS_TOKEN_COOKIE, { name: ACCESS_TOKEN_COOKIE, value: 'token_a' });

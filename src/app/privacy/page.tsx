@@ -37,8 +37,8 @@ export default function PrivacyPage() {
         <h2 className="text-base font-semibold text-foreground">Cookies and session</h2>
         <p>
           Sign-in uses an HttpOnly access cookie (`cp_access_token`, short-lived) plus a refresh
-          cookie. The browser talks to our same-origin proxy; the proxy attaches the API token.
-          You cannot set that cookie from JavaScript.
+          cookie. In local development the browser may talk to the same-origin proxy; in production
+          it can talk directly to the API origin. You cannot set that cookie from JavaScript.
         </p>
       </section>
 
