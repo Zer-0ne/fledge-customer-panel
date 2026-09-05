@@ -106,8 +106,28 @@ export async function POST() {
     );
   }
 
+  let route: Record<string, unknown> = {};
+  try {
+    const routeResponse = await apiFetch<Record<string, unknown>>({
+      method: 'GET',
+      path: '/api/v1/realtime/route',
+      accessToken,
+      baseUrl: env.BACKEND_API_BASE_URL,
+      timeoutMs: 8_000,
+    });
+    route = routeResponse.data && typeof routeResponse.data === 'object'
+      ? routeResponse.data as Record<string, unknown>
+      : routeResponse;
+  } catch {
+    return NextResponse.json(
+      { error: { message: 'Realtime routing is unavailable', status: 503 } },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } }
+    );
+  }
+
   return NextResponse.json(
     {
+      ...route,
       token: accessToken,
       expiresIn: expiresInFromJwt(accessToken) || ACCESS_TOKEN_MAX_AGE,
     },

@@ -2,7 +2,6 @@
 
 import type {
   ChatSocketHandlers,
-  SocketStatus,
   AckResult,
 } from './chat-socket';
 import {
@@ -28,19 +27,28 @@ const ACK_TIMEOUT_MS = 12_000;
 const MAX_RECONNECT_ATTEMPTS = 8;
 const MAX_BACKOFF_MS = 30_000;
 
-function wsUrl(token: string): string {
-  const value = process.env.NEXT_PUBLIC_SOCKET_URL?.trim();
+const HEARTBEAT_INTERVAL_MS = 240_000;
+
+type RealtimeRoute = {
+  token: string;
+  url: string;
+  transport: 'cloudflare-edge' | 'uwebsockets';
+  routeVersion: string;
+};
+
+function wsUrl(token: string, routedUrl?: string): string {
+  const value = routedUrl?.trim() || process.env.NEXT_PUBLIC_SOCKET_URL?.trim();
   if (!value) {
-    throw new Error('Realtime messaging is not configured (NEXT_PUBLIC_SOCKET_URL).');
+    throw new Error('Realtime messaging is not configured.');
   }
-  const base = value
-    .replace(/\/$/, '')
-    .replace(/^http:/, 'ws:')
-    .replace(/^https:/, 'wss:');
-  return `${base}/realtime?token=${encodeURIComponent(token)}`;
+  const url = new URL(value);
+  url.protocol = url.protocol === 'http:' ? 'ws:' : url.protocol === 'https:' ? 'wss:' : url.protocol;
+  if (!routedUrl) url.pathname = `${url.pathname.replace(/\/$/, '')}/realtime`;
+  url.searchParams.set('token', token);
+  return url.toString();
 }
 
-async function fetchSocketToken(): Promise<string> {
+async function fetchSocketRoute(fallbackDownstreamOnly: boolean): Promise<RealtimeRoute> {
   const response = await fetch('/api/auth/socket-token', {
     method: 'POST',
     cache: 'no-store',
@@ -58,9 +66,16 @@ async function fetchSocketToken(): Promise<string> {
         : `Failed to obtain socket access token (${response.status})`;
     throw new Error(message);
   }
-  const data = (await response.json()) as { token?: string };
+  const data = (await response.json()) as Partial<RealtimeRoute>;
   if (!data.token) throw new Error('Socket token missing from response');
-  return data.token;
+  return {
+    token: data.token,
+    url: typeof data.url === 'string' ? data.url : '',
+    transport: data.transport === 'cloudflare-edge' || data.transport === 'uwebsockets'
+      ? data.transport
+      : fallbackDownstreamOnly ? 'cloudflare-edge' : 'uwebsockets',
+    routeVersion: typeof data.routeVersion === 'string' ? data.routeVersion : 'static',
+  };
 }
 
 type PendingAck = {
@@ -72,6 +87,9 @@ type PendingAck = {
 export class WsConversationSocket {
   private ws?: WebSocket;
   private memoryToken?: string;
+  private routeUrl?: string;
+  private routeVersion?: string;
+  private livenessTimer?: ReturnType<typeof setInterval>;
   private joined = new Set<string>();
   private disposed = false;
   private pending = new Map<string, PendingAck>();
@@ -82,7 +100,7 @@ export class WsConversationSocket {
 
   constructor(
     private readonly handlers: ChatSocketHandlers = {},
-    private readonly downstreamOnly = false,
+    private downstreamOnly = false,
   ) {}
 
   get connected(): boolean {
@@ -105,19 +123,30 @@ export class WsConversationSocket {
 
   private async connectOnce(): Promise<void> {
     this.handlers.onStatus?.('connecting');
-    this.memoryToken = await fetchSocketToken();
+    await this.refreshRoute();
     this.openSocket();
     await this.waitForOpen();
   }
 
+  private async refreshRoute(): Promise<boolean> {
+    const previous = `${this.routeVersion ?? ''}:${this.routeUrl ?? ''}`;
+    const route = await fetchSocketRoute(this.downstreamOnly);
+    this.memoryToken = route.token;
+    this.routeUrl = route.url;
+    this.routeVersion = route.routeVersion;
+    this.downstreamOnly = route.transport === 'cloudflare-edge';
+    return previous.length > 1 && previous !== `${route.routeVersion}:${route.url}`;
+  }
+
   private openSocket(rejoin = false): void {
     if (!this.memoryToken) return;
-    const url = wsUrl(this.memoryToken);
+    const url = wsUrl(this.memoryToken, this.routeUrl);
     const ws = new WebSocket(url);
     this.ws = ws;
 
     ws.onopen = () => {
       this.reconnectAttempt = 0;
+      this.startLiveness();
       this.handlers.onStatus?.('connected');
       if (rejoin) {
         for (const conversationId of this.joined) {
@@ -127,6 +156,7 @@ export class WsConversationSocket {
     };
 
     ws.onclose = (ev) => {
+      this.stopLiveness();
       this.rejectAllPending('Connection closed');
       if (this.disposed) {
         this.handlers.onStatus?.('disconnected');
@@ -355,6 +385,29 @@ export class WsConversationSocket {
     });
   }
 
+  private startLiveness(): void {
+    this.stopLiveness();
+    this.livenessTimer = setInterval(() => {
+      if (!this.connected || (typeof document !== 'undefined' && document.visibilityState !== 'visible')) return;
+      void this.refreshRoute()
+        .then((changed) => {
+          if (changed) {
+            this.ws?.close(1012, 'Realtime route changed');
+            return;
+          }
+          if (this.connected) this.sendFrame('ping', {});
+        })
+        .catch(() => {
+          if (this.connected) this.sendFrame('ping', {});
+        });
+    }, HEARTBEAT_INTERVAL_MS);
+  }
+
+  private stopLiveness(): void {
+    if (this.livenessTimer) clearInterval(this.livenessTimer);
+    this.livenessTimer = undefined;
+  }
+
   private scheduleReconnect(): void {
     if (this.disposed || this.reconnectAttempt >= MAX_RECONNECT_ATTEMPTS) {
       this.handlers.onStatus?.('failed');
@@ -370,7 +423,7 @@ export class WsConversationSocket {
   private async reconnect(): Promise<void> {
     if (this.disposed) return;
     try {
-      this.memoryToken = await fetchSocketToken();
+      await this.refreshRoute();
     } catch {
       this.handlers.onError?.('Socket reauthorization failed');
       this.scheduleReconnect();
@@ -473,9 +526,15 @@ export class WsConversationSocket {
     }
   }
 
+  async renewAuth(): Promise<void> {
+    const changed = await this.refreshRoute();
+    if (changed && this.connected) this.ws?.close(1012, 'Realtime route changed');
+  }
+
   disconnect(): void {
     this.disposed = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.stopLiveness();
     this.rejectAllPending('Socket disconnected');
     for (const conversationId of [...this.joined]) {
       if (this.downstreamOnly && this.connected && this.typing.get(conversationId)) {
