@@ -27,7 +27,7 @@ export default function AboutPage() {
     <SitePage
       className="max-w-5xl"
       title={`About ${env.NEXT_PUBLIC_APP_NAME}`}
-      description="We help students find verified housing near campus — without brokers, public phone numbers, or spammy classifieds."
+      description="Fledge connects students and housing partners through privacy-first discovery, matching, and in-app conversations."
     >
       {/* Hero card — Made in India */}
       <div className="rounded-2xl border border-border/60 bg-card p-6 space-y-4">
@@ -39,13 +39,15 @@ export default function AboutPage() {
           Housing that feels right
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-          {env.NEXT_PUBLIC_APP_NAME} is the student-facing app of a housing marketplace: discovery
-          (listings, map/geo search), roommates, Need Now requirements, favorites, chat, and
-          campus-aware ads. Partners list properties; you search, shortlist, and talk in-app.
+          {env.NEXT_PUBLIC_APP_NAME} is the customer side of a housing marketplace. Students can
+          search by college or location, shortlist listings, find roommates, publish time-limited
+          Need Now requirements, and talk in-app. Partners use a separate portal to manage
+          properties, listings, leads, availability, and sponsored campaigns.
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-          Phone numbers are never dumped on listing cards. Contact sharing is request-based,
-          time-bounded, and can fall back to a verified backup contact when the owner is unavailable.
+          Public discovery uses approximate locations and hides direct contact details. Contact is
+          shared only through the approval, expiry, and view-limit rules shown before the action.
+          Moderation and trust badges add context, but users should still verify independently.
         </p>
       </div>
 
@@ -54,22 +56,22 @@ export default function AboutPage() {
         <InfoCard
           icon={Heart}
           title="Our mission"
-          body="Make student housing discovery safe, transparent, and broker-free. Every listing is verified, every contact is consent-based, and every interaction happens in-app."
+          body="Make student housing discovery easier to understand: clear listing information, approximate-location search, direct matching, and in-app communication before personal details are shared."
         />
         <InfoCard
           icon={Shield}
           title="Privacy by design"
-          body="Your phone number is never public. Contact sharing requires approval, has daily limits, and can route to a verified backup contact when you're unavailable."
+          body="Contact details and exact addresses stay protected by default. Requests, grants, expiry, view limits, fallback contacts, and revocation are explicit product flows."
         />
         <InfoCard
           icon={BookOpen}
-          title="Community first"
-          body="Roommate matching, college-specific rules, and a moderation system that keeps the community safe. Post restrictions are transparent and appealable."
+          title="Safety with context"
+          body="Automated checks, authorised review, reports, blocks, appeals, and verification or trust badges help people judge risk. These signals support — but never replace — independent checks."
         />
         <InfoCard
           icon={ExternalLink}
-          title="Open-source notices"
-          body="Built with open-source tools and libraries. We believe in giving back to the community that makes this possible."
+          title="Transparent actions"
+          body="Before sensitive actions such as sharing contact, publishing content, paying, exporting data, or scheduling erasure, Fledge explains what is sent and what happens next."
         />
       </div>
 
