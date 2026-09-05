@@ -161,10 +161,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       conversationIds = (await fetchConversations()).map(({ id }) => id);
       await announcePresence(true);
       if (conversationIds.length > 0) {
-        heartbeat = window.setInterval(
-          () => void announcePresence(true).catch(() => undefined),
-          60_000
-        );
+        heartbeat = window.setInterval(() => {
+          if (document.visibilityState === 'visible') {
+            void announcePresence(true).catch(() => undefined);
+          }
+        }, 240_000);
       }
     })().catch(() => undefined);
     document.addEventListener('visibilitychange', onVisibilityChange);
