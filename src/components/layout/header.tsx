@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { PwaInstallButton } from '@/components/pwa/pwa-install-button';
 import { useAuth } from '@/components/providers/auth-provider';
 
 export interface HeaderProps {
@@ -140,6 +141,7 @@ export function Header({
 
         {/* Right side actions */}
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+          <PwaInstallButton />
           <ThemeToggle className="size-8 sm:size-9 rounded-full" />
 
           {user ? (
