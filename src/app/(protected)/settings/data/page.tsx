@@ -7,9 +7,11 @@ import {
 } from '@/lib/api/services/user-settings';
 import {
   createDataExport,
+  fetchDataExportJob,
   fetchDataExportJobs,
   requestDataErase,
 } from '@/lib/api/services/data-export';
+import { CUSTOMER_EXPORT_SUMMARY } from '@/lib/public-info';
 import { fetchI18nStrings } from '@/lib/api/services/i18n';
 import { DataExportJob, UpdateUserSettingsPayload, UserSettingKey, UserSettingValue } from '@/types';
 import { formatRelativeTime, formatDate } from '@/lib/formatting';
@@ -72,6 +74,7 @@ export default function DataPrivacySettingsPage() {
   const [jobs, setJobs] = React.useState<DataExportJob[]>([]);
   const [isJobsLoading, setIsJobsLoading] = React.useState(false);
   const [isExporting, setIsExporting] = React.useState(false);
+  const [downloadingJobId, setDownloadingJobId] = React.useState<string | null>(null);
 
   const [supportedLocales, setSupportedLocales] = React.useState<string[]>(['en', 'hi']);
   const [eraseConfirmText, setEraseConfirmText] = React.useState('');
@@ -111,7 +114,6 @@ export default function DataPrivacySettingsPage() {
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadSettings();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadJobs();
     fetchI18nStrings('en')
       .then((res) => {
@@ -141,11 +143,11 @@ export default function DataPrivacySettingsPage() {
     try {
       await createDataExport();
       showToast({
-        title: 'Export Requested',
-        description: 'We are preparing your data — check back shortly.',
+        title: 'Export ready',
+        description: 'The API generated a JSON snapshot. Use Download beside the ready job while it is available.',
         variant: 'success',
       });
-      loadJobs();
+      await loadJobs();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to request export';
       showToast({ title: 'Error', description: msg, variant: 'error' });
@@ -154,13 +156,42 @@ export default function DataPrivacySettingsPage() {
     }
   };
 
+  const handleDownloadExport = async (job: DataExportJob) => {
+    setDownloadingJobId(job.id);
+    try {
+      const detail = await fetchDataExportJob(job.id);
+      if (detail.payload === undefined) {
+        throw new Error('This export is no longer available. Request a new export.');
+      }
+      const blob = new Blob([JSON.stringify(detail.payload, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `fledge-data-export-${job.id}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast({
+        title: 'Export downloaded',
+        description: 'The JSON file was saved by your browser on this device. Fledge did not share it with anyone.',
+        variant: 'success',
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to download export';
+      showToast({ title: 'Error', description: msg, variant: 'error' });
+    } finally {
+      setDownloadingJobId(null);
+    }
+  };
+
   const handleErase = async () => {
     setIsErasing(true);
     try {
       const res = await requestDataErase();
       showToast({
-        title: 'Data Erase Scheduled',
-        description: `All your data will be permanently deleted by ${formatDate(res.eraseAt)}.`,
+        title: 'Data erase scheduled',
+        description: `The API scheduled your account for erasure on or after ${formatDate(res.eraseAt)}. Data is not deleted immediately.`,
         variant: 'info',
       });
       setIsEraseConfirmOpen(false);
@@ -175,6 +206,16 @@ export default function DataPrivacySettingsPage() {
 
   return (
     <div className="space-y-6">
+      <section role="note" className="rounded-2xl border border-primary/25 bg-primary/5 p-5 space-y-2">
+        <h2 className="font-semibold text-foreground">What each action does</h2>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Preference changes are saved to your Fledge account and sync across signed-in devices.
+          Request Export asks the API to create a JSON snapshot, then Download saves that snapshot
+          through this browser. Schedule Data Erase records an erasure request with a grace period;
+          it does not delete data immediately. The API-returned expiry and erase dates are shown here.
+        </p>
+      </section>
+
       {/* Language */}
       <BorderGlow className='rounded-2xl!'>
       <section className="rounded-2xl border border-border/60 bg-card p-5 space-y-3">
@@ -251,7 +292,8 @@ export default function DataPrivacySettingsPage() {
             <div>
               <h2 className="font-semibold text-foreground">Export My Data</h2>
               <p className="text-xs text-muted-foreground">
-                Download everything we store about you (listings, interests, messages, settings).
+                Creates a JSON snapshot containing {CUSTOMER_EXPORT_SUMMARY}. It does not currently
+                include chat messages, interests, verification evidence, or uploaded media.
               </p>
             </div>
           </div>
@@ -266,13 +308,31 @@ export default function DataPrivacySettingsPage() {
         ) : jobs.length > 0 ? (
           <ul className="space-y-2">
             {jobs.map((job) => (
-              <li key={job.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2 text-sm">
-                <span className="text-muted-foreground">
+              <li key={job.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2 text-sm">
+                <span className="min-w-0 text-muted-foreground">
                   {job.kind === 'erase' ? 'Data erase' : 'Export'} · {formatRelativeTime(job.createdAt)}
+                  {job.expiresAt ? ` · expires/scheduled ${formatDate(job.expiresAt)}` : ''}
                 </span>
-                <Badge variant={job.status === 'completed' ? 'success' : job.status === 'failed' ? 'destructive' : 'secondary'}>
-                  {JOB_STATUS_LABELS[job.status] ?? job.status}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={job.status === 'completed' ? 'success' : job.status === 'failed' ? 'destructive' : 'secondary'}>
+                    {JOB_STATUS_LABELS[job.status] ?? job.status}
+                  </Badge>
+                  {job.kind === 'export' && job.status === 'completed' ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownloadExport(job)}
+                      disabled={downloadingJobId === job.id}
+                    >
+                      {downloadingJobId === job.id ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <Download className="size-3.5" />
+                      )}
+                      Download
+                    </Button>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>
@@ -289,9 +349,11 @@ export default function DataPrivacySettingsPage() {
           <h2 className="font-semibold text-foreground">Delete My Data</h2>
         </div>
         <p className="text-xs text-muted-foreground">
-          Schedule permanent deletion of all your data. This cannot be undone — after deletion
-          your account and all associated data (listings, interests, messages, reviews) will be
-          permanently removed. Type <span className="font-mono font-semibold text-foreground">PURGE</span> to confirm.
+          This sends a grace-period erasure request to the API. Your data is not deleted when you
+          press the button; the API returns the target date shown in the confirmation toast and job
+          list. Account data is purged later, while limited payment, dispute, fraud-prevention,
+          backup, or audit records may remain when required. Type{' '}
+          <span className="font-mono font-semibold text-foreground">PURGE</span> to continue.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
@@ -318,9 +380,9 @@ export default function DataPrivacySettingsPage() {
         isOpen={isEraseConfirmOpen}
         onClose={() => setIsEraseConfirmOpen(false)}
         onConfirm={handleErase}
-        title="Permanently Delete All Your Data?"
-        description="This schedules permanent deletion of your account and all associated data. You will not be able to log in after deletion."
-        confirmLabel="Yes, Delete Everything"
+        title="Schedule Account Data Erasure?"
+        description="This records an erasure request with a grace period; it does not delete data or sign you out immediately. The API returns the target date. Once the later purge completes, the deletion cannot be undone. Limited records may remain where retention is required."
+        confirmLabel="Schedule erasure"
         cancelLabel="Cancel"
         isDestructive
         isLoading={isErasing}

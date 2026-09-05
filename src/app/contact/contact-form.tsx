@@ -18,8 +18,9 @@ import { cn } from '@/lib/utils';
 const TOPICS = [
   'General',
   'Account or login',
-  'Listing or interest',
-  'Roommate or Need Now',
+  'Listing, roommate, or Need Now',
+  'Safety or abuse report',
+  'Payment or donation',
   'Privacy or data',
 ] as const;
 
@@ -64,7 +65,8 @@ export function ContactForm({ supportEmail }: ContactFormProps) {
           <Badge variant="secondary">Opens your mail app</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          We don&apos;t store this form on the server. Submit builds a draft to {supportEmail}.
+          We do not submit these fields to the Fledge API. Submit creates a draft to {supportEmail};
+          you review and send it from your own email app.
         </p>
       </div>
 

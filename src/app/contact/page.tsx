@@ -2,13 +2,11 @@ import type { Metadata } from 'next';
 import { SitePage } from '@/components/layout/site-page';
 import { ContactContent } from './contact-content';
 import { env } from '@/lib/env';
-
-const SUPPORT_EMAIL =
-  process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@flatfinder.local';
+import { FLEDGE_SUPPORT_EMAIL } from '@/lib/public-info';
 
 export const metadata: Metadata = {
   title: `Contact us — ${env.NEXT_PUBLIC_APP_NAME}`,
-  description: 'Reach the team about listings, your account, or privacy.',
+  description: `Contact Fledge support at ${FLEDGE_SUPPORT_EMAIL} for account, listing, safety, payment, or privacy help.`,
 };
 
 export default function ContactPage() {
@@ -16,9 +14,9 @@ export default function ContactPage() {
     <SitePage
       className="max-w-5xl"
       title="Contact us"
-      description="Questions about listings, your account, or privacy? Pick a shortcut or send a message — it opens your email app."
+      description={`Get help at ${FLEDGE_SUPPORT_EMAIL}. The contact action opens your email app; it does not silently submit data to the Fledge API.`}
     >
-      <ContactContent supportEmail={SUPPORT_EMAIL} />
+      <ContactContent supportEmail={FLEDGE_SUPPORT_EMAIL} />
     </SitePage>
   );
 }

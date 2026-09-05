@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Building2 } from 'lucide-react';
+import { FLEDGE_SUPPORT_EMAIL } from '@/lib/public-info';
 
 const PRODUCT_LINKS = [
   { href: '/', label: 'Explore Colleges' },
@@ -44,8 +45,14 @@ export function Footer({ appName = 'Fledge' }: { appName?: string }) {
           </nav>
         </div>
 
-        <div className="mt-8 border-t border-border/50 pt-4 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} {appName}. All rights reserved.
+        <div className="mt-8 flex flex-col items-center gap-1 border-t border-border/50 pt-4 text-center text-xs text-muted-foreground">
+          <span>© {new Date().getFullYear()} {appName}. All rights reserved.</span>
+          <a
+            href={`mailto:${FLEDGE_SUPPORT_EMAIL}`}
+            className="transition-colors hover:text-foreground hover:underline"
+          >
+            {FLEDGE_SUPPORT_EMAIL}
+          </a>
         </div>
       </div>
     </footer>
