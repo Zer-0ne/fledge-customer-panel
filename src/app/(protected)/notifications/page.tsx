@@ -3,12 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/auth-provider';
-import {
-  fetchNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
-  archiveNotification,
-} from '@/lib/api/services/notifications';
+import { useNotificationStore } from '@/lib/stores/use-notification-store';
 import { Notification } from '@/types';
 import { formatRelativeTime } from '@/lib/formatting';
 import { Button } from '@/components/ui/button';
@@ -80,32 +75,23 @@ function ModerationChips({ notification }: { notification: Notification }) {
 
 export default function NotificationsPage() {
   const { user } = useAuth();
-  const [items, setItems] = React.useState<Notification[]>([]);
-  const [nextBefore, setNextBefore] = React.useState<string | null>(null);
-  const [hasMore, setHasMore] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  const [markingIds, setMarkingIds] = React.useState<Set<string>>(new Set());
-
-  const loadInitial = React.useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const page = await fetchNotifications();
-      setItems(page.items);
-      setNextBefore(page.nextBefore);
-      setHasMore(page.hasMore);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to load notifications.';
-      setError(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const items = useNotificationStore((s) => s.items);
+  const nextBefore = useNotificationStore((s) => s.nextBefore);
+  const hasMore = useNotificationStore((s) => s.hasMore);
+  const isLoading = useNotificationStore((s) => s.isLoading);
+  const isLoadingMore = useNotificationStore((s) => s.isLoadingMore);
+  const error = useNotificationStore((s) => s.error);
+  const markingIds = useNotificationStore((s) => s.markingIds);
+  const archivingIds = useNotificationStore((s) => s.archivingIds);
+  const loadInitial = useNotificationStore((s) => s.loadInitial);
+  const loadMoreItems = useNotificationStore((s) => s.loadMore);
+  const markRead = useNotificationStore((s) => s.markRead);
+  const markAllRead = useNotificationStore((s) => s.markAllRead);
+  const archive = useNotificationStore((s) => s.archive);
+  const prepend = useNotificationStore((s) => s.prepend);
+  const unreadCount = useNotificationStore((s) => s.unreadCount());
 
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadInitial();
   }, [loadInitial]);
 
@@ -132,89 +118,50 @@ export default function NotificationsPage() {
         createdAt: detail.createdAt,
       };
 
-      setItems((prev) => {
-        if (prev.some((n) => n.id === newNotif.id)) return prev;
-        return [newNotif, ...prev];
-      });
+      prepend(newNotif);
     };
 
     window.addEventListener('app:notification_created', handleNotificationCreated);
     return () => {
       window.removeEventListener('app:notification_created', handleNotificationCreated);
     };
-  }, []);
+  }, [prepend, user?.id]);
 
   const loadMore = async () => {
-    if (!nextBefore || isLoadingMore) return;
-    setIsLoadingMore(true);
     try {
-      const page = await fetchNotifications({ before: nextBefore });
-      setItems((prev) => {
-        const seen = new Set(prev.map((n) => n.id));
-        const fresh = page.items.filter((n) => !seen.has(n.id));
-        return [...prev, ...fresh];
-      });
-      setNextBefore(page.nextBefore);
-      setHasMore(page.hasMore);
+      await loadMoreItems();
     } catch {
       showToast({
         title: 'Could not load more',
         description: 'Please try again.',
         variant: 'error',
       });
-    } finally {
-      setIsLoadingMore(false);
     }
   };
 
   const handleMarkRead = async (notification: Notification) => {
-    if (notification.isRead || markingIds.has(notification.id)) return;
-
-    setMarkingIds((prev) => new Set(prev).add(notification.id));
-    setItems((prev) =>
-      prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
-    );
-
     try {
-      await markNotificationRead(notification.id);
+      await markRead(notification.id);
       // Header badge is updated via socket `user:unread_counts` after mark-read.
-      // Do not call refreshSession() — bootstrap does not return unread counts and
-      // would incorrectly zero both message and notification badges.
     } catch {
-      setItems((prev) =>
-        prev.map((n) => (n.id === notification.id ? { ...n, isRead: false } : n))
-      );
       showToast({
         title: 'Update failed',
         description: 'Could not mark notification as read.',
         variant: 'error',
       });
-    } finally {
-      setMarkingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(notification.id);
-        return next;
-      });
     }
   };
 
   const handleMarkAllVisible = async () => {
-    const unread = items.filter((n) => !n.isRead);
-    if (unread.length === 0) return;
-
-    setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
-
     try {
-      await markAllNotificationsRead();
+      const updated = await markAllRead();
+      if (updated === 0) return;
       showToast({
         title: 'Marked as read',
-        description: `${unread.length} notification(s) updated.`,
+        description: `${updated} notification(s) updated.`,
         variant: 'success',
       });
     } catch {
-      setItems((prev) =>
-        prev.map((n) => (unread.some((u) => u.id === n.id) ? { ...n, isRead: false } : n))
-      );
       showToast({
         title: 'Update failed',
         description: 'Could not mark all as read.',
@@ -223,27 +170,14 @@ export default function NotificationsPage() {
     }
   };
 
-  const [archivingIds, setArchivingIds] = React.useState<Set<string>>(new Set());
-
   const handleArchive = async (notification: Notification) => {
-    if (archivingIds.has(notification.id)) return;
-    setArchivingIds((prev) => new Set(prev).add(notification.id));
     try {
-      await archiveNotification(notification.id);
-      setItems((prev) => prev.filter((n) => n.id !== notification.id));
+      await archive(notification.id);
       showToast({ title: 'Archived', description: 'Notification moved to archive.', variant: 'success' });
     } catch {
       showToast({ title: 'Archive failed', description: 'Could not archive this notification.', variant: 'error' });
-    } finally {
-      setArchivingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(notification.id);
-        return next;
-      });
     }
   };
-
-  const unreadCount = items.filter((n) => !n.isRead).length;
 
   if (isLoading) {
     return (

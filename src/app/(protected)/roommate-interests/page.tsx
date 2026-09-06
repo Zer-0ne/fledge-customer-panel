@@ -4,11 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
-import {
-  fetchRoommateInterests,
-  updateRoommateInterestStatus,
-  GroupedRoommateInterests,
-} from '@/lib/api/services/roommates';
+import { useRoommateInterestStore } from '@/lib/stores/use-roommate-interest-store';
 import { createConversation } from '@/lib/api/services/chat';
 import { RoommateInterest } from '@/types';
 import { formatPaiseToINR, formatDate } from '@/lib/formatting';
@@ -38,92 +34,80 @@ export default function RoommateInterestsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
+  // Deep-link target card (?postId=...) from roommate-interest notifications.
+  const highlightPostId = searchParams.get('postId');
+  const firstHighlightRef = React.useRef<HTMLDivElement | null>(null);
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const userId = user?.id;
-  const [data, setData] = React.useState<GroupedRoommateInterests>({ incoming: [], outgoing: [] });
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [activeTab, setActiveTab] = React.useState<'outgoing' | 'incoming'>(
-    tabParam === 'incoming' ? 'incoming' : 'outgoing'
-  );
-  const [actionLoadingId, setActionLoadingId] = React.useState<string | null>(null);
+  const data = useRoommateInterestStore((s) => s.data);
+  const activeTab = useRoommateInterestStore((s) => s.activeTab);
+  const setTab = useRoommateInterestStore((s) => s.setTab);
+  const isLoading = useRoommateInterestStore((s) => s.isLoading);
+  const error = useRoommateInterestStore((s) => s.error);
+  const actionLoadingId = useRoommateInterestStore((s) => s.actionLoadingId);
+  const setActionLoadingId = useRoommateInterestStore((s) => s.setActionLoadingId);
+  const loadInterests = useRoommateInterestStore((s) => s.load);
+  const updateInterestStatus = useRoommateInterestStore((s) => s.updateStatus);
 
   React.useEffect(() => {
     if (tabParam === 'incoming' || tabParam === 'outgoing') {
-      const timer = window.setTimeout(() => setActiveTab(tabParam), 0);
+      const timer = window.setTimeout(() => setTab(tabParam), 0);
       return () => window.clearTimeout(timer);
     }
-  }, [tabParam]);
+  }, [tabParam, setTab]);
 
-  const loadInterests = React.useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await fetchRoommateInterests(userId);
-      if (res) {
-        setData(res);
-        if (!tabParam && res.incoming.length > 0) {
-          setActiveTab('incoming');
-        }
-      }
-    } catch (err: unknown) {
-      console.error('Error fetching roommate interests:', err);
-      setError(err instanceof Error ? err.message : 'Could not load your interests');
-    } finally {
-      setIsLoading(false);
+  // Notification deep link: when ?postId matches only one side, flip to it.
+  // (The linker always passes tab=incoming, but the requester side owns the
+  // same postId under outgoing.)
+  React.useEffect(() => {
+    if (!highlightPostId || isLoading) return;
+    const inIncoming = data.incoming.some((item) => item.postId === highlightPostId);
+    const inOutgoing = data.outgoing.some((item) => item.postId === highlightPostId);
+    if (inIncoming && !inOutgoing) setTab('incoming');
+    else if (inOutgoing && !inIncoming) setTab('outgoing');
+  }, [highlightPostId, isLoading, data, setTab]);
+
+  // Scroll the first highlighted card into view once it renders.
+  React.useEffect(() => {
+    if (!highlightPostId || isLoading) return;
+    const timer = window.setTimeout(() => {
+      firstHighlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, [highlightPostId, isLoading, activeTab, data]);
+
+  const reload = React.useCallback(async () => {
+    await loadInterests(userId);
+    if (!tabParam && !highlightPostId) {
+      const state = useRoommateInterestStore.getState();
+      if (state.data.incoming.length > 0) setTab('incoming');
     }
-  }, [userId, tabParam]);
+  }, [userId, tabParam, highlightPostId, loadInterests, setTab]);
 
   React.useEffect(() => {
     if (isAuthenticated) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      loadInterests();
-    } else if (!isAuthLoading) {
-      setIsLoading(false);
+      reload();
     }
-  }, [isAuthenticated, isAuthLoading, loadInterests]);
+  }, [isAuthenticated, isAuthLoading, reload]);
 
   const handleStatusUpdate = async (
     interest: RoommateInterest,
     newStatus: 'accepted' | 'rejected' | 'withdrawn'
   ) => {
-    const listKey = interest.direction === 'incoming' ? 'incoming' : 'outgoing';
-    const oldStatus = interest.status;
-
-    // Optimistic UI Update
-    setData((prev) => ({
-      ...prev,
-      [listKey]: prev[listKey].map((item) =>
-        item.id === interest.id ? { ...item, status: newStatus } : item
-      ),
-    }));
-
-    setActionLoadingId(interest.id);
-
     try {
-      await updateRoommateInterestStatus(interest.id, newStatus);
+      await updateInterestStatus(interest, newStatus);
       showToast({
         title: 'Status Updated',
         description: `Roommate request marked as ${newStatus}.`,
         variant: 'default',
       });
     } catch (err: unknown) {
-      // Rollback optimistic update
-      setData((prev) => ({
-        ...prev,
-        [listKey]: prev[listKey].map((item) =>
-          item.id === interest.id ? { ...item, status: oldStatus } : item
-        ),
-      }));
-
       const msg = err instanceof Error ? err.message : 'Failed to update request status.';
       showToast({
         title: 'Action Failed',
         description: `${msg} Restored previous status.`,
         variant: 'error',
       });
-    } finally {
-      setActionLoadingId(null);
     }
   };
 
@@ -190,7 +174,7 @@ export default function RoommateInterestsPage() {
         <ErrorState
           title="Could Not Load Roommate Requests"
           description={error}
-          onRetry={loadInterests}
+          onRetry={() => loadInterests(userId)}
         />
       </div>
     );
@@ -235,7 +219,7 @@ export default function RoommateInterestsPage() {
       <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-muted/60 w-fit">
         <button
           type="button"
-          onClick={() => setActiveTab('outgoing')}
+          onClick={() => setTab('outgoing')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
             activeTab === 'outgoing'
               ? 'bg-card text-foreground shadow-xs'
@@ -251,7 +235,7 @@ export default function RoommateInterestsPage() {
 
         <button
           type="button"
-          onClick={() => setActiveTab('incoming')}
+          onClick={() => setTab('incoming')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
             activeTab === 'incoming'
               ? 'bg-card text-foreground shadow-xs'
@@ -271,7 +255,7 @@ export default function RoommateInterestsPage() {
         <ErrorState
           title="Could not load your requests"
           message={error}
-          onRetry={() => loadInterests()}
+          onRetry={() => loadInterests(userId)}
         />
       ) : currentRequests.length > 0 ? (
         <div className="space-y-4">
@@ -279,11 +263,13 @@ export default function RoommateInterestsPage() {
             const post = interest.post;
             const user = interest.user;
             const isProcessing = actionLoadingId === interest.id;
+            const isHighlighted = highlightPostId !== null && interest.postId === highlightPostId;
 
             return (
               <div
                 key={interest.id}
-                className="group relative flex flex-col md:flex-row items-start md:items-center justify-between rounded-2xl border border-border/80 bg-card p-5 gap-4 shadow-xs transition-all hover:shadow-md"
+                ref={isHighlighted ? firstHighlightRef : undefined}
+                className={`group relative flex flex-col md:flex-row items-start md:items-center justify-between rounded-2xl border bg-card p-5 gap-4 shadow-xs transition-all hover:shadow-md ${isHighlighted ? 'border-primary ring-2 ring-primary/40' : 'border-border/80'}`}
               >
                 {/* Details */}
                 <div className="space-y-2 flex-1 min-w-0">

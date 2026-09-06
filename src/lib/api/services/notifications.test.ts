@@ -83,6 +83,20 @@ describe('Notifications API Service', () => {
       expect(n.kind).toBe('system_alert');
     });
 
+    it('mapRawToNotification deep-links roommate posts to interests', () => {
+      const n = mapRawToNotification({
+        id: 'r1',
+        kind: 'roommate_interest',
+        title: 'New interest',
+        body: 'Someone is interested',
+        entityType: 'roommate_post',
+        entityId: 'post-123',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
+
+      expect(n.targetUrl).toBe('/roommate-interests?tab=incoming&postId=post-123');
+    });
+
     it('normalizePreferencesResponse fills missing kinds with defaults', () => {
       const prefs = normalizePreferencesResponse({
         preferences: [{ kind: 'message', pushEnabled: false }],

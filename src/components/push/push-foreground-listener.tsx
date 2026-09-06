@@ -31,7 +31,7 @@ export function resolvePushRoute(data: PushData): string | null {
     case 'property': return id ? `/listings/${id}` : '/listings';
     case 'conversation': return id ? `/messages/${id}` : null;
     case 'contact_share_request': return id ? `/contact-share/${id}` : '/messages';
-    case 'roommate_post': return id ? `/roommate-posts/${id}` : '/roommate-posts';
+    case 'roommate_post': return id ? `/roommate-interests?tab=incoming&postId=${id}` : '/roommate-interests';
     default: return null;
   }
 }

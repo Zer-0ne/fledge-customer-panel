@@ -130,10 +130,27 @@ export async function uploadToStorage(
     if (file.type) xhr.setRequestHeader('Content-Type', file.type);
 
     if (options.headers) {
+      const FORBIDDEN_HEADERS = new Set([
+        'authorization',
+        'cookie',
+        'content-type',
+        'content-length',
+        'host',
+        'connection',
+        'origin',
+        'referer',
+        'date',
+        'user-agent',
+        'accept-encoding',
+        'sec-fetch-mode',
+        'sec-fetch-site',
+        'sec-fetch-dest',
+      ]);
+
       for (const [key, value] of Object.entries(options.headers)) {
         const lower = key.toLowerCase();
-        // Never forward session/auth headers to storage; content-type is set above.
-        if (lower === 'authorization' || lower === 'cookie' || lower === 'content-type') {
+        // Never forward forbidden or browser-managed headers to storage; content-type is set above.
+        if (FORBIDDEN_HEADERS.has(lower)) {
           continue;
         }
         xhr.setRequestHeader(key, value);

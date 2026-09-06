@@ -105,7 +105,7 @@ export function mapRawToNotification(item: unknown): Notification {
     else if (entityType === 'housing_response') targetUrl = '/need-now';
     else if (entityType === 'listing') targetUrl = `/listings/${entityId}`;
     else if (entityType === 'conversation') targetUrl = `/messages/${entityId}`;
-    else if (entityType === 'roommate_post') targetUrl = `/roommate-posts/${entityId}`;
+    else if (entityType === 'roommate_post') targetUrl = `/roommate-interests?tab=incoming&postId=${entityId}`;
   }
 
   return {

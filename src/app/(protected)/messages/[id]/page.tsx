@@ -757,7 +757,7 @@ export default function ChatThreadPage() {
   }
 
   return (
-    <main className="relative mx-auto max-w-4xl px-4 py-6 sm:px-6 flex flex-col h-[calc(100vh-5rem)]">
+    <main className="relative mx-auto max-w-4xl px-4 py-6 sm:px-6 flex flex-col h-[calc(100dvh-5rem)]">
       <div className="absolute inset-x-4 top-6 z-20 sm:inset-x-6">
       {/* Header Bar */}
       <div
@@ -898,7 +898,7 @@ export default function ChatThreadPage() {
                   <p className="truncate text-xs font-semibold text-foreground">{title}</p>
                 </div>
               </div>
-              <Link href={isRoommate ? '/roommates' : postId ? `/listings/${postId}` : '/listings'} className="shrink-0 text-[11px] font-medium text-primary hover:underline">
+              <Link href={isRoommate ? (postId ? `/roommate-interests?tab=incoming&postId=${postId}` : '/roommate-interests') : postId ? `/listings/${postId}` : '/listings'} className="shrink-0 text-[11px] font-medium text-primary hover:underline">
                 View post
               </Link>
             </div>
@@ -981,16 +981,16 @@ export default function ChatThreadPage() {
             return (
               <div
                 key={msg.id}
-                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1`}
+                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1 min-w-0`}
               >
                 <div
                   className={
                     isMe
-                      ? 'max-w-[70%] sm:max-w-[62%] px-4 py-2.5 rounded-2xl rounded-br-md text-sm shadow-sm bg-primary text-primary-foreground'
-                      : 'max-w-[85%] sm:max-w-[75%] px-3.5 py-2 rounded-2xl rounded-bl-md text-[13px] leading-relaxed shadow-xs bg-card border border-border text-card-foreground'
+                      ? 'max-w-[85%] sm:max-w-[70%] min-w-0 px-4 py-2.5 rounded-2xl rounded-br-md text-sm shadow-sm bg-primary text-primary-foreground'
+                      : 'max-w-[85%] sm:max-w-[75%] min-w-0 px-3.5 py-2 rounded-2xl rounded-bl-md text-[13px] leading-relaxed shadow-xs bg-card border border-border text-card-foreground'
                   }
                 >
-                  <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                  <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.content}</p>
                 </div>
 
                 <div className="flex items-center gap-1 text-[10px] text-muted-foreground px-1">
