@@ -176,16 +176,18 @@ export default function UpiVerifyPage() {
               <p className="text-xs text-amber-600/80 dark:text-amber-400/80 leading-relaxed">
                 UPI OTM verification is only available in production mode. Contact support to enable it.
               </p>
-              <Button
-                onClick={() => void handleDevBypass()}
-                disabled={loading}
-                variant="outline"
-                size="sm"
-                className="mt-2 rounded-xl"
-              >
-                {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
-                Skip for local testing (dev only)
-              </Button>
+              {process.env.NODE_ENV === 'development' && (
+                <Button
+                  onClick={() => void handleDevBypass()}
+                  disabled={loading}
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                >
+                  {loading ? <Loader2 className="size-4 animate-spin" /> : null}
+                  Skip for local testing (dev only)
+                </Button>
+              )}
             </div>
           </div>
         )}
