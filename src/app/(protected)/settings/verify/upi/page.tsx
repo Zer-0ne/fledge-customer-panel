@@ -88,6 +88,29 @@ export default function UpiVerifyPage() {
     setLoading(false);
   }
 
+  // Dev-only: backend hard-blocks this unless NODE_ENV=development.
+  // Lets local testing skip the Razorpay UPI mandate (no UPI support in test mode).
+  async function handleDevBypass() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await browserApiFetch('/api/v1/verification/upi/dev-bypass', {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message ?? 'Dev bypass failed');
+      }
+      setUpiUnavailable(false);
+      showToast('Verified successfully!');
+      router.push('/settings/profile');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Dev bypass failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleCheck() {
     setChecking(true);
     try {
@@ -140,7 +163,7 @@ export default function UpiVerifyPage() {
             Verify via UPI
           </h1>
           <p className="text-sm text-muted-foreground">
-            Block ₹1 temporarily to prove you are real. Auto-cancelled after verification.
+            Verify with a ₹1 UPI check. Auto-cancelled after verification; any ₹1 debited is auto-refunded.
           </p>
         </div>
 
@@ -153,6 +176,16 @@ export default function UpiVerifyPage() {
               <p className="text-xs text-amber-600/80 dark:text-amber-400/80 leading-relaxed">
                 UPI OTM verification is only available in production mode. Contact support to enable it.
               </p>
+              <Button
+                onClick={() => void handleDevBypass()}
+                disabled={loading}
+                variant="outline"
+                size="sm"
+                className="mt-2 rounded-xl"
+              >
+                {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+                Skip for local testing (dev only)
+              </Button>
             </div>
           </div>
         )}
@@ -174,14 +207,14 @@ export default function UpiVerifyPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">₹1 Auto-Cancel Mandate</p>
-                  <p className="text-xs text-muted-foreground">Temporary hold, never charged</p>
+                  <p className="text-xs text-muted-foreground">Auto-refunded in 5–7 working days if debited</p>
                 </div>
               </div>
               <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
                 <p>1. We create a ₹1 UPI mandate via Razorpay</p>
                 <p>2. You approve it in your UPI app</p>
                 <p>3. Verification is confirmed automatically</p>
-                <p>4. The mandate is cancelled — no money is deducted</p>
+                <p>4. The mandate is cancelled — any ₹1 debited is auto-refunded</p>
               </div>
             </div>
 
