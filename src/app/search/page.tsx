@@ -246,25 +246,26 @@ function SearchContent() {
         </div>
       )}
 
-      {/* Sponsored placement — search */}
-      <SponsoredAd placement="search" tierFilter="all" />
-
       {viewMode === 'grid' && (
-        <ListingGrid
-          listings={listings}
-          isLoading={isLoading}
-          isLoadingMore={isLoadingMore}
-          nextCursor={nextCursor}
-          onLoadMore={handleLoadMore}
-          onResetFilters={handleResetFilters}
-          expressedInterestListingIds={expressedInterestListingIds}
-          collegeId={filters.collegeId}
-          campusId={filters.campusId}
-          onInterestClick={(listing) => {
-            setSelectedListingForInterest(listing);
-            setIsInterestOpen(true);
-          }}
-        />
+        <>
+          {/* Sponsored placement — search (grid mode: single slot above results) */}
+          <SponsoredAd placement="search" tierFilter="all" />
+          <ListingGrid
+            listings={listings}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            nextCursor={nextCursor}
+            onLoadMore={handleLoadMore}
+            onResetFilters={handleResetFilters}
+            expressedInterestListingIds={expressedInterestListingIds}
+            collegeId={filters.collegeId}
+            campusId={filters.campusId}
+            onInterestClick={(listing) => {
+              setSelectedListingForInterest(listing);
+              setIsInterestOpen(true);
+            }}
+          />
+        </>
       )}
 
       {/* Interest Dialog */}
