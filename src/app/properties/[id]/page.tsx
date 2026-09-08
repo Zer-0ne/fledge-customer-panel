@@ -12,6 +12,7 @@ import { ErrorState } from '@/components/ui/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showToast } from '@/components/ui/toast';
 import { LocationMap } from '@/components/map/location-map';
+import { SponsoredAd } from '@/components/ads/sponsored-ad';
 import {
   MapPin,
   Eye,
@@ -205,6 +206,14 @@ export default function PropertyDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Sponsored placement — listing */}
+      <SponsoredAd
+        placement="listing"
+        collegeId={property.collegeId}
+        campusId={property.campusId}
+        variant="sidebar"
+      />
 
       {/* Exact Address Privacy / Authorization Card */}
       <div className="rounded-3xl border border-border/80 bg-gradient-to-br from-card via-card to-muted/30 p-6 sm:p-8 space-y-4">

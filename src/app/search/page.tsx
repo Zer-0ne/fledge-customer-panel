@@ -16,6 +16,7 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { LocationMap } from '@/components/map/location-map';
 import { Building2, LayoutGrid, Map as MapIcon, Columns } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SponsoredAd } from '@/components/ads/sponsored-ad';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -212,6 +213,7 @@ function SearchContent() {
       {viewMode === 'split' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-7">
+            <SponsoredAd placement="search" tierFilter="all" />
             <ListingGrid
               listings={listings}
               isLoading={isLoading}
@@ -243,6 +245,9 @@ function SearchContent() {
           </div>
         </div>
       )}
+
+      {/* Sponsored placement — search */}
+      <SponsoredAd placement="search" tierFilter="all" />
 
       {viewMode === 'grid' && (
         <ListingGrid
