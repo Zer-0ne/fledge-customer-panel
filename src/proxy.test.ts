@@ -3,10 +3,11 @@ import { decideProxyAction } from "@/proxy";
 
 describe("decideProxyAction — customer panel route protection", () => {
   describe("public paths", () => {
-    it("passes auth pages for unauthenticated users", () => {
+    it("passes supported auth pages and blocks retired OTP login", () => {
       expect(decideProxyAction({ pathname: "/login", isAuthenticated: false })).toEqual({ type: "pass" });
       expect(decideProxyAction({ pathname: "/signup", isAuthenticated: false })).toEqual({ type: "pass" });
-      expect(decideProxyAction({ pathname: "/otp", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/otp", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
+      expect(decideProxyAction({ pathname: "/otp", isAuthenticated: true })).toEqual({ type: "redirect", to: "/dashboard" });
     });
 
     it("passes the contact-approval email deep link", () => {

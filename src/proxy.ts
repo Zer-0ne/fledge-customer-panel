@@ -7,7 +7,7 @@
  *   - No `cp_access_token` cookie → immediate redirect to /login. The home
  *     page is protected too — no bootstrap/data API call ever fires without
  *     a session cookie.
- *   - Public exceptions: auth pages (/login /signup /otp), the token-based
+ *   - Public exceptions: auth pages (/login /signup), the token-based
  *     contact-approval email deep link, the static ad-style design preview,
  *     the offline fallback page (/offline), and company/legal pages
  *     (/about /faq /contact /privacy /terms).
@@ -21,7 +21,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
 
 const PUBLIC_PATH_PATTERN =
-  /^\/(login|signup|otp|contact-approval|ad-style-preview|offline|about|faq|contact|privacy|terms)(\/|$)/;
+  /^\/(login|signup|contact-approval|ad-style-preview|offline|about|faq|contact|privacy|terms)(\/|$)/;
 
 export type ProxyDecision =
   | { type: "pass" }
@@ -36,6 +36,12 @@ export function decideProxyAction(input: {
   isAuthenticated: boolean;
 }): ProxyDecision {
   const { pathname, isAuthenticated } = input;
+
+  if (pathname === "/otp") {
+    return isAuthenticated
+      ? { type: "redirect", to: "/dashboard" }
+      : { type: "redirect", to: "/login" };
+  }
 
   // Auth pages, email deep link, and design preview stay public.
   if (PUBLIC_PATH_PATTERN.test(pathname)) {
@@ -53,8 +59,11 @@ export function proxy(request: NextRequest): NextResponse | undefined {
   const decision = decideProxyAction({ pathname, isAuthenticated });
 
   if (decision.type === "redirect") {
-    // Preserve the intended destination so post-login redirect works.
-    const target = `/login?returnUrl=${encodeURIComponent(pathname + search)}`;
+    let target = decision.to;
+    // Preserve supported destinations after login, never the retired OTP page.
+    if (decision.to === "/login" && pathname !== "/" && pathname !== "/otp") {
+      target = `/login?returnUrl=${encodeURIComponent(pathname + search)}`;
+    }
     return NextResponse.redirect(new URL(target, request.url), { status: 302 });
   }
 

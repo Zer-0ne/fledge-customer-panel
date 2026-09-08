@@ -5,7 +5,16 @@ import { extractAuthTokens } from '@/lib/auth/tokens';
 import { setAuthCookies } from '@/lib/auth/cookies';
 import { ApiError } from '@/lib/api/errors';
 
+const OTP_LOGIN_API_ENABLED = false;
+
 export async function POST(request: Request) {
+  if (!OTP_LOGIN_API_ENABLED) {
+    return NextResponse.json(
+      { error: { message: 'Not found', status: 404 } },
+      { status: 404, headers: { 'Cache-Control': 'no-store' } }
+    );
+  }
+
   try {
     const body = await request.json().catch(() => ({}));
     const { identifier, code, deviceLabel } = body || {};
