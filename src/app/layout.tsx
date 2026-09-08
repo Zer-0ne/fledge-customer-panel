@@ -13,6 +13,9 @@ import { AnalyticsInit } from '@/components/providers/analytics-init';
 import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register';
 import { PushBootstrap } from '@/components/push/push-bootstrap';
 import { getFirebaseWebConfig } from '@/lib/push/push-config';
+import { AnnouncementProvider } from '@/components/announcements/announcement-provider';
+import { GlobalAnnouncementBanner } from '@/components/announcements/global-announcement-banner';
+import { AnnouncementModal } from '@/components/announcements/announcement-modal';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -62,15 +65,19 @@ export default function RootLayout({
         <ThemeProvider>
           <PushBootstrap firebaseConfig={firebaseConfig} />
           <AuthProvider>
-            <ToastProvider>
-              <SkipToContent />
-              <Header appName={env.NEXT_PUBLIC_APP_NAME} />
-              <main id="main-content" className="flex-1">
-                {children}
-              </main>
-              <Footer appName={env.NEXT_PUBLIC_APP_NAME} />
-              <MobileNav />
-            </ToastProvider>
+            <AnnouncementProvider>
+              <ToastProvider>
+                <SkipToContent />
+                <Header appName={env.NEXT_PUBLIC_APP_NAME} />
+                <GlobalAnnouncementBanner />
+                <main id="main-content" className="flex-1">
+                  {children}
+                </main>
+                <Footer appName={env.NEXT_PUBLIC_APP_NAME} />
+                <MobileNav />
+                <AnnouncementModal />
+              </ToastProvider>
+            </AnnouncementProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
