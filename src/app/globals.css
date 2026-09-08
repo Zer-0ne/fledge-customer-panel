@@ -297,7 +297,10 @@
   height: auto;
 }
 
-/* Carousel viewport + slides share the fixed slot dimensions */
+/* Carousel viewport + slides share the fixed slot dimensions.
+   viewportFraction ~0.93 parity with the Flutter AdCarousel: the active
+   slide is 93% wide so the next card peeks from the right edge (stacked
+   look), and the track translates by the same 93% per slide. */
 .promotion-carousel {
   width: min(100%, 448px);
   max-width: 448px;
@@ -305,8 +308,12 @@
 }
 
 .promotion-carousel-slide {
-  width: 100%;
-  flex: 0 0 100%;
+  width: 93%;
+  flex: 0 0 93%;
+}
+
+.promotion-carousel-slide + .promotion-carousel-slide {
+  margin-left: 0;
 }
 
 /* Standard/Active slim promotion — adaptive masonry tile: content-based height

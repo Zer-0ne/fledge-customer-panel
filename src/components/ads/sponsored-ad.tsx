@@ -444,7 +444,7 @@ function CarouselChunk({
         >
           <div
             className="flex h-full transition-transform duration-500"
-            style={{ transform: `translateX(-${index * 100}%)` }}
+            style={{ transform: `translateX(-${index * 93}%)` }}
           >
             {items.map((item, i) => (
               <div key={item.id} className="promotion-carousel-slide" aria-hidden={i !== index}>
