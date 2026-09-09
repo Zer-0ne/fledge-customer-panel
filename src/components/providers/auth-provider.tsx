@@ -275,6 +275,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } finally {
+      // Disable Google One Tap auto-select so the user isn't automatically logged back in
+      if (typeof window !== 'undefined' && window.google?.accounts?.id?.disableAutoSelect) {
+        try {
+          window.google.accounts.id.disableAutoSelect();
+        } catch {}
+      }
+      // Reset analytics identity
+      try {
+        const { resetIdentity } = await import('@/lib/analytics/analytics-client');
+        resetIdentity();
+      } catch {}
       // Push leak fix: deactivate this browser's WEB push installation so the
       // backend push_tokens row is deleted (isActive=false) and the SW
       // IndexedDB firebase-push-config cache is cleared. Without this the

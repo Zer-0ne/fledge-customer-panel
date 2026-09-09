@@ -71,11 +71,13 @@ export function setAuthCookies(
  */
 export function clearAuthCookies(cookieStore: MinimalCookieStore): void {
   const sharedDomain = getSharedCookieDomain();
-  cookieStore.set(ACCESS_TOKEN_COOKIE, '', getCookieConfig(0));
-  cookieStore.set(REFRESH_TOKEN_COOKIE, '', getCookieConfig(0));
+  const clearConfig = { ...getCookieConfig(0), maxAge: 0, expires: new Date(0) };
+  cookieStore.set(ACCESS_TOKEN_COOKIE, '', clearConfig);
+  cookieStore.set(REFRESH_TOKEN_COOKIE, '', clearConfig);
   if (sharedDomain) {
-    cookieStore.set(ACCESS_TOKEN_COOKIE, '', getCookieConfig(0, sharedDomain));
-    cookieStore.set(REFRESH_TOKEN_COOKIE, '', getCookieConfig(0, sharedDomain));
+    const sharedClearConfig = { ...getCookieConfig(0, sharedDomain), maxAge: 0, expires: new Date(0) };
+    cookieStore.set(ACCESS_TOKEN_COOKIE, '', sharedClearConfig);
+    cookieStore.set(REFRESH_TOKEN_COOKIE, '', sharedClearConfig);
   }
   cookieStore.delete(ACCESS_TOKEN_COOKIE);
   cookieStore.delete(REFRESH_TOKEN_COOKIE);
