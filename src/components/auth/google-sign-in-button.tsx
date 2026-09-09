@@ -77,12 +77,42 @@ const GOOGLE_SIGNIN_ERROR =
 export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: GoogleSignInButtonProps) {
   const { googleLogin, isAuthenticated } = useAuth();
   const { addToast } = useToast();
-  const [googleReady, setGoogleReady] = React.useState(false);
+  const [googleReady, setGoogleReady] = React.useState(() => {
+    return typeof window !== 'undefined' && Boolean(window.google?.accounts?.id);
+  });
   const [googleLoadFailed, setGoogleLoadFailed] = React.useState(false);
   const [googleBusy, setGoogleBusy] = React.useState(false);
   const [switchOpen, setSwitchOpen] = React.useState(false);
   const [pendingCredential, setPendingCredential] = React.useState<string | null>(null);
   const [pendingFingerprint, setPendingFingerprint] = React.useState<string | undefined>();
+
+  // Continuously verify GIS readiness on mount/navigation
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.google?.accounts?.id) {
+      setGoogleReady(true);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (window.google?.accounts?.id) {
+        setGoogleReady(true);
+        clearInterval(interval);
+      }
+    }, 100);
+
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      if (!window.google?.accounts?.id) {
+        setGoogleLoadFailed(true);
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, []);
 
   const handleGoogleCredential = React.useCallback(
     async (response: GoogleCredentialResponse) => {
@@ -148,17 +178,17 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleCredential,
       auto_select: false,
-      // Popup UX — real clicks on the GIS iframe (above) open the chooser.
     });
 
     const host = document.getElementById('google-signin-button');
     if (host) {
+      host.innerHTML = '';
       window.google.accounts.id.renderButton(host, {
         theme: 'outline',
         size: 'large',
         shape: 'pill',
         text: 'continue_with',
-        width: 320,
+        width: 380,
         logo_alignment: 'left',
       });
     }
@@ -174,6 +204,17 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [googleLoadFailed]);
 
+  const handleManualClick = () => {
+    if (googleBusy) return;
+    if (typeof window !== 'undefined' && window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.prompt();
+      } catch {}
+    } else if (googleLoadFailed) {
+      onError?.(GOOGLE_SIGNIN_ERROR);
+    }
+  };
+
   if (!GOOGLE_CLIENT_ID) return null;
 
   return (
@@ -184,35 +225,36 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
         onLoad={() => setGoogleReady(true)}
         onError={() => setGoogleLoadFailed(true)}
       />
-      <div className="relative">
-        {/* Decorative shell (underlay, visual only — never intercepts clicks). */}
-        <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 w-full font-medium gap-2.5 rounded-xl border-border/80 bg-background/50 backdrop-blur-sm"
-            tabIndex={-1}
-          >
-            {googleBusy ? (
-              <>
-                <Spinner className="size-4 animate-spin text-primary" />
-                <span className="text-foreground">Signing you in…</span>
-              </>
-            ) : (
-              <>
-                <GoogleG className="size-4 shrink-0" />
-                <span>Continue with Google</span>
-              </>
-            )}
-          </Button>
-        </div>
-        {/* REAL GIS button on top — real user clicks land on the Google iframe
-            itself, so the cross-origin activation is intact in every browser. */}
+      <div className="relative w-full overflow-hidden rounded-xl">
+        {/* Visible decorative shell with click fallback */}
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 w-full font-medium gap-2.5 rounded-xl border-border/80 bg-background/50 backdrop-blur-sm cursor-pointer select-none"
+          disabled={googleBusy}
+          onClick={handleManualClick}
+        >
+          {googleBusy ? (
+            <>
+              <Spinner className="size-4 animate-spin text-primary" />
+              <span className="text-foreground">Signing you in…</span>
+            </>
+          ) : (
+            <>
+              <GoogleG className="size-4 shrink-0" />
+              <span>Continue with Google</span>
+            </>
+          )}
+        </Button>
+
+        {/* REAL GIS button overlay — stretched across full container so all user clicks land on the Google iframe */}
         <div
           id="google-signin-button"
-          className={`relative h-10 w-full overflow-hidden ${
-            googleReady && !googleBusy ? 'opacity-0' : 'pointer-events-none opacity-0'
-          }`}
+          className={`absolute inset-0 z-10 w-full h-full overflow-hidden flex items-center justify-center cursor-pointer ${
+            googleReady && !googleBusy
+              ? 'opacity-[0.0001] pointer-events-auto'
+              : 'pointer-events-none opacity-0'
+          } [&>div]:!w-full [&>div]:!h-full [&_iframe]:!w-full [&_iframe]:!h-full [&_iframe]:!min-w-full [&_iframe]:!min-h-full [&_iframe]:!scale-[1.8] [&_iframe]:!origin-center [&_iframe]:!cursor-pointer`}
           aria-hidden="true"
         />
       </div>
