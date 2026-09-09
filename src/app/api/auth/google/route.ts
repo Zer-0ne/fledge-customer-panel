@@ -18,7 +18,7 @@ import { ApiError } from '@/lib/api/errors';
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { idToken, fingerprint, deviceLabel } = body || {};
+    const { idToken, fingerprint, deviceLabel, allowSwitch } = body || {};
 
     if (!idToken || typeof idToken !== 'string') {
       return NextResponse.json(
@@ -33,6 +33,8 @@ export async function POST(request: Request) {
       body: {
         idToken,
         deviceLabel: deviceLabel || 'Web Browser',
+        portal: 'customer',
+        allowSwitch: allowSwitch === true,
         ...(typeof fingerprint === 'string' && fingerprint ? { fingerprint } : {}),
       },
     });

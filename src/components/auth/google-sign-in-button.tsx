@@ -2,10 +2,18 @@
 
 import * as React from 'react';
 import Script from 'next/script';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useToast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -67,12 +75,14 @@ const GOOGLE_SIGNIN_ERROR =
  * session).
  */
 export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: GoogleSignInButtonProps) {
-  const router = useRouter();
   const { googleLogin, isAuthenticated } = useAuth();
   const { addToast } = useToast();
   const [googleReady, setGoogleReady] = React.useState(false);
   const [googleLoadFailed, setGoogleLoadFailed] = React.useState(false);
   const [googleBusy, setGoogleBusy] = React.useState(false);
+  const [switchOpen, setSwitchOpen] = React.useState(false);
+  const [pendingCredential, setPendingCredential] = React.useState<string | null>(null);
+  const [pendingFingerprint, setPendingFingerprint] = React.useState<string | undefined>();
 
   const handleGoogleCredential = React.useCallback(
     async (response: GoogleCredentialResponse) => {
@@ -80,11 +90,19 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
       if (!response.credential || googleBusy) return;
 
       setGoogleBusy(true);
+      const fingerprint = readGcsrfToken();
       try {
-        await googleLogin(response.credential, readGcsrfToken());
+        await googleLogin(response.credential, fingerprint, false);
         addToast('Success', 'Log in successful!', 'success');
         window.location.href = returnUrl;
       } catch (err: unknown) {
+        const authError = err as Error & { status?: number; code?: string };
+        if (authError.status === 409 || authError.code === 'PARTNER_ACCOUNT_EXISTS') {
+          setPendingCredential(response.credential);
+          setPendingFingerprint(fingerprint);
+          setSwitchOpen(true);
+          return;
+        }
         const message =
           err instanceof Error ? err.message : 'Google sign-in failed. Please try again.';
         onError?.(message);
@@ -95,6 +113,29 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
     },
     [googleLogin, googleBusy, returnUrl, addToast, onError]
   );
+
+  const cancelSwitch = React.useCallback(() => {
+    setSwitchOpen(false);
+    setPendingCredential(null);
+    setPendingFingerprint(undefined);
+  }, []);
+
+  const confirmSwitch = React.useCallback(async () => {
+    if (!pendingCredential || googleBusy) return;
+    setGoogleBusy(true);
+    try {
+      await googleLogin(pendingCredential, pendingFingerprint, true);
+      addToast('Success', 'Account switched to customer.', 'success');
+      window.location.href = returnUrl;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Account switch failed. Please try again.';
+      onError?.(message);
+      addToast('Switch Failed', message, 'error');
+    } finally {
+      setGoogleBusy(false);
+      cancelSwitch();
+    }
+  }, [addToast, cancelSwitch, googleBusy, googleLogin, onError, pendingCredential, pendingFingerprint, returnUrl]);
 
   // Redirect-mode return: gsi/client replays the `#credential` fragment into
   // the callback once initialize() has run — make sure the SDK finished
@@ -149,23 +190,51 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
           <Button
             type="button"
             variant="outline"
-            className="h-9 w-full font-medium gap-2.5"
+            className="h-10 w-full font-medium gap-2.5 rounded-xl border-border/80 bg-background/50 backdrop-blur-sm"
             tabIndex={-1}
           >
-            <GoogleG className="size-4" />
-            <span>Continue with Google</span>
+            {googleBusy ? (
+              <>
+                <Spinner className="size-4 animate-spin text-primary" />
+                <span className="text-foreground">Signing you in…</span>
+              </>
+            ) : (
+              <>
+                <GoogleG className="size-4 shrink-0" />
+                <span>Continue with Google</span>
+              </>
+            )}
           </Button>
         </div>
         {/* REAL GIS button on top — real user clicks land on the Google iframe
             itself, so the cross-origin activation is intact in every browser. */}
         <div
           id="google-signin-button"
-          className={`relative h-9 w-full overflow-hidden ${
+          className={`relative h-10 w-full overflow-hidden ${
             googleReady && !googleBusy ? 'opacity-0' : 'pointer-events-none opacity-0'
           }`}
           aria-hidden="true"
         />
       </div>
+
+      <Dialog open={switchOpen} onOpenChange={(open) => (open ? setSwitchOpen(true) : cancelSwitch())}>
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Switch to a customer account?</DialogTitle>
+            <DialogDescription>
+              This login currently belongs to a partner account. Switching revokes partner access and hides owned properties and listings, while preserving their history.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={cancelSwitch} disabled={googleBusy}>
+              No, stay here
+            </Button>
+            <Button onClick={() => void confirmSwitch()} disabled={googleBusy}>
+              {googleBusy ? 'Switching…' : 'Yes, switch'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

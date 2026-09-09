@@ -8,7 +8,7 @@ import { ApiError } from '@/lib/api/errors';
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { identifier, password, deviceLabel } = body || {};
+    const { identifier, password, deviceLabel, allowSwitch } = body || {};
 
     if (!identifier || typeof identifier !== 'string' || !password || typeof password !== 'string') {
       return NextResponse.json(
@@ -24,6 +24,8 @@ export async function POST(request: Request) {
         identifier,
         password,
         deviceLabel: deviceLabel || 'Web Browser',
+        portal: 'customer',
+        allowSwitch: allowSwitch === true,
       },
     });
 

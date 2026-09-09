@@ -15,7 +15,9 @@ import { PushBootstrap } from '@/components/push/push-bootstrap';
 import { getFirebaseWebConfig } from '@/lib/push/push-config';
 import { AnnouncementProvider } from '@/components/announcements/announcement-provider';
 import { GlobalAnnouncementBanner } from '@/components/announcements/global-announcement-banner';
+import { Suspense } from 'react';
 import { AnnouncementModal } from '@/components/announcements/announcement-modal';
+import { NavigationProgressBar } from '@/components/providers/navigation-progress-bar';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -67,6 +69,9 @@ export default function RootLayout({
           <AuthProvider>
             <AnnouncementProvider>
               <ToastProvider>
+                <Suspense fallback={null}>
+                  <NavigationProgressBar />
+                </Suspense>
                 <SkipToContent />
                 <Header appName={env.NEXT_PUBLIC_APP_NAME} />
                 <GlobalAnnouncementBanner />

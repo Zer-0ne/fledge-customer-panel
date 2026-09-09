@@ -60,7 +60,8 @@ export function AnnouncementModal() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+      style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="announcement-modal-title"

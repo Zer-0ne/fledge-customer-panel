@@ -41,6 +41,43 @@ import { Search, Building2, Users, ArrowRight, Sparkles, Timer } from 'lucide-re
 const NEED_NOW_DEFAULT_LAT = 28.6139; // Delhi fallback
 const NEED_NOW_DEFAULT_LNG = 77.209;
 
+/**
+ * Filter out obviously fake / placeholder roommate-post titles that leak
+ * into the home feed (e.g. dev seed data left in the backend). Only applied
+ * to the home-page teaser — never to the authoritative /roommates browse.
+ *
+ * Rejects:
+ *   - short or non-string titles
+ *   - 6+ identical characters in a row ("hsssssss")
+ *   - mostly a single character repeated with separators ("t t t f t t t t")
+ *   - low vowel ratio (real English/Hindi words have ~30%+ vowels)
+ *   - titles that look like keyboard mash (consonants without a vowel run
+ *     long enough to form a real syllable — e.g. "sakjsdbskdbsb")
+ */
+function isValidRoommatePostTitle(title: unknown): boolean {
+  if (typeof title !== 'string') return false;
+  const t = title.trim();
+  if (t.length < 5) return false;
+  if (/(.)\1{5,}/.test(t)) return false;
+  if (/^([^\w\s])\1*\s?\1*$/i.test(t)) return false;
+
+  // Vowel ratio check: real English titles have >= 20% vowels.
+  const letters = t.toLowerCase().replace(/[^a-z]/g, '');
+  if (letters.length >= 6) {
+    const vowels = (letters.match(/[aeiouy]/g) || []).length;
+    if (vowels / letters.length < 0.18) return false;
+  }
+
+  // Token-length sanity: reject strings made of mostly 1-character tokens,
+  // e.g. "t t t f t t t t u u u. i.xi.x". Real titles have normal word lengths.
+  const tokens = t.split(/\s+/).filter(Boolean);
+  if (tokens.length >= 4) {
+    const shortTokens = tokens.filter((tk) => tk.replace(/[^a-z]/gi, '').length <= 1).length;
+    if (shortTokens / tokens.length > 0.5) return false;
+  }
+  return true;
+}
+
 export default function HomePage() {
   const router = useRouter();
   const [colleges, setColleges] = React.useState<College[]>([]);
@@ -128,7 +165,8 @@ export default function HomePage() {
         }
         if (!cancelled) setRoommateFeedEnabled(true);
         const posts = await fetchRoommatePosts();
-        if (!cancelled) setRoommatePosts(posts.slice(0, cfg.roommateFeedCount || 6));
+        const sanitized = (posts ?? []).filter((post) => isValidRoommatePostTitle(post?.title));
+        if (!cancelled) setRoommatePosts(sanitized.slice(0, cfg.roommateFeedCount || 6));
       } catch {
         if (!cancelled) setRoommateFeedEnabled(false);
       }
@@ -175,15 +213,8 @@ export default function HomePage() {
 
             {/* Main Headline */}
 
-            <h1 className="max-w-4xl text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl sm:leading-tight">
-              <Text3DFlip
-                className="bg-none text-center! justify-center"
-                textClassName="bg-none text-foreground"
-                flipTextClassName="bg-none text-foreground"
-                rotateDirection="top"
-              >
-                Find Your Ideal Flat Near <AnimatedGradientText>Campus</AnimatedGradientText>
-              </Text3DFlip>
+            <h1 className="max-w-4xl text-center text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl sm:leading-tight">
+              Find Your Ideal Flat Near <AnimatedGradientText>Campus</AnimatedGradientText>
             </h1>
             <BlurFade delay={0.15} inView>
               <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">

@@ -28,36 +28,32 @@ import { CheckCircle2, Clock3, Loader2, XCircle, Undo2 } from 'lucide-react';
 
 export function HousingResponseBanner({
   responseId,
-  currentUserId,
   onChanged,
 }: {
   responseId: string;
-  currentUserId?: string;
   onChanged?: () => void;
 }) {
   const [response, setResponse] = React.useState<NeedNowResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [busy, setBusy] = React.useState<string | null>(null);
 
-  const load = React.useCallback(async () => {
-    try {
-      const res = await fetchHousingResponse(responseId);
-      setResponse(res);
-    } catch {
-      setResponse(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [responseId]);
-
   React.useEffect(() => {
     let cancelled = false;
-    void load().then(() => undefined);
+    async function loadInitialResponse() {
+      try {
+        const result = await fetchHousingResponse(responseId);
+        if (!cancelled) setResponse(result);
+      } catch {
+        if (!cancelled) setResponse(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void loadInitialResponse();
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [load]);
+  }, [responseId]);
 
   if (loading) {
     return <Skeleton className="h-14 rounded-xl" />;
@@ -81,7 +77,7 @@ export function HousingResponseBanner({
         await withdrawResponse(response.id);
         showToast({ title: 'Response withdrawn', variant: 'success' });
       }
-      await load();
+      setResponse(await fetchHousingResponse(responseId));
       onChanged?.();
     } catch (err: unknown) {
       showToast({

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import PushForegroundListener from '@/components/push/push-foreground-listener';
 import ContactShareDialogs from '@/components/contact/contact-share-dialogs';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
@@ -37,7 +38,12 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   }
 
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 p-8 text-center animate-in fade-in duration-200">
+        <Spinner className="size-6 animate-spin text-primary" />
+        <p className="text-sm font-medium text-muted-foreground">Redirecting to login…</p>
+      </div>
+    );
   }
 
   return (

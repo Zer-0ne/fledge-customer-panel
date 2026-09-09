@@ -658,12 +658,14 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
         onResponded={() => void load()}
       />
 
-      <MessageDialog
-        open={messageOpen}
-        onOpenChange={setMessageOpen}
-        requestId={request.id}
-        onResponded={() => void load()}
-      />
+      {messageOpen && (
+        <MessageDialog
+          open
+          onOpenChange={setMessageOpen}
+          requestId={request.id}
+          onResponded={() => void load()}
+        />
+      )}
 
       {/* JOIN_SEARCH disabled — not needed yet
       <JoinSearchDialog
@@ -803,7 +805,7 @@ function OfferListingDialog({
         ) : listings.length === 0 && (!roommatePosts || roommatePosts.length === 0) ? (
           <div className="space-y-4">
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
-              You don't have a published listing or roommate post yet — send a direct message instead.
+              You don&apos;t have a published listing or roommate post yet — send a direct message instead.
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-foreground" htmlFor="offer-message-empty">
@@ -942,10 +944,6 @@ function MessageDialog({
   const router = useRouter();
   const [message, setMessage] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
-
-  React.useEffect(() => {
-    if (open) setMessage('');
-  }, [open]);
 
   const handleSubmit = async () => {
     if (!message.trim()) {

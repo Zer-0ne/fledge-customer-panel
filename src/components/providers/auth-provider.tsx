@@ -26,12 +26,12 @@ export interface AuthContextType {
   can: (permission: string) => boolean;
   /** Any-of permission check — `"*"` grants everything. */
   canAny: (permissions: string[]) => boolean;
-  login: (identifier: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string, allowSwitch?: boolean) => Promise<void>;
   signup: (displayName: string, password: string, email?: string, phone?: string) => Promise<void>;
   otpRequest: (identifier: string) => Promise<void>;
   otpLogin: (identifier: string, code: string) => Promise<void>;
   /** Google Sign-In (web): forwards the GIS ID token to /api/auth/google. */
-  googleLogin: (idToken: string, fingerprint?: string) => Promise<void>;
+  googleLogin: (idToken: string, fingerprint?: string, allowSwitch?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
 }
@@ -182,16 +182,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [user?.id]);
 
-  const login = async (identifier: string, password: string) => {
+  const login = async (identifier: string, password: string, allowSwitch = false) => {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier, password }),
+      body: JSON.stringify({ identifier, password, allowSwitch }),
     });
 
     const json = await res.json();
     if (!res.ok) {
-      throw new Error(json.error?.message || 'Login failed');
+      const error = new Error(json.error?.message || 'Login failed') as Error & {
+        status?: number;
+        code?: string;
+      };
+      error.status = res.status;
+      error.code = json.error?.code ?? json.code;
+      throw error;
     }
 
     await refreshSession();
@@ -240,16 +246,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await refreshSession();
   };
 
-  const googleLogin = async (idToken: string, fingerprint?: string) => {
+  const googleLogin = async (
+    idToken: string,
+    fingerprint?: string,
+    allowSwitch = false
+  ) => {
     const res = await fetch('/api/auth/google', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken, fingerprint }),
+      body: JSON.stringify({ idToken, fingerprint, allowSwitch }),
     });
 
     const json = await res.json();
     if (!res.ok) {
-      throw new Error(json.error?.message || 'Google sign-in failed');
+      const error = new Error(json.error?.message || 'Google sign-in failed') as Error & {
+        status?: number;
+        code?: string;
+      };
+      error.status = res.status;
+      error.code = json.error?.code ?? json.code;
+      throw error;
     }
 
     await refreshSession();

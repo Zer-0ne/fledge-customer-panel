@@ -5,23 +5,53 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/providers/auth-provider';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function LoginPage() {
+function LoginContent() {
   const searchParams = useSearchParams();
   const rawReturnUrl = searchParams.get('returnUrl');
   const returnUrl = rawReturnUrl && !rawReturnUrl.startsWith('/login') ? rawReturnUrl : '/dashboard';
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (!isLoading && isAuthenticated) {
       window.location.href = returnUrl;
     }
-  }, [isAuthenticated, returnUrl]);
+  }, [isAuthenticated, isLoading, returnUrl]);
 
   const handleGoogleError = React.useCallback((message: string) => {
     setErrorMsg(message);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-36 rounded-md" />
+          <Skeleton className="h-4 w-64 rounded-md" />
+        </div>
+        <Skeleton className="h-10 w-full rounded-xl" />
+        <Skeleton className="h-20 w-full rounded-xl" />
+        <Skeleton className="h-4 w-48 mx-auto rounded-md" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center py-6 text-center space-y-4 animate-in fade-in duration-300">
+        <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Spinner className="size-6 animate-spin" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold text-foreground">Signing you in…</h2>
+          <p className="text-xs text-muted-foreground">Redirecting to your dashboard, please wait.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -62,5 +92,24 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="space-y-6 animate-pulse">
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-36 rounded-md" />
+            <Skeleton className="h-4 w-64 rounded-md" />
+          </div>
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+        </div>
+      }
+    >
+      <LoginContent />
+    </React.Suspense>
   );
 }
