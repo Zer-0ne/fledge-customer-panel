@@ -214,7 +214,14 @@ export default function HomePage() {
             {/* Main Headline */}
 
             <h1 className="max-w-4xl text-center text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl sm:leading-tight">
-              Find Your Ideal Flat Near <AnimatedGradientText>Campus</AnimatedGradientText>
+              <Text3DFlip
+                className="bg-none text-center! justify-center"
+                textClassName="bg-none text-foreground"
+                flipTextClassName="bg-none text-foreground"
+                rotateDirection="top"
+              >
+                Find Your Ideal Flat Near <AnimatedGradientText>Campus</AnimatedGradientText>
+              </Text3DFlip>
             </h1>
             <BlurFade delay={0.15} inView>
               <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
