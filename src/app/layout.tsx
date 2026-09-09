@@ -79,7 +79,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200">
+      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200 overflow-x-hidden">
         <AnalyticsInit />
         <ServiceWorkerRegister />
         <ThemeProvider>
@@ -93,7 +93,7 @@ export default function RootLayout({
                 <SkipToContent />
                 <Header appName={env.NEXT_PUBLIC_APP_NAME} />
                 <GlobalAnnouncementBanner />
-                <main id="main-content" className="flex-1">
+                <main id="main-content" className="flex-1 w-full min-w-0 overflow-x-clip">
                   {children}
                 </main>
                 <Footer appName={env.NEXT_PUBLIC_APP_NAME} />

@@ -12,8 +12,9 @@
   isolation: isolate;
   transform: translate3d(0, 0, 0.01px);
   display: grid;
+  max-width: 100%;
   border: 1px solid rgb(255 255 255 / 15%);
-  background: var(--card-bg, #120F17);
+  background: var(--card-bg, transparent);
   overflow: visible;
   box-shadow:
     rgba(0, 0, 0, 0.1) 0px 1px 2px,
@@ -22,6 +23,16 @@
     rgba(0, 0, 0, 0.1) 0px 8px 16px,
     rgba(0, 0, 0, 0.1) 0px 16px 32px,
     rgba(0, 0, 0, 0.1) 0px 32px 64px;
+}
+
+@media (max-width: 640px) {
+  .border-glow-card {
+    --glow-padding: 0px;
+    overflow: hidden;
+  }
+  .border-glow-card > .edge-light {
+    inset: 0 !important;
+  }
 }
 
 .border-glow-card::before,

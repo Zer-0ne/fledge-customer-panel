@@ -110,24 +110,24 @@ export default function ProfileSettingsPage() {
         </p>
       </div>
 
-      <BorderGlow className='rounded-2xl!'>
-      <div className="rounded-2xl border border-border/80 bg-card p-5 sm:p-6 space-y-6">
-        <div className="flex items-center gap-4">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+      <BorderGlow className="rounded-2xl! max-w-full">
+      <div className="rounded-2xl border border-border/80 bg-card p-4 sm:p-6 space-y-6 max-w-full min-w-0">
+        <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+          <div className="flex size-12 sm:size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             {data?.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={data.avatarUrl}
                 alt=""
-                className="size-14 rounded-2xl object-cover"
+                className="size-12 sm:size-14 rounded-2xl object-cover"
               />
             ) : (
-              <UserRound className="size-7" />
+              <UserRound className="size-6 sm:size-7" />
             )}
           </div>
-          <div>
-            <h3 className="text-base font-bold text-foreground flex items-center gap-1.5">
-              {data?.displayName || 'User'}
+          <div className="min-w-0 flex-1">
+            <h3 className="text-base font-bold text-foreground flex items-center gap-1.5 truncate">
+              <span className="truncate">{data?.displayName || 'User'}</span>
               <TrustBadge badge={data?.trustBadge} />
             </h3>
             <Badge variant="secondary" className="mt-1">
@@ -136,7 +136,7 @@ export default function ProfileSettingsPage() {
           </div>
         </div>
 
-        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2 border-t border-border/60">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 pt-2 border-t border-border/60 min-w-0">
           <Field label="Display name" value={data?.displayName || '—'} />
           <Field label="Email" value={data?.email || 'Not provided'} />
           <Field label="Phone" value={data?.phone || 'Not provided'} />
@@ -146,9 +146,9 @@ export default function ProfileSettingsPage() {
         </dl>
 
         {/* ── Verification Section ── */}
-        <div className="pt-3 border-t border-border/60 space-y-3">
+        <div className="pt-3 border-t border-border/60 space-y-3 min-w-0">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Verification</p>
-          <div className="grid gap-2">
+          <div className="grid gap-2 min-w-0">
             {(methods === null || methods.phoneOtpEnabled) && (
               <VerifyRow icon="📱" label="Phone" done={!!data?.phoneVerifiedAt} route="/settings/verify/phone" />
             )}
@@ -160,9 +160,9 @@ export default function ProfileSettingsPage() {
         </div>
 
         {data?.bio && (
-          <div className="pt-2 border-t border-border/60 space-y-1">
+          <div className="pt-2 border-t border-border/60 space-y-1 min-w-0">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Bio</p>
-            <p className="text-sm text-foreground leading-relaxed">{data.bio}</p>
+            <p className="text-sm text-foreground leading-relaxed break-words">{data.bio}</p>
           </div>
         )}
         <TrustLevelSection badge={data?.trustBadge} />
@@ -174,20 +174,20 @@ export default function ProfileSettingsPage() {
 
 function VerifyRow({ icon, label, done, route, subtitle }: { icon: string; label: string; done: boolean; route?: string; subtitle?: string }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border/40 bg-card/50 px-3 py-2.5">
-      <div className="flex items-center gap-2.5">
-        <span className="text-base">{icon}</span>
-        <div>
-          <p className="text-sm font-medium">{label}</p>
-          {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+    <div className="flex items-center justify-between rounded-lg border border-border/40 bg-card/50 px-3 py-2.5 min-w-0 gap-2">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        <span className="text-base shrink-0">{icon}</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium truncate">{label}</p>
+          {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
         </div>
       </div>
       {done ? (
-        <span className="text-xs font-medium text-green-500 flex items-center gap-1">✓ Verified</span>
+        <span className="text-xs font-medium text-green-500 flex items-center gap-1 shrink-0">✓ Verified</span>
       ) : route ? (
-        <Link href={route} className="text-xs font-medium text-primary hover:underline">Verify →</Link>
+        <Link href={route} className="text-xs font-medium text-primary hover:underline shrink-0">Verify →</Link>
       ) : (
-        <span className="text-xs text-muted-foreground">—</span>
+        <span className="text-xs text-muted-foreground shrink-0">—</span>
       )}
     </div>
   );
