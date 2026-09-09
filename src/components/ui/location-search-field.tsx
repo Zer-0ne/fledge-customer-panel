@@ -42,8 +42,9 @@ function normalizePlaces(raw: unknown): PlaceResult[] {
   return places
     .filter((p): p is Record<string, unknown> => typeof p === 'object' && p !== null)
     .map((p) => {
-      const lat = typeof p.latitude === 'number' ? p.latitude : parseFloat(String(p.latitude ?? '0'));
-      const lng = typeof p.longitude === 'number' ? p.longitude : parseFloat(String(p.longitude ?? '0'));
+      // API returns `lat`/`lng`; accept `latitude`/`longitude` too for robustness.
+      const lat = typeof p.latitude === 'number' ? p.latitude : parseFloat(String(p.latitude ?? p.lat ?? '0'));
+      const lng = typeof p.longitude === 'number' ? p.longitude : parseFloat(String(p.longitude ?? p.lng ?? '0'));
       const displayName = String(p.displayName ?? p.display_name ?? '');
       const shortLabel = displayName
         .split(',')

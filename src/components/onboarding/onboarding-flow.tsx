@@ -8,11 +8,13 @@ import {
   saveOnboardingResponses,
   skipOnboarding,
 } from '@/lib/api/services/onboarding';
-import type { OnboardingAnswerValue, OnboardingQuestion } from '@/types';
+import type { OnboardingAnswerValue, OnboardingLocationAnswer, OnboardingQuestion } from '@/types';
+import { saveLocation } from '@/lib/location';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/lib/api/errors';
 import { Check, ChevronRight, Sparkles } from 'lucide-react';
 import { SingleChoice, MultiChoice, BooleanChoice, TextChoice } from './question-controls';
+import { CollegePickerField, type CollegeAnswer } from './college-picker-field';
 
 type AnswerMap = Record<string, OnboardingAnswerValue>;
 
@@ -25,6 +27,12 @@ function isAnswered(question: OnboardingQuestion, answers: AnswerMap) {
 }
 
 function QuestionControl({ question, value, onChange }: { question: OnboardingQuestion; value?: OnboardingAnswerValue; onChange: (value: OnboardingAnswerValue) => void }) {
+  // Location questions get the map picker (stores {name, latitude, longitude}
+  // so /search can anchor radius matching on real coordinates) instead of a
+  // free-text field that throws the coordinates away.
+  if (question.code === 'q_college' || question.code === 'q_cities') {
+    return <CollegePickerField value={value as string | CollegeAnswer | null | undefined} onChange={onChange} />;
+  }
   switch (question.type) {
     case 'multi':
       return <MultiChoice question={question} value={value} onChange={onChange} />;
@@ -159,7 +167,19 @@ export function OnboardingFlow() {
   const submitOnce = () =>
     saveOnboardingResponses(
       Object.entries(answers).map(([questionId, answer]) => ({ questionId, answer }))
-    );
+    ).then((status) => {
+      // Persist the picked location for the app-wide GPS → saved → default
+      // fallback chain so /search centers on it before GPS is consulted.
+      const locationAnswer = Object.values(answers).find(
+        (value): value is OnboardingLocationAnswer =>
+          typeof value === 'object' && value !== null && !Array.isArray(value) &&
+          'latitude' in value && 'longitude' in value
+      );
+      if (locationAnswer) {
+        saveLocation(locationAnswer.latitude, locationAnswer.longitude);
+      }
+      return status;
+    });
 
   const submit = async () => {
     if (!requiredDone || submitting) return;

@@ -8,9 +8,14 @@
  */
 
 import { apiFetch } from '@/lib/api/client';
-import { OnboardingOption, OnboardingQuestion, OnboardingStatus } from '@/types';
+import {
+  OnboardingOption,
+  OnboardingQuestion,
+  OnboardingStatus,
+  type OnboardingAnswerValue,
+} from '@/types';
 
-export type OnboardingAnswerValue = string | string[] | boolean;
+export type { OnboardingAnswerValue };
 
 function mapRawToOption(item: unknown): OnboardingOption {
   const raw = (item || {}) as Record<string, unknown>;

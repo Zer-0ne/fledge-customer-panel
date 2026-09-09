@@ -14,6 +14,7 @@ import { InterestDialog } from '@/components/listings/interest-dialog';
 import { fetchListingInterests } from '@/lib/api/services/interests';
 import { useAuth } from '@/components/providers/auth-provider';
 import { LocationMap } from '@/components/map/location-map';
+import { resolveLocation } from '@/lib/location';
 import { Building2, LayoutGrid, Map as MapIcon, Columns } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SponsoredAd } from '@/components/ads/sponsored-ad';
@@ -96,6 +97,21 @@ function SearchContent() {
       }
     }).catch(() => { /* ignore */ });
   }, [filters.campusId, filters.collegeId]);
+
+  // No onboarding pin and no campus selected → fall back to the user's
+  // resolved location (GPS → saved → Delhi default) instead of a hardcoded
+  // Delhi center, so students outside Delhi still see relevant results.
+  const [fallbackCenter, setFallbackCenter] = React.useState<{ lat: number; lng: number } | null>(null);
+  React.useEffect(() => {
+    if (filters.latitude != null || campusCenter) return;
+    let cancelled = false;
+    resolveLocation().then((loc) => {
+      if (!cancelled && loc.source !== 'default') {
+        setFallbackCenter({ lat: loc.latitude, lng: loc.longitude });
+      }
+    }).catch(() => { /* keep hardcoded default */ });
+    return () => { cancelled = true; };
+  }, [filters.latitude, campusCenter]);
 
   // Reset campus center when campus is cleared
   React.useEffect(() => {
@@ -199,8 +215,8 @@ function SearchContent() {
       {viewMode === 'map' && (
         <LocationMap
           listings={listings}
-          centerLat={filters.latitude ?? campusCenter?.lat ?? 28.689}
-          centerLng={filters.longitude ?? campusCenter?.lng ?? 77.2105}
+          centerLat={filters.latitude ?? campusCenter?.lat ?? fallbackCenter?.lat ?? 28.689}
+          centerLng={filters.longitude ?? campusCenter?.lng ?? fallbackCenter?.lng ?? 77.2105}
           radiusMeters={filters.radiusMeters}
           selectedListingId={selectedListingId || undefined}
           onSelectListing={setSelectedListingId}
@@ -233,8 +249,8 @@ function SearchContent() {
           <div className="lg:col-span-5 lg:sticky lg:top-6">
             <LocationMap
               listings={listings}
-              centerLat={filters.latitude ?? campusCenter?.lat ?? 28.689}
-              centerLng={filters.longitude ?? campusCenter?.lng ?? 77.2105}
+              centerLat={filters.latitude ?? campusCenter?.lat ?? fallbackCenter?.lat ?? 28.689}
+              centerLng={filters.longitude ?? campusCenter?.lng ?? fallbackCenter?.lng ?? 77.2105}
               radiusMeters={filters.radiusMeters}
               selectedListingId={selectedListingId || undefined}
               onSelectListing={setSelectedListingId}

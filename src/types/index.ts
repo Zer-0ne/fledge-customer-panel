@@ -56,7 +56,18 @@ export interface BootstrapResponse {
 
 // Onboarding (post-login question flow)
 export type OnboardingQuestionType = 'single' | 'multi' | 'boolean' | 'text';
-export type OnboardingAnswerValue = string | string[] | boolean;
+/** Location answers store structured coordinates for radius-based matching. */
+export interface OnboardingLocationAnswer {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+export type OnboardingAnswerValue =
+  | string
+  | string[]
+  | boolean
+  | OnboardingLocationAnswer;
 
 export interface OnboardingOption {
   value: string;
