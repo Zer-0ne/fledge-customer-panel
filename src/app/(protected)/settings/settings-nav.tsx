@@ -4,10 +4,11 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { User, MonitorSmartphone, Bell, Trash2, ShieldCheck } from 'lucide-react';
+import { User, MonitorSmartphone, Bell, Trash2, ShieldCheck, Palette } from 'lucide-react';
 
 const SETTINGS_NAV = [
   { href: '/settings/profile', label: 'Profile', icon: User },
+  { href: '/settings/appearance', label: 'Appearance & Theme', icon: Palette },
   { href: '/settings/contact-privacy', label: 'Contact Preferences', icon: ShieldCheck },
   { href: '/settings/sessions', label: 'Sessions', icon: MonitorSmartphone },
   { href: '/settings/notifications', label: 'Notifications', icon: Bell },

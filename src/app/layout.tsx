@@ -49,6 +49,21 @@ export const viewport: Viewport = {
   themeColor: '#0c0e12',
 };
 
+const themeScript = `
+  try {
+    const theme = localStorage.getItem('theme') || 'system';
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+
+    const color = localStorage.getItem('theme-color') || 'indigo';
+    document.documentElement.setAttribute('data-theme-color', color);
+
+    const fontScale = localStorage.getItem('theme-font-scale') || 'normal';
+    document.documentElement.setAttribute('data-font-scale', fontScale);
+  } catch (e) {}
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -61,7 +76,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200">
         <AnalyticsInit />
         <ServiceWorkerRegister />
         <ThemeProvider>
