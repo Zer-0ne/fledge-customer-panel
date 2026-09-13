@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { showToast } from '@/components/ui/toast';
+import { useAuth } from '@/components/providers/auth-provider';
 import { createDonationOrder } from '@/lib/api/donations';
 import { openDonationCheckout } from '@/lib/donations/checkout';
 import {
@@ -29,6 +30,7 @@ function inr(paise: number): string {
 }
 
 export default function DonatePage() {
+  const { isAuthenticated } = useAuth();
   const [config, setConfig] = React.useState<DonationConfigSummary | null>(null);
   const [supporters, setSupporters] = React.useState<SupporterEntry[]>([]);
   const [amount, setAmount] = React.useState<number | null>(null);
@@ -94,11 +96,14 @@ export default function DonatePage() {
         showToast({
           type: 'success',
           title: 'Thank you for your support!',
-          description: `${frequency === 'monthly' ? 'Monthly' : 'One-time'} contribution of ₹${selected.toLocaleString('en-IN')} received.`,
+          description: `${frequency === 'monthly' ? 'Monthly' : 'One-time'} contribution of ₹${selected.toLocaleString('en-IN')} received.${
+            isAuthenticated ? '' : ' Guest donations stay private and are not listed on the supporters wall.'
+          }`,
         });
         await loadConfig();
-        // Show consent modal so user can opt-in to the supporters wall
-        if (donationId) {
+        // Consent modal so signed-in donors can opt in to the supporters wall.
+        // Guest donations have no account to attach visibility preferences to.
+        if (donationId && isAuthenticated) {
           setConsentDonationId(donationId);
           setConsentPublic(true);
           setConsentShowAmount(false);
@@ -291,6 +296,15 @@ export default function DonatePage() {
         <p className="mt-3 text-center text-xs text-muted-foreground">
           Secured by Razorpay · 100% of donations go toward platform running costs.
         </p>
+        {!isAuthenticated && (
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            You are donating as a guest.{' '}
+            <Link href="/login?returnUrl=%2Fdonate" className="font-medium text-primary hover:underline">
+              Sign in
+            </Link>{' '}
+            first if you want the option to appear on the supporters wall.
+          </p>
+        )}
       </div>
 
       {/* Recent Supporters wall — only opt-in entries, projected server-side */}

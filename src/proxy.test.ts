@@ -26,6 +26,13 @@ describe("decideProxyAction — customer panel route protection", () => {
       expect(decideProxyAction({ pathname: "/contact", isAuthenticated: false })).toEqual({ type: "pass" });
       expect(decideProxyAction({ pathname: "/privacy", isAuthenticated: false })).toEqual({ type: "pass" });
       expect(decideProxyAction({ pathname: "/terms", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/pricing", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/refunds", isAuthenticated: false })).toEqual({ type: "pass" });
+    });
+
+    it("passes the public donation page so guests can contribute", () => {
+      expect(decideProxyAction({ pathname: "/donate", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/donate", isAuthenticated: true })).toEqual({ type: "pass" });
     });
   });
 
@@ -48,7 +55,6 @@ describe("decideProxyAction — customer panel route protection", () => {
       expect(decideProxyAction({ pathname: "/properties/abc-123", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
       expect(decideProxyAction({ pathname: "/roommates", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
       expect(decideProxyAction({ pathname: "/users/abc-123", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
-      expect(decideProxyAction({ pathname: "/donate", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
     });
 
     it("passes authenticated users everywhere", () => {

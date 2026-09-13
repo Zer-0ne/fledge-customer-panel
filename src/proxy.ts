@@ -3,14 +3,16 @@
  * formerly `middleware`).
  *
  * Cheap, fast gating on every matching request (including client-side RSC
- * navigations and prefetches): the whole customer panel is login-gated.
+ * navigations and prefetches): the customer panel is login-gated, except the
+ * public pages listed below.
  *   - No `cp_access_token` cookie → immediate redirect to /login. The home
  *     page is protected too — no bootstrap/data API call ever fires without
  *     a session cookie.
  *   - Public exceptions: auth pages (/login /signup), the token-based
  *     contact-approval email deep link, the static ad-style design preview,
- *     the offline fallback page (/offline), and company/legal pages
- *     (/about /faq /contact /privacy /terms).
+ *     the offline fallback page (/offline), company/legal pages
+ *     (/about /faq /contact /privacy /terms /pricing /refunds), and the
+ *     donation page (/donate) so guests can contribute without an account.
  *
  * This is NOT an authorization decision — the backend's 401/403 always win
  * (the `(protected)` layout + auth provider handle expired sessions).
@@ -21,7 +23,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
 
 const PUBLIC_PATH_PATTERN =
-  /^\/(login|signup|contact-approval|ad-style-preview|offline|about|faq|contact|privacy|terms)(\/|$)/;
+  /^\/(login|signup|contact-approval|ad-style-preview|offline|about|faq|contact|privacy|terms|pricing|refunds|donate)(\/|$)/;
 
 export type ProxyDecision =
   | { type: "pass" }

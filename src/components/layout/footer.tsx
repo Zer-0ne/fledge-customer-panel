@@ -12,6 +12,7 @@ const PRODUCT_LINKS = [
 
 const COMPANY_LINKS = [
   { href: '/about', label: 'About' },
+  { href: '/pricing', label: 'Pricing' },
   { href: '/faq', label: 'FAQ' },
   { href: '/contact', label: 'Contact us' },
 ];
@@ -19,6 +20,7 @@ const COMPANY_LINKS = [
 const LEGAL_LINKS = [
   { href: '/privacy', label: 'Privacy Policy' },
   { href: '/terms', label: 'Terms of Service' },
+  { href: '/refunds', label: 'Cancellation & Refunds' },
 ];
 
 export function Footer({ appName = 'Fledge' }: { appName?: string }) {

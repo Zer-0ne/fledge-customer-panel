@@ -105,8 +105,16 @@ export default function TermsPage() {
           Sponsored placements are labelled and do not guarantee quality or availability. Payment
           checkout may be provided by Razorpay or another disclosed provider. Any amount, recurrence,
           cancellation, refund, and visibility choice shown before confirmation forms part of that
-          transaction. A donation supports Fledge; it does not buy ranking, verification, priority
-          support, or a better housing outcome.
+          transaction. See{' '}
+          <Link href="/pricing" className="font-medium text-primary hover:underline">
+            Pricing
+          </Link>{' '}
+          and{' '}
+          <Link href="/refunds" className="font-medium text-primary hover:underline">
+            Cancellation &amp; Refunds
+          </Link>{' '}
+          for the current details. A donation supports Fledge; it does not buy ranking, verification,
+          priority support, or a better housing outcome.
         </p>
       </section>
 

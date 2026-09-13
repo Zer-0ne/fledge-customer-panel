@@ -11,7 +11,7 @@ const BASE = process.env.E2E_BASE_URL ?? "http://127.0.0.1:4200";
 test.describe("customer-panel — public surfaces", () => {
   test("public marketing pages load with no auth", async ({ page, context }) => {
     await context.clearCookies();
-    for (const path of ["/", "/donate", "/login", "/signup", "/faq", "/about", "/privacy", "/terms", "/search", "/roommates"]) {
+    for (const path of ["/", "/donate", "/pricing", "/refunds", "/login", "/signup", "/faq", "/about", "/privacy", "/terms", "/search", "/roommates"]) {
       await page.goto(path);
       const bodyText = await page.locator("body").innerText();
       expect(bodyText.length, `body text length for ${path}`).toBeGreaterThan(20);
