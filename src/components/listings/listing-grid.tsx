@@ -102,6 +102,7 @@ export function ListingGrid({
           carousel
           intervalMs={4500}
           tierFilter={tier}
+          page={n === 0 ? 1 : 2}
           className={tier === 'standard' ? 'standard-promotion' : undefined}
         />
       );

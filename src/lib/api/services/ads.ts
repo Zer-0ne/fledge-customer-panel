@@ -21,6 +21,8 @@ export interface SelectAdParams {
   campusId?: string;
   /** Restrict to specific priority tiers (each carousel receives one type) */
   tiers?: string[];
+  /** Results page feeding this slot — page 1 is eligible for first-page add-ons */
+  page?: number;
 }
 
 const VALID_PLACEMENTS: AdPlacement[] = ['home', 'search', 'listing'];
@@ -121,6 +123,9 @@ export function normalizeAdSelection(res: unknown): AdCreative | null {
         : typeof creativeRaw.tier === 'string'
           ? creativeRaw.tier
           : null,
+    // Add-on delivery: the backend flags the top slot and the paid partner badge.
+    pinned: creativeRaw.pinned === true || payload.pinned === true,
+    advertiserBadge: creativeRaw.advertiserBadge === 'PREMIUM' || payload.advertiserBadge === 'PREMIUM' ? 'PREMIUM' : null,
     featureChips: Array.isArray(creativeRaw.featureChips)
       ? creativeRaw.featureChips.filter((c): c is string => typeof c === 'string' && c.trim().length > 0).slice(0, 6)
       : [],
@@ -220,6 +225,7 @@ export function selectAds(params: SelectAdParams & { count?: number }): Promise<
     params.campusId ?? null,
     params.tiers ?? null,
     params.count ?? null,
+    params.page ?? null,
   ]);
 
   const cached = selectRequestCache.get(key);
@@ -253,6 +259,7 @@ async function doSelectAds(params: SelectAdParams & { count?: number }): Promise
     if (params.campusId) body.campusId = params.campusId;
     if (params.tiers && params.tiers.length > 0) body.tiers = params.tiers;
     if (params.count) body.count = params.count;
+    if (params.page) body.page = params.page;
 
     const res = await apiFetch<unknown>({
       path: '/api/v1/ads/select',

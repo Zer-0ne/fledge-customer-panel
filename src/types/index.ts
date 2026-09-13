@@ -546,6 +546,10 @@ export interface AdCreative {
   sponsorName?: string | null;
   /** Priority tier — BOOST/PREMIUM slides hold longer in carousels */
   priorityTier?: string | null;
+  /** Purchased add-on (pin / carousel top slot): the backend put this creative first. */
+  pinned?: boolean;
+  /** Purchased add-on (premium partner badge): show the gold partner chip. */
+  advertiserBadge?: 'PREMIUM' | null;
   /** Feature chips shown on MAXIMUM cards (partner-selected amenity tags) */
   featureChips?: string[];
   /** Signed token for impression/click events */

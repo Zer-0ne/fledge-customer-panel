@@ -35,6 +35,8 @@ export interface SponsoredAdProps {
   carousel?: boolean;
   /** Restrict which tiers fill the slot: all | maximum | premium | boost | standard */
   tierFilter?: TierFilter;
+  /** Results page feeding this slot — page 1 is eligible for first-page add-ons */
+  page?: number;
   /** Base autoplay delay per slide in ms. BOOST/PREMIUM slides hold ~1.4-1.8x longer. */
   intervalMs?: number;
 }
@@ -57,8 +59,9 @@ const TIER_RANK: Record<string, number> = {
 
 const tierRank = (tier?: string | null) => TIER_RANK[tier ?? 'STANDARD'] ?? 0;
 
-/** Sort ads by premiumness (descending) — stable, so equal tiers keep API order. */
-const byPremiumness = (a: AdCreative, b: AdCreative) => tierRank(b.priorityTier) - tierRank(a.priorityTier);
+/** Sort ads by premiumness (descending) — pinned (paid top-slot add-on) always first. */
+const byPremiumness = (a: AdCreative, b: AdCreative) =>
+  Number(b.pinned === true) - Number(a.pinned === true) || tierRank(b.priorityTier) - tierRank(a.priorityTier);
 
 /** Customer-facing badge per tier — no literal tier names (BOOST/PREMIUM text is hidden). */
 const TIER_BADGE: Record<string, string> = {
@@ -132,6 +135,21 @@ function GlassBadge({ children, gold = false }: { children: React.ReactNode; gol
   );
 }
 
+/** Paid add-on badge (PREMIUM_BADGE_30D) — shown on every card variant while active. */
+function PartnerBadge({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-sm border border-[#e9c349]/40 bg-[#e9c349]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#e9c349] backdrop-blur-lg',
+        className
+      )}
+    >
+      <Sparkles className="size-3" aria-hidden="true" />
+      Premium Partner
+    </span>
+  );
+}
+
 /** STANDARD — compact native glass card */
 function StandardCard({ ad }: { ad: AdCreative }) {
   return (
@@ -141,6 +159,7 @@ function StandardCard({ ad }: { ad: AdCreative }) {
           <span className="rounded border border-white/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/60">
             Sponsored
           </span>
+          {ad.advertiserBadge === 'PREMIUM' && <PartnerBadge className="border-white/20 bg-white/[0.08] text-white/80" />}
           {ad.sponsorName && (
             <span className="font-mono-jb text-[11px] text-white/70">{ad.sponsorName}</span>
           )}
@@ -190,6 +209,7 @@ function BoostCard({ ad }: { ad: AdCreative }) {
           <span className="rounded-sm border border-white/10 bg-black/60 px-3 py-1 text-[10px] font-medium text-white/80 backdrop-blur-md">
             Sponsored
           </span>
+          {ad.advertiserBadge === 'PREMIUM' && <PartnerBadge />}
         </div>
       </div>
 
@@ -257,7 +277,12 @@ function HeroCard({ ad, tier }: { ad: AdCreative; tier: string }) {
 
         {/* top row — badge + wordmark */}
         <div className="absolute left-6 right-6 top-6 flex items-center justify-between">
-          <GlassBadge gold={isMax}>{TIER_BADGE[tier] ?? 'Sponsored'}</GlassBadge>
+          <div className="flex items-center gap-2">
+            {!(ad.advertiserBadge === 'PREMIUM' && (TIER_BADGE[tier] ?? 'Sponsored') === 'Premium Partner') && (
+              <GlassBadge gold={isMax}>{TIER_BADGE[tier] ?? 'Sponsored'}</GlassBadge>
+            )}
+            {ad.advertiserBadge === 'PREMIUM' && <GlassBadge gold>{'✦'} Premium Partner</GlassBadge>}
+          </div>
           {ad.sponsorName && (
             <span className="font-mono-jb text-[10px] uppercase tracking-widest text-white/40">
               {ad.sponsorName}
@@ -514,6 +539,7 @@ export function SponsoredAd({
   className,
   carousel = false,
   tierFilter = 'all',
+  page,
   intervalMs = 4500,
 }: SponsoredAdProps) {
   const [ads, setAds] = React.useState<AdCreative[]>([]);
@@ -540,7 +566,7 @@ export function SponsoredAd({
     let cancelled = false;
 
     // Ask for up to 12 so types with more than 3 ads can be chunked 3-per-carousel.
-    selectAds({ placement, collegeId, campusId, count: 12, tiers }).then((list) => {
+    selectAds({ placement, collegeId, campusId, count: 12, tiers, page }).then((list) => {
       if (cancelled) return;
       const visible = filterTiers(list).sort(byPremiumness);
       setAds(carousel ? visible : visible.slice(0, 1));
@@ -549,7 +575,7 @@ export function SponsoredAd({
     return () => {
       cancelled = true;
     };
-  }, [placement, collegeId, campusId, carousel, filterTiers, tiers]);
+  }, [placement, collegeId, campusId, carousel, filterTiers, tiers, page]);
 
   const handleClick = async (item: AdCreative) => {
     if (!item || isClicking) return;
