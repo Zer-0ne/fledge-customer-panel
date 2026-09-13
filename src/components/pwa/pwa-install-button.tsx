@@ -4,6 +4,8 @@ import * as React from 'react';
 import { Download } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { BrandLogo } from '@/components/brand/brand-logo';
+import { BRAND_LOGOS } from '@/lib/brand/logos';
 import {
   Dialog,
   DialogContent,
@@ -122,6 +124,22 @@ export function PwaInstallButton() {
             <DialogTitle>{guidance.title}</DialogTitle>
             <DialogDescription>{guidance.description}</DialogDescription>
           </DialogHeader>
+
+          {guidance.brands.length > 0 ? (
+            /* Brand marks for the browser/platform the steps apply to — the
+               copies come from svgl.app, see docs/svgl-icon-audit.md. */
+            <div className="flex items-center gap-3">
+              {guidance.brands.map((brand, index) => (
+                <span
+                  key={brand}
+                  className="animate-brand-pop flex size-11 items-center justify-center rounded-xl border border-border bg-muted/40 shadow-xs"
+                  style={{ animationDelay: `${index * 90}ms` }}
+                >
+                  <BrandLogo brand={brand} size="lg" title={BRAND_LOGOS[brand].label} />
+                </span>
+              ))}
+            </div>
+          ) : null}
 
           {guidance.steps.length > 0 ? (
             <ol className="space-y-2 pl-5 text-sm text-foreground">

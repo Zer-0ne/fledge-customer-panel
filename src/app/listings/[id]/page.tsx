@@ -9,6 +9,7 @@ import { fetchListingDetail, fetchPropertyDetail, toggleListingFavorite } from '
 import { fetchListingInterests } from '@/lib/api/services/interests';
 import { formatPaiseToINR, formatDate } from '@/lib/formatting';
 import { InterestDialog } from '@/components/listings/interest-dialog';
+import { BrandLogo } from '@/components/brand/brand-logo';
 import { LocationMap } from '@/components/map/location-map';
 import { SponsoredAd } from '@/components/ads/sponsored-ad';
 import { Button } from '@/components/ui/button';
@@ -161,6 +162,17 @@ export default function ListingDetailPage() {
     }
   };
 
+  /** WhatsApp deep link — the channel most renters actually use to pass a flat around. */
+  const handleWhatsAppShare = () => {
+    const url = window.location.href;
+    const title = listing?.title || 'Flat Listing';
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(`${title} — ${url}`)}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -226,6 +238,20 @@ export default function ListingDetailPage() {
           >
             <Share2 className="size-4" />
             Share
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleWhatsAppShare}
+            aria-label="Share on WhatsApp"
+            className="group gap-1.5 rounded-full"
+          >
+            <BrandLogo
+              brand="whatsapp"
+              size="sm"
+              className="group-hover:animate-brand-wiggle"
+            />
+            <span className="hidden sm:inline">WhatsApp</span>
           </Button>
           <Button
             variant="outline"

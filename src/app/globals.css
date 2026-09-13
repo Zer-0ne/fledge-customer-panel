@@ -97,6 +97,31 @@
   to {
     background-position: var(--bg-size, 300%) 0;
     }
+  }
+  /* Brand marks (svgl) — entrance pop for logo rows + hover nudge on CTAs.
+     Transform/opacity only; both are disabled under prefers-reduced-motion. */
+  --animate-brand-pop: brand-pop 0.45s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+  --animate-brand-wiggle: brand-wiggle 0.55s ease-in-out;
+  @keyframes brand-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.72);
+    }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes brand-wiggle {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+    }
+  25% {
+    transform: rotate(-10deg) scale(1.08);
+    }
+  70% {
+    transform: rotate(10deg) scale(1.08);
+    }
   }}
 
 :root {
@@ -375,6 +400,11 @@ html[data-font-scale="large"] {
 
 @media (prefers-reduced-motion: reduce) {
   .ad-max-spin {
+    animation: none;
+  }
+  /* Brand marks (svgl): keep them visible, drop the motion — matches the
+     `animate-brand-*` utilities and their variant forms (`group-hover:…`). */
+  [class*='animate-brand-'] {
     animation: none;
   }
 }

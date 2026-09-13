@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { ArrowUpRight, ChevronLeft, ChevronRight, MessageCircle, Phone, Sparkles } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, Phone, Sparkles } from 'lucide-react';
+import { BrandLogo } from '@/components/brand/brand-logo';
 import { cn } from '@/lib/utils';
 import { AdCreative, AdPlacement } from '@/types';
 import {
@@ -94,7 +95,12 @@ function AdCta({ ad, className }: { ad: AdCreative; className?: string }) {
   if (ad.contactType === 'WHATSAPP') {
     return (
       <span className={cls}>
-        Chat on WhatsApp <MessageCircle className="size-4" />
+        Chat on WhatsApp{' '}
+        <BrandLogo
+          brand="whatsapp"
+          size="sm"
+          className="group-hover:animate-brand-wiggle"
+        />
       </span>
     );
   }
