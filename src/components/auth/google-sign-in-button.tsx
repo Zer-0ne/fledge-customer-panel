@@ -55,6 +55,12 @@ interface GoogleSignInButtonProps {
   returnUrl?: string;
   /** Called with the human-readable message when sign-in fails. */
   onError?: (message: string) => void;
+  /**
+   * Skip One Tap entirely and remember the opt-out (`disableAutoSelect`).
+   * Set when the user just logged out (`/login?loggedOut=1`) so One Tap's
+   * returning-user flow can't silently sign them back in.
+   */
+  suppressAutoSignIn?: boolean;
 }
 
 const GOOGLE_SIGNIN_ERROR =
@@ -74,7 +80,7 @@ const GOOGLE_SIGNIN_ERROR =
  * windows). The token still goes to `/api/auth/google` (same HttpOnly cookie
  * session).
  */
-export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ returnUrl = '/dashboard', onError, suppressAutoSignIn = false }: GoogleSignInButtonProps) {
   const { googleLogin, isAuthenticated } = useAuth();
   const { addToast } = useToast();
   const [googleReady, setGoogleReady] = React.useState(() => {
@@ -193,11 +199,20 @@ export function GoogleSignInButton({ returnUrl = '/dashboard', onError }: Google
       });
     }
 
+    if (suppressAutoSignIn) {
+      // Just logged out: persist the opt-out and never show One Tap here —
+      // otherwise the returning-user prompt can silently restore the session.
+      try {
+        window.google.accounts.id.disableAutoSelect();
+      } catch {}
+      return;
+    }
+
     // Optional One Tap — Google applies its own frequency capping.
     if (!isAuthenticated) {
       window.google.accounts.id.prompt();
     }
-  }, [googleReady, handleGoogleCredential, isAuthenticated]);
+  }, [googleReady, handleGoogleCredential, isAuthenticated, suppressAutoSignIn]);
 
   React.useEffect(() => {
     if (googleLoadFailed) onError?.(GOOGLE_SIGNIN_ERROR);

@@ -42,6 +42,10 @@ export const CUSTOMER_ALLOWLIST: AllowlistRule[] = [
   { method: 'GET', pattern: /^\/api\/v1\/users\/me$/ },
   { method: 'DELETE', pattern: /^\/api\/v1\/users\/me$/ },
 
+  // Trust score & badges (dashboard trust card)
+  { method: 'GET', pattern: /^\/api\/v1\/trust\/me$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/trust\/me\/badges$/ },
+
   // Favorites & Listing Interests
   { method: 'GET', pattern: /^\/api\/v1\/favorites$/ },
   { method: 'POST', pattern: /^\/api\/v1\/listings\/[^\/]+\/favorite$/ },

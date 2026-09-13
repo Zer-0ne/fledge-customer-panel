@@ -35,6 +35,7 @@ export function mapRawToTrustScore(item: unknown): TrustScore {
       tenantVerified: num(breakdownRaw.tenantVerified),
       studentVerified: num(breakdownRaw.studentVerified),
       accountAge: num(breakdownRaw.accountAge),
+      spamStrikes: num(breakdownRaw.spamStrikes),
     },
     recomputedAt: String(raw.recomputedAt || raw.updatedAt || new Date().toISOString()),
   };

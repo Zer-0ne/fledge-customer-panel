@@ -35,7 +35,7 @@ export default function AccountSettingsPage() {
       } catch {
         // Session may already be invalidated
       }
-      router.replace('/login');
+      router.replace('/login?loggedOut=1');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Could not delete account.';
       showToast({

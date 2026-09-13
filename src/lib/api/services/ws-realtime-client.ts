@@ -13,6 +13,7 @@ import {
   parseConversationUpdated,
   parseNotificationCreated,
 } from './chat-socket';
+import { guardedAuthFetch } from '@/lib/auth/logout-guard';
 import type { ChatMessage } from '@/types';
 import {
   markMessageDelivered,
@@ -49,7 +50,7 @@ function wsUrl(token: string, routedUrl?: string): string {
 }
 
 async function fetchSocketRoute(fallbackDownstreamOnly: boolean): Promise<RealtimeRoute> {
-  const response = await fetch('/api/auth/socket-token', {
+  const response = await guardedAuthFetch('/api/auth/socket-token', {
     method: 'POST',
     cache: 'no-store',
   });

@@ -63,14 +63,15 @@ function getInitialTheme(): Theme {
 }
 
 function getInitialColorTheme(): ColorTheme {
-  if (typeof window === 'undefined') return 'indigo';
+  // Default accent palette = Monochrome Slate.
+  if (typeof window === 'undefined') return 'slate';
   try {
     const stored = localStorage.getItem(COLOR_STORAGE_KEY) as ColorTheme | null;
     if (stored && ['indigo', 'blue', 'emerald', 'violet', 'amber', 'rose', 'slate'].includes(stored)) {
       return stored;
     }
   } catch {}
-  return 'indigo';
+  return 'slate';
 }
 
 function getInitialFontScale(): FontScale {

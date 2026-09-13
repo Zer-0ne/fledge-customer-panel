@@ -12,6 +12,8 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const rawReturnUrl = searchParams.get('returnUrl');
   const returnUrl = rawReturnUrl && !rawReturnUrl.startsWith('/login') ? rawReturnUrl : '/dashboard';
+  // Just logged out → suppress Google One Tap auto sign-in for this visit.
+  const loggedOut = searchParams.get('loggedOut') === '1';
   const { isAuthenticated, isLoading } = useAuth();
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
@@ -68,7 +70,7 @@ function LoginContent() {
         </div>
       )}
 
-      <GoogleSignInButton returnUrl={returnUrl} onError={handleGoogleError} />
+      <GoogleSignInButton returnUrl={returnUrl} onError={handleGoogleError} suppressAutoSignIn={loggedOut} />
 
       <div className="rounded-xl border border-border/70 bg-muted/40 p-3 text-left">
         <p className="text-[11px] leading-relaxed text-muted-foreground">

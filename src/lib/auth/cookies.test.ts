@@ -3,8 +3,11 @@ import {
   setAuthCookies,
   clearAuthCookies,
   getAuthCookies,
+  setLoggedOutMarker,
+  isLoggedOutMarked,
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
+  LOGGED_OUT_COOKIE,
 } from './cookies';
 
 describe('Cookie Management', () => {
@@ -82,5 +85,41 @@ describe('Cookie Management', () => {
     expect(mockCookieStore.delete).toHaveBeenCalledWith(ACCESS_TOKEN_COOKIE);
     expect(mockCookieStore.delete).toHaveBeenCalledWith(REFRESH_TOKEN_COOKIE);
     expect(store.has(ACCESS_TOKEN_COOKIE)).toBe(false);
+  });
+
+  it('sets and detects the logged-out marker', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = new Map<string, { name: string; value: string; options?: any }>();
+    const mockCookieStore = {
+      set: vi.fn((name, value, options) => {
+        store.set(name, { name, value, options });
+      }),
+      get: vi.fn((name) => store.get(name)),
+      delete: vi.fn((name) => store.delete(name)),
+    };
+
+    expect(isLoggedOutMarked(mockCookieStore)).toBe(false);
+    setLoggedOutMarker(mockCookieStore);
+    expect(isLoggedOutMarked(mockCookieStore)).toBe(true);
+    expect(store.get(LOGGED_OUT_COOKIE)?.options.maxAge).toBeGreaterThan(0);
+  });
+
+  it('a fresh session (setAuthCookies) clears the logged-out marker', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = new Map<string, { name: string; value: string; options?: any }>();
+    const mockCookieStore = {
+      set: vi.fn((name, value, options) => {
+        store.set(name, { name, value, options });
+      }),
+      get: vi.fn((name) => store.get(name)),
+      delete: vi.fn((name) => store.delete(name)),
+    };
+
+    setLoggedOutMarker(mockCookieStore);
+    expect(isLoggedOutMarked(mockCookieStore)).toBe(true);
+
+    setAuthCookies(mockCookieStore, { accessToken: 'acc_new', refreshToken: 'ref_new' });
+    expect(isLoggedOutMarked(mockCookieStore)).toBe(false);
+    expect(store.get(ACCESS_TOKEN_COOKIE)?.value).toBe('acc_new');
   });
 });

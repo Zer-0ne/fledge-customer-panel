@@ -8,6 +8,7 @@ import {
 } from '@/lib/api/services/chat-socket';
 import { fetchConversations } from '@/lib/api/services/chat';
 import { showToast } from '@/components/ui/toast';
+import { beginLogout, endLogout } from '@/lib/auth/logout-guard';
 
 export interface AuthContextType {
   user: User | null;
@@ -63,6 +64,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const json = await res.json();
         const payload: BootstrapResponse = json.data || json;
         if (payload?.user) {
+          // A live session supersedes any earlier logout — release the guard
+          // so socket refreshes resume (covers client-side login paths that
+          // don't reload the document).
+          endLogout();
           setUser(payload.user);
           // Backend bootstrap returns `capabilities` (Phase 6); tolerate the
           // legacy `permissions` alias. Never pass `undefined` — consumers
@@ -272,6 +277,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    // Stop in-flight socket-token refreshes FIRST: a response landing after
+    // the logout response would re-mint the auth cookies and the login page
+    // would silently restore the session ("logout logs me back in").
+    beginLogout();
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } finally {

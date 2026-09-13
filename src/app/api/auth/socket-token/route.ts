@@ -15,23 +15,11 @@ import {
   setAuthCookies,
   clearAuthCookies,
   getAuthCookies,
+  isLoggedOutMarked,
   ACCESS_TOKEN_MAX_AGE,
 } from '@/lib/auth/cookies';
+import { expiresInFromJwt } from '@/lib/auth/jwt';
 import { env } from '@/lib/env';
-
-function expiresInFromJwt(token: string): number {
-  try {
-    const payload = token.split('.')[1];
-    if (!payload) return 0;
-    const json = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as {
-      exp?: number;
-    };
-    if (typeof json.exp !== 'number') return ACCESS_TOKEN_MAX_AGE;
-    return Math.max(0, json.exp - Math.floor(Date.now() / 1000));
-  } catch {
-    return 0;
-  }
-}
 
 async function probeAccessToken(accessToken: string): Promise<boolean> {
   try {
@@ -73,12 +61,28 @@ async function rotate(
 
 export async function POST() {
   const cookieStore = await cookies();
+
+  // Freshly logged out: never mint a session from a racing refresh response.
+  if (isLoggedOutMarked(cookieStore)) {
+    clearAuthCookies(cookieStore);
+    return NextResponse.json(
+      { error: { message: 'Logged out', status: 401 } },
+      { status: 401, headers: { 'Cache-Control': 'no-store' } }
+    );
+  }
+
   const { accessToken: initialAccessToken, refreshToken } = getAuthCookies(cookieStore);
   let accessToken = initialAccessToken;
 
+  // Opaque/unparseable tokens fall back to the max-age probe (preserved
+  // behavior); ≤ 60s remaining refreshes proactively.
+  const accessTtlSeconds = accessToken
+    ? expiresInFromJwt(accessToken) ?? ACCESS_TOKEN_MAX_AGE
+    : 0;
+
   const needsRefresh =
     !accessToken ||
-    expiresInFromJwt(accessToken) < 60 ||
+    accessTtlSeconds < 60 ||
     !(await probeAccessToken(accessToken));
 
   if (needsRefresh) {
@@ -129,7 +133,7 @@ export async function POST() {
     {
       ...route,
       token: accessToken,
-      expiresIn: expiresInFromJwt(accessToken) || ACCESS_TOKEN_MAX_AGE,
+      expiresIn: Math.max(0, expiresInFromJwt(accessToken) ?? 0) || ACCESS_TOKEN_MAX_AGE,
     },
     { headers: { 'Cache-Control': 'no-store' } }
   );

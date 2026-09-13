@@ -7,6 +7,7 @@
 
 import { io, type Socket } from 'socket.io-client';
 import { apiFetch } from '@/lib/api/client';
+import { guardedAuthFetch } from '@/lib/auth/logout-guard';
 import {
   AllowedMimeType,
   MediaDownloadResponse,
@@ -293,7 +294,7 @@ export async function waitForMediaStatus(
 
     void (async () => {
       try {
-        const tokenResponse = await fetch('/api/auth/socket-token', { method: 'POST', cache: 'no-store' });
+        const tokenResponse = await guardedAuthFetch('/api/auth/socket-token', { method: 'POST', cache: 'no-store' });
         const tokenData = (await tokenResponse.json().catch(() => null)) as { token?: string } | null;
         if (!tokenResponse.ok || !tokenData?.token) throw new Error('no socket token');
         // Env-driven transport — NOT hardcoded to socket.io

@@ -56,7 +56,7 @@ const themeScript = `
     if (isDark) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
 
-    const color = localStorage.getItem('theme-color') || 'indigo';
+    const color = localStorage.getItem('theme-color') || 'slate';
     document.documentElement.setAttribute('data-theme-color', color);
 
     const fontScale = localStorage.getItem('theme-font-scale') || 'normal';

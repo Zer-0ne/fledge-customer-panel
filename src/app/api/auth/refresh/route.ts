@@ -2,11 +2,29 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { apiFetch } from '@/lib/api/client';
 import { extractAuthTokens } from '@/lib/auth/tokens';
-import { setAuthCookies, clearAuthCookies, getAuthCookies } from '@/lib/auth/cookies';
+import {
+  setAuthCookies,
+  clearAuthCookies,
+  getAuthCookies,
+  isLoggedOutMarked,
+} from '@/lib/auth/cookies';
 import { ApiError } from '@/lib/api/errors';
+
+/** Every auth response is session-scoped — never cache it. */
+const NO_STORE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' } as const;
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
+
+  // Freshly logged out: never mint a session from a racing refresh response.
+  if (isLoggedOutMarked(cookieStore)) {
+    clearAuthCookies(cookieStore);
+    return NextResponse.json(
+      { error: { message: 'Logged out', status: 401 } },
+      { status: 401, headers: NO_STORE }
+    );
+  }
+
   let { refreshToken } = getAuthCookies(cookieStore);
 
   if (!refreshToken) {
@@ -20,7 +38,7 @@ export async function POST(request: Request) {
     clearAuthCookies(cookieStore);
     return NextResponse.json(
       { error: { message: 'No refresh token available', status: 401 } },
-      { status: 401 }
+      { status: 401, headers: NO_STORE }
     );
   }
 
@@ -50,13 +68,13 @@ export async function POST(request: Request) {
     if (error instanceof ApiError) {
       return NextResponse.json(
         { error: { message: error.message, code: error.code, field: error.field, status: error.status } },
-        { status: error.status }
+        { status: error.status, headers: NO_STORE }
       );
     }
 
     return NextResponse.json(
       { error: { message: 'Failed to refresh authentication session', status: 401 } },
-      { status: 401 }
+      { status: 401, headers: NO_STORE }
     );
   }
 }

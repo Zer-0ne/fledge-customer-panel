@@ -12,6 +12,7 @@ import {
   type DeliveredState,
   type ReadState,
 } from '@/lib/api/services/chat';
+import { guardedAuthFetch } from '@/lib/auth/logout-guard';
 
 export type SocketStatus =
   | 'connecting'
@@ -80,7 +81,7 @@ function socketUrl(): string {
 }
 
 async function fetchSocketToken(): Promise<string> {
-  const response = await fetch('/api/auth/socket-token', {
+  const response = await guardedAuthFetch('/api/auth/socket-token', {
     method: 'POST',
     cache: 'no-store',
   });

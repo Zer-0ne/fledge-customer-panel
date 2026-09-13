@@ -5,11 +5,17 @@
 
 export const ACCESS_TOKEN_COOKIE = 'cp_access_token';
 export const REFRESH_TOKEN_COOKIE = 'cp_refresh_token';
+/** Short-lived logout marker: present for ~60s after a logout so passively
+ * minted sessions (socket-token/bootstrap refresh) can't re-create the
+ * session from an in-flight or just-triggered refresh response. */
+export const LOGGED_OUT_COOKIE = 'cp_logged_out';
 
 // 15 minutes for access token
 export const ACCESS_TOKEN_MAX_AGE = 60 * 15;
 // 30 days for refresh token
 export const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 30;
+// Logout marker lifetime — must outlive any in-flight socket-token refresh.
+export const LOGGED_OUT_MAX_AGE = 60;
 
 export interface CookieOptions {
   httpOnly: boolean;
@@ -64,6 +70,10 @@ export function setAuthCookies(
       cookieStore.set(REFRESH_TOKEN_COOKIE, tokens.refreshToken, getCookieConfig(REFRESH_TOKEN_MAX_AGE, sharedDomain));
     }
   }
+
+  // A fresh session supersedes any recent logout — drop the logout marker so
+  // the new session's socket/bootstrap refreshes are not blocked.
+  cookieStore.delete(LOGGED_OUT_COOKIE);
 }
 
 /**
@@ -81,6 +91,20 @@ export function clearAuthCookies(cookieStore: MinimalCookieStore): void {
   }
   cookieStore.delete(ACCESS_TOKEN_COOKIE);
   cookieStore.delete(REFRESH_TOKEN_COOKIE);
+}
+
+/**
+ * Marks this browser as freshly logged out (short-lived). While present, the
+ * passive session-minting routes (socket-token / bootstrap refresh / refresh)
+ * refuse to re-create a session — see `LOGGED_OUT_COOKIE`.
+ */
+export function setLoggedOutMarker(cookieStore: MinimalCookieStore): void {
+  cookieStore.set(LOGGED_OUT_COOKIE, String(Date.now()), getCookieConfig(LOGGED_OUT_MAX_AGE));
+}
+
+/** True when the logout marker cookie is present on the request. */
+export function isLoggedOutMarked(cookieStore: MinimalCookieStore): boolean {
+  return Boolean(cookieStore.get(LOGGED_OUT_COOKIE)?.value);
 }
 
 /**

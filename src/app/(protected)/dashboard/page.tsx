@@ -104,7 +104,10 @@ export default function DashboardPage() {
         description: 'You have been successfully logged out.',
         variant: 'info',
       });
-      window.location.href = '/login';
+      // Hard navigate with the loggedOut flag: suppresses Google One Tap
+      // auto-sign-in on the login page so the user can't be silently
+      // re-authenticated right after logging out.
+      window.location.href = '/login?loggedOut=1';
     } catch {
       showToast({
         title: 'Logout Error',

@@ -1135,6 +1135,8 @@ export interface TrustScore {
     tenantVerified: number;
     studentVerified: number;
     accountAge: number;
+    /** Negative penalty when spam strikes exist (0 otherwise). */
+    spamStrikes?: number;
   };
   recomputedAt: string;
 }
