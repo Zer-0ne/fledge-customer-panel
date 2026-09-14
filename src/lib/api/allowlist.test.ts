@@ -42,6 +42,33 @@ describe('Customer BFF allowlist — Phase 12 community endpoints', () => {
     ['POST', '/api/v1/onboarding/skip'],
     // Unverified posting limits (dynamic caps + live usage for limit hints)
     ['GET', '/api/v1/housing/limits'],
+    // Community bridge — market vocabulary catalog, paste-import, share card
+    ['GET', '/api/v1/amenities'],
+    ['POST', '/api/v1/import/whatsapp-post'],
+    ['POST', '/api/v1/share/whatsapp-card'],
+    // Resale marketplace
+    ['GET', '/api/v1/resale-posts'],
+    ['POST', '/api/v1/resale-posts'],
+    ['GET', '/api/v1/resale-posts/123e4567-e89b-12d3-a456-426614174000'],
+    ['PATCH', '/api/v1/resale-posts/123e4567-e89b-12d3-a456-426614174000'],
+    ['POST', '/api/v1/resale-posts/123e4567-e89b-12d3-a456-426614174000/sold'],
+    ['POST', '/api/v1/resale-posts/123e4567-e89b-12d3-a456-426614174000/interests'],
+    ['GET', '/api/v1/resale-interests'],
+    ['PATCH', '/api/v1/resale-interests/123e4567-e89b-12d3-a456-426614174000'],
+    // Local services directory
+    ['GET', '/api/v1/service-providers'],
+    ['POST', '/api/v1/service-providers'],
+    ['GET', '/api/v1/service-providers/mine/listings'],
+    ['GET', '/api/v1/service-providers/123e4567-e89b-12d3-a456-426614174000'],
+    ['POST', '/api/v1/service-providers/123e4567-e89b-12d3-a456-426614174000/enquiries'],
+    ['POST', '/api/v1/service-providers/123e4567-e89b-12d3-a456-426614174000/reviews'],
+    ['GET', '/api/v1/service-enquiries'],
+    ['PATCH', '/api/v1/service-enquiries/123e4567-e89b-12d3-a456-426614174000'],
+    // Utility status board
+    ['GET', '/api/v1/utility-board'],
+    ['POST', '/api/v1/utility-reports'],
+    ['POST', '/api/v1/utility-reports/123e4567-e89b-12d3-a456-426614174000/votes'],
+    ['DELETE', '/api/v1/utility-reports/123e4567-e89b-12d3-a456-426614174000'],
   ];
 
   it.each(allowed)('%s %s is allowed', (method, path) => {

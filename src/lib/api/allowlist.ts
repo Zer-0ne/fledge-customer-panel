@@ -206,6 +206,42 @@ export const CUSTOMER_ALLOWLIST: AllowlistRule[] = [
   { method: 'GET', pattern: /^\/api\/v1\/onboarding\/questions$/ },
   { method: 'POST', pattern: /^\/api\/v1\/onboarding\/responses$/ },
   { method: 'POST', pattern: /^\/api\/v1\/onboarding\/skip$/ },
+
+  // Market vocabulary — the amenity catalog the search filters are built from
+  { method: 'GET', pattern: /^\/api\/v1\/amenities$/ },
+
+  // Community bridge — paste a community post, get a structured draft; then
+  // share the published entity back into the group as a card.
+  { method: 'POST', pattern: /^\/api\/v1\/import\/whatsapp-post$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/share\/whatsapp-card$/ },
+
+  // Resale marketplace (second-hand goods — the move-out market)
+  { method: 'GET', pattern: /^\/api\/v1\/resale-posts$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/resale-posts$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/resale-posts\/[^\/]+$/ },
+  { method: 'PATCH', pattern: /^\/api\/v1\/resale-posts\/[^\/]+$/ },
+  { method: 'DELETE', pattern: /^\/api\/v1\/resale-posts\/[^\/]+$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/resale-posts\/[^\/]+\/sold$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/resale-posts\/[^\/]+\/interests$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/resale-interests$/ },
+  { method: 'PATCH', pattern: /^\/api\/v1\/resale-interests\/[^\/]+$/ },
+
+  // Local services directory (maid, cook, tiffin, laundry, plumber, ...)
+  { method: 'GET', pattern: /^\/api\/v1\/service-providers$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/service-providers$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/service-providers\/mine\/listings$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/service-providers\/[^\/]+$/ },
+  { method: 'PATCH', pattern: /^\/api\/v1\/service-providers\/[^\/]+$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/service-providers\/[^\/]+\/enquiries$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/service-providers\/[^\/]+\/reviews$/ },
+  { method: 'GET', pattern: /^\/api\/v1\/service-enquiries$/ },
+  { method: 'PATCH', pattern: /^\/api\/v1\/service-enquiries\/[^\/]+$/ },
+
+  // Utility status board (water / power / gas right now)
+  { method: 'GET', pattern: /^\/api\/v1\/utility-board$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/utility-reports$/ },
+  { method: 'POST', pattern: /^\/api\/v1\/utility-reports\/[^\/]+\/votes$/ },
+  { method: 'DELETE', pattern: /^\/api\/v1\/utility-reports\/[^\/]+$/ },
 ];
 
 /**

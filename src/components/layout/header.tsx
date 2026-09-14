@@ -14,6 +14,7 @@ import {
   Building2,
   HeartHandshake,
   Timer,
+  Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -33,6 +34,8 @@ const NAV_LINKS = [
   { href: '/search', label: 'Flats', icon: Search },
   { href: '/roommates', label: 'Roommates', icon: Users },
   { href: '/need-now', label: 'Need Now', icon: Timer },
+  // Community bridge: paste a group post, get a structured post back.
+  { href: '/import', label: 'Post from group', icon: Wand2 },
   { href: '/donate', label: 'Donate', icon: HeartHandshake },
 ];
 
