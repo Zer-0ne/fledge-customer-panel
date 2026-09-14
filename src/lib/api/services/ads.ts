@@ -13,6 +13,7 @@ import {
   markImpressionRecorded,
   shouldRecordImpression,
 } from '@/lib/ads/impression-tracker';
+import { trackAdEventLocal, flushAdAnalytics } from '@/lib/ads/ad-analytics-client';
 import { AdCreative, AdPlacement } from '@/types';
 
 export interface SelectAdParams {
@@ -279,167 +280,86 @@ async function doSelectAds(params: SelectAdParams & { count?: number }): Promise
 }
 
 /**
- * Records an impression once per token (deduplicated).
- * Returns true when the event was sent (or already recorded).
+ * Records an impression once per token (deduplicated) — local-first, 1h bulk flush.
+ * Returns true when queued locally (or already recorded). Network is deferred.
  */
 export async function trackAdImpression(token: string): Promise<boolean> {
   if (!token) return false;
   if (!shouldRecordImpression(token)) return true;
-
-  // Optimistically mark to avoid duplicate in-flight observers
   markImpressionRecorded(token);
-
   try {
-    await apiFetch<unknown>({
-      path: '/api/v1/ads/events/impression',
-      method: 'POST',
-      body: { token },
-    });
-    return true;
-  } catch {
-    // Soft-fail: keep marked to avoid retry storms; ads analytics is best-effort
-    return false;
-  }
+    await trackAdEventLocal(token, 'impression');
+  } catch {}
+  return true;
 }
 
 /**
- * Records a viewable impression (50%+ of the ad visible for ~1s).
- * Soft-fails — never blocks the host page.
+ * Records a viewable impression (50%+ of the ad visible for ~1s) — local-first.
+ * Soft-fails — never blocks the host page. Flushed hourly via bulk endpoint.
  */
 export async function trackAdViewable(token: string): Promise<boolean> {
   if (!token) return false;
-
   try {
-    await apiFetch<unknown>({
-      path: '/api/v1/ads/events/viewable',
-      method: 'POST',
-      body: { token },
-    });
-    return true;
-  } catch {
-    return false;
-  }
+    await trackAdEventLocal(token, 'viewable');
+  } catch {}
+  return true;
 }
 
-// --- Bulk impression batching -------------------------------------------------
-// Multiple slots/carousels on one page each become visible around the same
-// moment. Instead of N sequential POSTs, tokens are queued and flushed together
-// through the backend's bulk endpoint (one request, Promise.all fallback).
-
-const BATCH_MAX_EVENTS = 50; // backend batch schema cap
-/** Queue size that flushes immediately (a whole carousel page at once) */
-const FLUSH_IMMEDIATE_MIN = 8;
-/** Oldest queued token waits at most this long before the flush fires */
-const FLUSH_MAX_WAIT_MS = 8000;
-const pendingImpressionTokens = new Set<string>();
-let impressionFlushTimer: ReturnType<typeof setTimeout> | null = null;
-let pageHideBound = false;
-
-function bindPageHideFlush(): void {
-  if (pageHideBound || typeof window === 'undefined') return;
-  pageHideBound = true;
-  window.addEventListener('pagehide', () => {
-    void flushAdImpressions();
-  });
-}
-
-function scheduleImpressionFlush(): void {
-  if (impressionFlushTimer) return;
-  impressionFlushTimer = setTimeout(() => {
-    impressionFlushTimer = null;
-    void flushAdImpressions();
-  }, FLUSH_MAX_WAIT_MS);
-  bindPageHideFlush();
-}
+// --- Bulk impression batching (now durable IndexedDB, 1h bulk) -----------------
+// Legacy in-memory 8s batch replaced by AdAnalyticsQueue (IndexedDB flat_ads).
+// This section now delegates to the durable queue so a reload / offline session
+// does not lose impressions and the flush aligns with the 1-2h product analytics
+// bulk window (plus hidden/online/pagehide opportunistic flush).
 
 /**
- * Queues impression tokens for a batched send. Tokens are deduplicated
- * page-wide (one impression per ad per page session). The collector flushes
- * either when the queue hits a burst threshold (whole page visible at once)
- * or after a quiet window — so a carousel autoplaying slide-by-slide does NOT
- * produce one network call per slide.
+ * Queues impression tokens for a batched send via durable IndexedDB.
+ * Tokens are deduplicated page-wide (one impression per ad per page session).
  */
 export function queueAdImpressions(tokens: string[]): void {
   const fresh = tokens.filter((token) => shouldRecordImpression(token));
   if (!fresh.length) return;
   for (const token of fresh) {
-    pendingImpressionTokens.add(token);
     markImpressionRecorded(token);
-  }
-  scheduleImpressionFlush();
-  if (pendingImpressionTokens.size >= FLUSH_IMMEDIATE_MIN) {
-    void flushAdImpressions();
+    void trackAdEventLocal(token, 'impression');
   }
 }
 
 /**
- * Forces the pending impression queue to flush now. Returns true when the bulk
- * request succeeded; falls back to per-token concurrent POSTs on failure.
+ * Forces the durable ad queue to flush now (bulk 50 per request, shed-aware).
  */
 export async function flushAdImpressions(): Promise<boolean> {
-  if (impressionFlushTimer) {
-    clearTimeout(impressionFlushTimer);
-    impressionFlushTimer = null;
-  }
-  const batch = [...pendingImpressionTokens];
-  if (!batch.length) return true;
-  pendingImpressionTokens.clear();
-
-  const chunks: string[][] = [];
-  for (let i = 0; i < batch.length; i += BATCH_MAX_EVENTS) {
-    chunks.push(batch.slice(i, i + BATCH_MAX_EVENTS));
-  }
-
   try {
-    await Promise.all(
-      chunks.map((chunk) =>
-        apiFetch<unknown>({
-          path: '/api/v1/ads/events/batch',
-          method: 'POST',
-          body: { events: chunk.map((token) => ({ type: 'impression', token })) },
-        })
-      )
-    );
+    await flushAdAnalytics();
     return true;
   } catch {
-    // Bulk endpoint unavailable → concurrent per-token posts (still one burst)
-    await Promise.allSettled(
-      batch.map((token) =>
-        apiFetch<unknown>({
-          path: '/api/v1/ads/events/impression',
-          method: 'POST',
-          body: { token },
-        })
-      )
-    );
     return false;
   }
 }
 
 /**
- * Clears the pending queue (unit tests only).
+ * Clears the pending queue (unit tests only) — no-op now that queue is durable.
+ * Test should clear IndexedDB via AdAnalyticsQueue directly if needed.
  */
 export function resetImpressionBatch(): void {
-  if (impressionFlushTimer) {
-    clearTimeout(impressionFlushTimer);
-    impressionFlushTimer = null;
-  }
-  pendingImpressionTokens.clear();
+  // Intentionally no in-memory set to clear; durable queue persists.
 }
 
 /**
  * Records a click and returns a sanitized redirect URL when available.
+ * Click queues locally for bulk resilience but also posts immediately for redirect.
  */
 export async function trackAdClick(token: string): Promise<string | null> {
   if (!token) return null;
-
+  // Queue for bulk durability (covers offline / shed cases)
+  try {
+    await trackAdEventLocal(token, 'click');
+  } catch {}
   try {
     const res = await apiFetch<unknown>({
       path: '/api/v1/ads/events/click',
       method: 'POST',
       body: { token },
     });
-
     return normalizeClickRedirect(res);
   } catch {
     return null;

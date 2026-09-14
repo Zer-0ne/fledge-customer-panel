@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { initializeAnalytics, disposeAnalytics } from '@/lib/analytics/analytics-client';
+import { initializeAdAnalytics, disposeAdAnalytics } from '@/lib/ads/ad-analytics-client';
 
 /**
  * Initializes analytics on client mount and cleans up on unmount.
@@ -10,8 +11,10 @@ import { initializeAnalytics, disposeAnalytics } from '@/lib/analytics/analytics
 export function AnalyticsInit() {
   useEffect(() => {
     initializeAnalytics();
+    initializeAdAnalytics();
     return () => {
       disposeAnalytics();
+      disposeAdAnalytics();
     };
   }, []);
 
