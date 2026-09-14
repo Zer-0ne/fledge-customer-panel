@@ -143,7 +143,21 @@ const INITIAL_STATE: DraftState = {
 function NewNeedNowPageInner() {
   const router = useRouter();
   const [step, setStep] = React.useState(1);
-  const [draft, setDraft] = React.useState<DraftState>(INITIAL_STATE);
+  const [draft, setDraft] = React.useState<DraftState>(() => {
+    // Community-bridge hand-off: /import stores a parsed SEEK post here so the
+    // form opens prefilled (one-and-done read, then cleared).
+    try {
+      const stored = typeof window !== 'undefined' ? window.sessionStorage.getItem('fledge.neednow.draft') : null;
+      if (stored) {
+        const parsedDraft = JSON.parse(stored) as Partial<DraftState>;
+        window.sessionStorage.removeItem('fledge.neednow.draft');
+        return { ...INITIAL_STATE, ...parsedDraft };
+      }
+    } catch {
+      // Malformed draft — fall through to the empty form.
+    }
+    return INITIAL_STATE;
+  });
   const [colleges, setColleges] = React.useState<College[]>([]);
   const [selectedCollegeId, setSelectedCollegeId] = React.useState('');
   const [campuses, setCampuses] = React.useState<Campus[]>([]);

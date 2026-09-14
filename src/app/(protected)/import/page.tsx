@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, ArrowRight, BadgeCheck, Check, ClipboardPaste, Copy, Eraser, Info,
-  Loader2, MessageCircle, Pencil, Send, Sparkles, Wand2,
+  Loader2, MessageCircle, Pencil, Send, Sparkles, Timer, Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { showToast } from '@/components/ui/toast';
@@ -159,10 +159,36 @@ export default function ImportFromCommunityPage() {
     }
   };
 
+  // Prod may not have SHARE_PUBLIC_BASE_URL set: the backend then returns a
+  // relative deep-link path. Compose the absolute link from our own origin so
+  // the card is always clickable, regardless of that env var.
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const absoluteCardText = (text: string) =>
+    origin ? text.replace(/(^|\s)(\/(?:listings|roommate-posts|resale-posts)\/[^\s]+)/g, (_match, pre: string, path: string) => `${pre}${origin}${path}`) : text;
+
+  // A SEEK post doubles as a 24-hour Need Now request: hand the parse off so the
+  // Need Now form opens prefilled instead of making the user retype it.
+  const handOffToNeedNow = () => {
+    if (!parsed) return;
+    try {
+      const rentINR = parsed.rentPaise != null ? String(Math.round(parsed.rentPaise / 100)) : parsed.rentPerHeadPaise != null ? String(Math.round(parsed.rentPerHeadPaise / 100)) : '';
+      const body = [parsed.title, parsed.description].filter(Boolean).join('\n').slice(0, 300);
+      window.sessionStorage.setItem('fledge.neednow.draft', JSON.stringify({
+        locationName: parsed.streetLabel ?? '',
+        budgetMaxINR: rentINR,
+        description: body,
+      }));
+      showToast({ title: 'Draft ready', description: 'Need Now form is prefilled from your post.', variant: 'default' });
+      router.push('/need-now/new');
+    } catch {
+      router.push('/need-now/new');
+    }
+  };
+
   const copyCard = async () => {
     if (!card) return;
     try {
-      await navigator.clipboard.writeText(card.body);
+      await navigator.clipboard.writeText(absoluteCardText(card.body));
       setCopied(true);
       showToast({ title: 'Copied', description: 'Paste it into your group.', variant: 'default' });
       setTimeout(() => setCopied(false), 2_500);
@@ -445,22 +471,27 @@ export default function ImportFromCommunityPage() {
 
               {card ? (
                 <>
-                  <pre className="mt-4 whitespace-pre-wrap rounded-2xl border bg-background p-4 text-xs leading-relaxed">{card.body}</pre>
+                  <pre className="mt-4 whitespace-pre-wrap rounded-2xl border bg-background p-4 text-xs leading-relaxed">{absoluteCardText(card.body)}</pre>
                   <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                     <Button variant="outline" className="sm:w-40" onClick={copyCard}>
                       {copied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
                       {copied ? 'Copied' : 'Copy card'}
                     </Button>
-                    <a className="flex-1" href={card.whatsappUrl} target="_blank" rel="noopener noreferrer">
+                    <a
+                      className="flex-1"
+                      href={card.deepLinkUrl ? card.whatsappUrl : `https://wa.me/?text=${encodeURIComponent(absoluteCardText(card.body))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <Button className="w-full" size="lg">
                         <MessageCircle className="mr-2 h-4 w-4" /> Share on WhatsApp
                       </Button>
                     </a>
                   </div>
-                  {!card.deepLinkUrl && (
-                    <p className="mt-2 text-[11px] text-muted-foreground">
-                      Tip: set SHARE_PUBLIC_BASE_URL so the card carries a clickable link.
-                    </p>
+                  {parsed?.intent === 'SEEK_ROOM' && (
+                    <Button variant="secondary" className="w-full" onClick={handOffToNeedNow}>
+                      <Timer className="mr-2 h-4 w-4" /> Faster: also post as a 24h Need Now
+                    </Button>
                   )}
                 </>
               ) : (
