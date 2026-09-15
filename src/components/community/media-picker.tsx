@@ -1,66 +1,115 @@
 'use client';
 
 import * as React from 'react';
-import { ImagePlus, Loader2, Trash2, UploadCloud } from 'lucide-react';
+import { ImagePlus, Loader2, ShieldAlert, ShieldCheck, Trash2, UploadCloud } from 'lucide-react';
 import {
   uploadMediaPipeline,
   getMediaDownloadUrl,
+  getMediaStatus,
   waitForMediaStatus,
   deleteMediaAsset,
 } from '@/lib/api/services/media';
-import { MediaPurpose, MediaRejectionReason } from '@/types';
+import { MediaPurpose, MediaRejectionReason, MediaStatusResponse } from '@/types';
 import { cn } from '@/lib/utils';
 
-interface PickedImage {
+export interface PickedImage {
   mediaId: string;
   url?: string;
 }
 
 interface MediaPickerProps {
   value: PickedImage[];
-  onChange: (images: PickedImage[]) => void;
+  /**
+   * React state setter for the parent's selection. The picker uses functional
+   * updates so several photos (and late verdicts) can land without racing on a
+   * stale copy of `value`.
+   */
+  onChange: React.Dispatch<React.SetStateAction<PickedImage[]>>;
   purpose?: MediaPurpose;
   maxCount?: number;
   disabled?: boolean;
   /**
-   * Wait for the moderation queue before handing the id back. Default true
-   * (used by verification-style flows). Posting flows pass false: the photo
-   * uploads instantly, the post goes up at once, and only becomes PUBLIC once
-   * the background worker approves every photo — the poster never waits.
+   * Fires while any picked photo is still uploading or still waiting for its
+   * moderation verdict — posting flows use it to keep submit disabled, so a
+   * pending or rejected photo can never ride into a published post.
    */
-  waitForReady?: boolean;
-  /** Show a "processing media" banner while uploads are in flight. */
   onUploadingChange?: (uploading: boolean) => void;
 }
 
 /** Human-readable reason for a rejected upload (shown instead of a stuck spinner). */
 const REJECTION_MESSAGES: Record<Exclude<MediaRejectionReason, null>, string> = {
-  contact_in_image: 'Image rejected: it contains contact details (phone, WhatsApp, email, website, or QR).',
-  qr_code_detected: 'Image rejected: QR codes are not allowed in personal posts.',
-  promotional_layout: 'Image rejected: it looks like promotional content rather than a real photo.',
-  reposted_rejected_media: 'Image rejected: this image was previously rejected on the platform.',
-  technical_validation_failed: 'Image rejected: the file could not be processed. Try a different image.',
+  contact_in_image: 'Photo removed: it shows contact details (phone, WhatsApp, email, website or QR). Post the room, not your number.',
+  qr_code_detected: 'Photo removed: QR codes are not allowed in personal posts.',
+  promotional_layout: 'Photo removed: it looks like promotional or broker artwork rather than a real photo of the room.',
+  reposted_rejected_media: 'Photo removed: this image was rejected on Fledge before and cannot be re-uploaded.',
+  technical_validation_failed: 'Photo removed: the file could not be processed. Try a different image.',
 };
 
-/**
- * Waits for the media worker to finish via the realtime socket event, then
- * resolves the preview URL. Rejected uploads throw with a user-facing message
- * instead of leaving the picker stuck on a spinner.
- */
-async function resolvePreviewUrl(mediaId: string): Promise<string> {
-  const status = await waitForMediaStatus(mediaId);
-  if (status.status === 'rejected' || status.moderationStatus === 'rejected') {
-    const reason = status.rejectionReason ?? 'technical_validation_failed';
-    throw new Error(REJECTION_MESSAGES[reason] ?? REJECTION_MESSAGES.technical_validation_failed);
+/** Verdict of one uploaded photo, as far as the client knows it. */
+type Verdict =
+  | { state: 'checking' }
+  | { state: 'approved'; url?: string }
+  | { state: 'rejected'; reason: Exclude<MediaRejectionReason, null> }
+  | { state: 'unverified' };
+
+/** Realtime first (fast path), then bounded polling — the queue can lag. */
+const POLL_DELAYS_MS = [2_000, 3_000, 4_000, 5_000, 6_000, 8_000, 10_000, 12_000];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => { setTimeout(resolve, ms); });
+}
+
+function verdictFromStatus(status: MediaStatusResponse): Verdict {
+  if (status.moderationStatus === 'rejected' || status.status === 'rejected') {
+    return { state: 'rejected', reason: status.rejectionReason ?? 'technical_validation_failed' };
   }
-  const download = await getMediaDownloadUrl(mediaId);
-  return download.url;
+  if (status.moderationStatus === 'approved' && status.status === 'ready') {
+    return { state: 'approved' };
+  }
+  // `deleted` (removed elsewhere) is not a verdict we can act on.
+  return { state: 'checking' };
 }
 
 /**
- * Community media picker (Phase 12): pick images → presigned upload pipeline →
- * returns media ids. Shows transient 'Uploading'/'Processing media' states and
- * a contact-in-image reminder. Never sends session cookies to the storage host.
+ * Resolves a photo's moderation verdict. Approved photos resolve fast; the
+ * pipeline analyses in a queue, so a slow worker must not be mistaken for a
+ * pass — that is exactly how promo artwork used to slip into a post. Everything
+ * after the realtime wait is a bounded poll; an unknown verdict is reported as
+ * `unverified`, never as approval.
+ */
+async function resolveVerdict(mediaId: string, isCancelled: () => boolean): Promise<Verdict> {
+  try {
+    const status = await waitForMediaStatus(mediaId, { timeoutMs: 20_000 });
+    const fast = verdictFromStatus(status);
+    if (fast.state !== 'checking') return fast;
+  } catch {
+    // Realtime unavailable or too slow — polling below is the safety net.
+  }
+  for (const delay of POLL_DELAYS_MS) {
+    if (isCancelled()) return { state: 'unverified' };
+    await sleep(delay);
+    try {
+      const status = await getMediaStatus(mediaId);
+      const verdict = verdictFromStatus(status);
+      if (verdict.state !== 'checking') {
+        if (verdict.state === 'approved') {
+          const download = await getMediaDownloadUrl(mediaId);
+          return { state: 'approved', url: download.url };
+        }
+        return verdict;
+      }
+    } catch {
+      // Transient read failure — keep polling until the window closes.
+    }
+  }
+  return { state: 'unverified' };
+}
+
+/**
+ * Community media picker (Phase 12): pick photos → presigned upload pipeline →
+ * moderation verdict per photo. Rejected artwork is removed from the selection
+ * with the reason shown; nothing is handed back to the parent while its verdict
+ * is still unknown, so posting flows can keep submit disabled.
  */
 export function MediaPicker({
   value,
@@ -68,94 +117,133 @@ export function MediaPicker({
   purpose = 'community',
   maxCount = 10,
   disabled = false,
-  waitForReady = true,
   onUploadingChange,
 }: MediaPickerProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [verdicts, setVerdicts] = React.useState<Record<string, Verdict>>({});
+  const cancelled = React.useRef<Set<string>>(new Set());
+  const inFlight = React.useRef(0);
 
   const reportUploading = (active: boolean) => {
     setUploading(active);
     onUploadingChange?.(active);
   };
 
+  const startCheck = () => {
+    inFlight.current += 1;
+    reportUploading(true);
+  };
+
+  const finishCheck = () => {
+    inFlight.current = Math.max(0, inFlight.current - 1);
+    if (inFlight.current === 0) reportUploading(false);
+  };
+
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setError(null);
-    reportUploading(true);
-    try {
-      // Accumulate locally: `value` is a stale prop inside the loop, so a
-      // multi-file pick would otherwise keep only the last image.
-      let next = [...value];
-      for (const file of Array.from(files)) {
-        if (next.length >= maxCount) break;
+    const room = Math.max(0, maxCount - value.length);
+    for (const file of Array.from(files).slice(0, room)) {
+      const localUrl = URL.createObjectURL(file);
+      startCheck();
+      try {
         const mediaId = await uploadMediaPipeline(file, { purpose });
-        if (waitForReady) {
-          // Resolve a preview URL after the worker finishes; rejected uploads
-          // throw with a clear reason instead of hanging on the spinner.
-          const url = await resolvePreviewUrl(mediaId);
-          next = [...next, { mediaId, url }];
-        } else {
-          // Instant local preview. Moderation runs in the background queue and
-          // the item only becomes public once every photo is approved.
-          next = [...next, { mediaId, url: URL.createObjectURL(file) }];
-        }
-        onChange(next);
+        // Instant preview; the verdict arrives below and decides its fate.
+        onChange((prev) => (prev.length >= maxCount ? prev : [...prev, { mediaId, url: localUrl }]));
+        setVerdicts((prev) => ({ ...prev, [mediaId]: { state: 'checking' } }));
+
+        void resolveVerdict(mediaId, () => cancelled.current.has(mediaId)).then((verdict) => {
+          if (cancelled.current.has(mediaId)) return;
+          setVerdicts((prev) => ({ ...prev, [mediaId]: verdict }));
+          if (verdict.state === 'rejected') {
+            setError(REJECTION_MESSAGES[verdict.reason] ?? REJECTION_MESSAGES.technical_validation_failed);
+            onChange((prev) => prev.filter((image) => image.mediaId !== mediaId));
+          } else if (verdict.state === 'approved' && verdict.url) {
+            const approvedUrl = verdict.url;
+            onChange((prev) => prev.map((image) => (
+              image.mediaId === mediaId ? { ...image, url: approvedUrl } : image
+            )));
+          }
+        }).finally(() => { finishCheck(); });
+      } catch (err) {
+        finishCheck();
+        setError(err instanceof Error ? err.message : 'Could not upload photo');
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not upload image');
-    } finally {
-      reportUploading(false);
-      if (inputRef.current) inputRef.current.value = '';
     }
   };
 
   const removeImage = async (index: number) => {
     const image = value[index];
-    const next = value.filter((_, i) => i !== index);
-    onChange(next);
-    if (image?.mediaId) {
-      try {
-        await deleteMediaAsset(image.mediaId);
-      } catch {
-        // Non-critical: the media row will be cleaned up server-side on expiry.
-      }
+    if (!image) return;
+    cancelled.current.add(image.mediaId);
+    onChange((prev) => prev.filter((_, i) => i !== index));
+    setVerdicts((prev) => {
+      const next = { ...prev };
+      delete next[image.mediaId];
+      return next;
+    });
+    try {
+      await deleteMediaAsset(image.mediaId);
+    } catch {
+      // Non-critical: the media row will be cleaned up server-side on expiry.
     }
   };
 
   const remaining = Math.max(0, maxCount - value.length);
+  const unverified = value.filter((image) => verdicts[image.mediaId]?.state === 'unverified').length;
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-        {value.map((image, index) => (
-          <div
-            key={image.mediaId}
-            className="group relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted"
-          >
-            {image.url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={image.url}
-                alt={`Room photo ${index + 1}`}
-                className="size-full object-cover"
-              />
-            ) : (
-              <div className="flex size-full items-center justify-center">
-                <Loader2 className="size-5 animate-spin text-muted-foreground" />
-              </div>
-            )}
-            <button
-              type="button"
-              aria-label={`Remove photo ${index + 1}`}
-              onClick={() => removeImage(index)}
-              className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+        {value.map((image, index) => {
+          const verdict = verdicts[image.mediaId];
+          return (
+            <div
+              key={image.mediaId}
+              className="group relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted"
             >
-              <Trash2 className="size-3.5" />
-            </button>
-          </div>
-        ))}
+              {image.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={image.url}
+                  alt={`Room photo ${index + 1}`}
+                  className="size-full object-cover"
+                />
+              ) : (
+                <div className="flex size-full items-center justify-center">
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
+                </div>
+              )}
+              {verdict?.state === 'checking' && (
+                <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-black/65 px-2 py-1 text-[10px] font-medium text-white">
+                  <Loader2 className="size-3 animate-spin" />
+                  Checking…
+                </div>
+              )}
+              {verdict?.state === 'approved' && (
+                <div className="absolute left-1.5 top-1.5 rounded-full bg-emerald-600/90 p-1 text-white" title="Checked — looks like a real photo">
+                  <ShieldCheck className="size-3.5" />
+                </div>
+              )}
+              {verdict?.state === 'unverified' && (
+                <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-amber-600/85 px-2 py-1 text-[10px] font-medium text-white">
+                  <ShieldAlert className="size-3" />
+                  Not checked yet
+                </div>
+              )}
+              <button
+                type="button"
+                aria-label={`Remove photo ${index + 1}`}
+                onClick={() => removeImage(index)}
+                className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
+          );
+        })}
 
         {remaining > 0 && (
           <button
@@ -191,15 +279,22 @@ export function MediaPicker({
       {uploading && (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" />
-          Uploading and processing media…
+          Uploading and checking every photo…
+        </p>
+      )}
+
+      {unverified > 0 && (
+        <p className="text-xs text-amber-600">
+          {unverified === 1 ? 'One photo is' : `${String(unverified)} photos are`} still being checked —
+          {' '}your post stays private until the check passes.
         </p>
       )}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
 
       <p className="text-[11px] text-muted-foreground">
-        Use actual photos of the room or flat. Images containing contact details
-        (phone numbers, WhatsApp, emails, URLs or QR codes) are rejected.
+        Use real photos of the room or flat. Promotional artwork, broker flyers, QR codes
+        and images with phone numbers, WhatsApp, emails or websites are rejected automatically.
       </p>
     </div>
   );

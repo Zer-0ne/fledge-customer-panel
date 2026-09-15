@@ -254,9 +254,14 @@ function ComposeResaleDialog({ open, busy, onClose, onSubmit }: {
   // Photos are moderated by the same pipeline as every other post (OCR /
   // safety checks run server-side); up to five per item.
   const [images, setImages] = React.useState<{ mediaId: string; url?: string }[]>([]);
+  const [mediaChecking, setMediaChecking] = React.useState(false);
 
   const submit = async () => {
     const rupees = Number(price.replace(/[^0-9]/g, ''));
+    if (mediaChecking) {
+      showToast({ title: 'Photos are still being checked', description: 'Give it a few seconds — rejected photos are removed automatically.', variant: 'error' });
+      return;
+    }
     if (!title.trim() || !description.trim() || !locality.trim() || !Number.isFinite(rupees) || rupees <= 0) {
       showToast({ title: 'Fill everything in', description: 'Title, details, price and area are required.', variant: 'error' });
       return;
@@ -307,18 +312,19 @@ function ComposeResaleDialog({ open, busy, onClose, onSubmit }: {
           {/* Photos — multi-image, same moderation pipeline as every other post. */}
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">Photos (up to 5)</p>
-            <MediaPicker value={images} onChange={setImages} maxCount={5} waitForReady={false} />
+            <MediaPicker value={images} onChange={setImages} maxCount={5} onUploadingChange={setMediaChecking} />
             <p className="text-[11px] text-muted-foreground">
-              Photos are checked automatically in the background — your item stays visible to you and goes public as soon as they pass.
+              Every photo is checked as you add it. Promotional artwork, broker flyers, QR codes and
+              images with contact details are removed right away — real photos of the item only.
             </p>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
-          <Button onClick={() => { void submit(); }} disabled={busy}>
-            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-            {busy ? 'Listing…' : 'List it'}
+          <Button onClick={() => { void submit(); }} disabled={busy || mediaChecking}>
+            {busy || mediaChecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+            {busy ? 'Listing…' : mediaChecking ? 'Checking photos…' : 'List it'}
           </Button>
         </DialogFooter>
       </DialogContent>
