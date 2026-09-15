@@ -10,6 +10,10 @@ Requires cairosvg:
     python3 -m venv /tmp/pipenv && /tmp/pipenv/bin/pip install cairosvg
 Run from the customer-panel root:
     /tmp/pipenv/bin/python scripts/generate-icons.py
+
+When the artwork changes, bump the `?v=` on the manifest icon URLs
+(public/manifest.webmanifest) — an installed Android WebAPK only re-reads its
+launcher icon when the manifest declares a different icon URL.
 """
 
 from __future__ import annotations
@@ -58,11 +62,15 @@ MASKABLE_MARK_SCALE = 0.8  # keep the glyph inside the maskable safe zone
 
 def svg_doc(*, radius: int = TILE_RADIUS, mark_scale: float = 1.0) -> str:
     paths = "".join(f'<path d="{d}"/>' for d in ICON_PATHS)
+    icon = f'<g transform="{ICON_TRANSFORM}" fill="#ffffff">{paths}</g>'
     if mark_scale != 1.0:
+        # Scale the FINISHED mark around the canvas centre — the scale group must
+        # wrap the icon transform, not sit inside it (inside = the 24-unit glyph
+        # coordinates get scaled, then blown off-canvas by ICON_TRANSFORM).
         c = CANVAS / 2
-        paths = (
+        icon = (
             f'<g transform="translate({c} {c}) scale({mark_scale}) translate({-c} {-c})">'
-            f"{paths}</g>"
+            f"{icon}</g>"
         )
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {CANVAS} {CANVAS}">'
@@ -70,7 +78,7 @@ def svg_doc(*, radius: int = TILE_RADIUS, mark_scale: float = 1.0) -> str:
         f'y2="{CANVAS}" gradientUnits="userSpaceOnUse"><stop stop-color="{GRAD_TOP}"/>'
         f'<stop offset="1" stop-color="{GRAD_BOT}"/></linearGradient></defs>'
         f'<rect x="0" y="0" width="{CANVAS}" height="{CANVAS}" rx="{radius}" fill="url(#tile)"/>'
-        f'<g transform="{ICON_TRANSFORM}" fill="#ffffff">{paths}</g></svg>'
+        f"{icon}</svg>"
     )
 
 
