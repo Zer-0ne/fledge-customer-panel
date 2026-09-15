@@ -57,6 +57,13 @@ export default function TermsPage() {
           account until you notify us or revoke access. Do not impersonate another person or submit
           false verification evidence.
         </p>
+        <p>
+          Fledge keeps one active portal identity per account — customer or partner. Switching to the
+          other portal requires re-authentication and an explicit confirmation step. The switch
+          revokes the previous identity&apos;s role-specific verification, pauses content published
+          under it so it is no longer publicly discoverable, and signs out existing sessions because
+          the account&apos;s access set changes. Previous records are preserved rather than erased.
+        </p>
       </section>
 
       <section className="flex flex-col gap-2">
@@ -68,9 +75,11 @@ export default function TermsPage() {
           replace an inspection, identity check, title check, written agreement, or professional advice.
         </p>
         <p>
-          Need Now requirements expire after the period displayed in the app. Withdrawing, declining,
-          or expiry can close the related response flow or conversation. Review the confirmation copy
-          before submitting any of those actions.
+          Need Now requirements are time-limited and chat-first: a response opens or reuses a
+          conversation straight away, and the requirement owner can accept or decline it in that
+          thread. Withdrawing a response, declining it, or expiry closes the linked conversation.
+          Review the confirmation copy before submitting any of those actions. Contact details stay
+          protected unless a separate contact flow grants access.
         </p>
       </section>
 

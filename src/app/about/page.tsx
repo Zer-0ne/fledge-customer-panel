@@ -41,8 +41,9 @@ export default function AboutPage() {
         <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
           {env.NEXT_PUBLIC_APP_NAME} is the customer side of a housing marketplace. Students can
           search by college or location, shortlist listings, find roommates, publish time-limited
-          Need Now requirements, and talk in-app. Partners use a separate portal to manage
-          properties, listings, leads, availability, and sponsored campaigns.
+          Need Now requirements that open straight into chat, and talk in-app. Partners use a
+          separate portal to manage properties, listings, leads, availability, and sponsored
+          campaigns.
         </p>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
           Public discovery uses approximate locations and hides direct contact details. Contact is
@@ -61,12 +62,12 @@ export default function AboutPage() {
         <InfoCard
           icon={Shield}
           title="Privacy by design"
-          body="Contact details and exact addresses stay protected by default. Requests, grants, expiry, view limits, fallback contacts, and revocation are explicit product flows."
+          body="Contact details and exact addresses stay protected by default. Requests, grants, expiry, view limits (a single view by default), fallback contacts, and revocation are explicit product flows."
         />
         <InfoCard
           icon={BookOpen}
           title="Safety with context"
-          body="Automated checks, authorised review, reports, blocks, appeals, and verification or trust badges help people judge risk. These signals support — but never replace — independent checks."
+          body="Automated checks, authorised review, reports, blocks, appeals, and verification or trust badges help people judge risk. Media that cannot be confirmed safe is held rather than published. These signals support — but never replace — independent checks."
         />
         <InfoCard
           icon={ExternalLink}

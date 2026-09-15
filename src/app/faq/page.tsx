@@ -15,6 +15,10 @@ const FAQS: { q: string; a: string }[] = [
     a: 'The customer app is built around students and college-area housing. Housing owners, managers, and advertisers use a separate partner portal. Access to individual features can depend on account role, verification, college rules, and availability in your area.',
   },
   {
+    q: 'How do I sign in to Fledge?',
+    a: 'The Fledge customer website and app sign you in with Google: a Google identity token is exchanged for a Fledge session, and Fledge never receives your Google password. The older phone one-time-code (OTP) login is retired. The partner portal additionally supports email/phone and password sign-in.',
+  },
+  {
     q: 'How does nearby search use my location?',
     a: 'If you allow device location, Fledge sends coordinates and a search radius to find nearby results. You can deny permission and choose an area manually. Public property results use approximate rather than exact address coordinates.',
   },
@@ -24,19 +28,23 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'What is Need Now?',
-    a: 'Need Now is a time-limited housing requirement. A response creates or opens a conversation so both sides can discuss the request. Withdrawing a request, declining a response, or expiry closes that response flow; contact details remain protected unless separately approved.',
+    a: 'Need Now is a time-limited housing requirement, and it is chat-first: when someone responds, a conversation opens straight away so both sides can discuss the offer in context. The requirement owner can accept or decline the response inside that thread. Withdrawing a response, declining it, or expiry closes the linked conversation; contact details remain protected unless a separate contact flow is approved.',
   },
   {
     q: 'How do roommate posts work?',
     a: 'You can publish a genuine personal requirement, browse matches, express interest, and chat in-app. Posts and images are moderated. Promotional layouts, QR codes, and public phone, email, social-handle, or WhatsApp details can be rejected; eligible decisions can be appealed.',
   },
   {
-    q: 'What do verification and owl trust badges mean?',
-    a: 'A badge shows the specific check or trust tier completed by Fledge. It is context, not a guarantee of identity, conduct, ownership, property quality, or transaction safety. Always verify independently before meeting or paying.',
+    q: 'What do verification badges and owl trust tiers mean?',
+    a: 'Fledge shows role verification badges — verified student, verified faculty, verified partner, or verified college membership (a college email proves membership only, never a role) — and owl trust tiers (bronze, silver, gold, diamond) that reflect verified identity, approved activity, and account history. A badge shows the checks completed at that time, can change if a verification is revoked, and is context, not a guarantee of identity, conduct, ownership, property quality, or transaction safety. Always verify independently before meeting or paying.',
+  },
+  {
+    q: 'Can one account be both a customer and a partner?',
+    a: 'Portal identities are mutually exclusive. An account uses the customer or the partner portal at a time; switching requires re-authentication and an explicit confirmation, revokes the role-specific verification of the previous identity, and pauses content published under it — records are preserved, not deleted. Existing sessions are signed out because your access set changes.',
   },
   {
     q: 'Why is the phone number hidden?',
-    a: 'Direct contact details are hidden from public cards. Depending on the listing preference, you may need to chat, request access, wait for approval, or use a verified fallback-contact flow. The approval screen shows the grant expiry and view limit before contact is revealed.',
+    a: 'Direct contact details are hidden from public cards. Depending on the listing preference, you may need to chat, request access, wait for approval, or use a verified fallback-contact flow. The approval screen shows the grant expiry and view limit (a single view by default) before contact is revealed.',
   },
   {
     q: 'Can contact access be revoked?',

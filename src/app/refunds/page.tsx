@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SitePage } from '@/components/layout/site-page';
 import { env } from '@/lib/env';
-import { FLEDGE_SUPPORT_EMAIL } from '@/lib/public-info';
+import { FLEDGE_SUPPORT_EMAIL, POLICY_LAST_UPDATED } from '@/lib/public-info';
 
 export const metadata: Metadata = {
   title: `Cancellation & Refunds — ${env.NEXT_PUBLIC_APP_NAME}`,
@@ -14,7 +14,7 @@ export default function RefundsPage() {
   return (
     <SitePage
       title="Cancellation & Refund Policy"
-      description="Effective 13 September 2026. This policy covers payments collected by Fledge through the Fledge website and app."
+      description={`Effective ${POLICY_LAST_UPDATED}. This policy covers payments collected by Fledge through the Fledge website and app.`}
     >
       <div
         role="note"
@@ -66,10 +66,10 @@ export default function RefundsPage() {
           >
             {FLEDGE_SUPPORT_EMAIL}
           </a>{' '}
-          with the subject “Cancel monthly donation” from your registered email, or cancel the UPI
-          Autopay / e-mandate approval in your bank or UPI app. We stop future charges as soon as the
-          request is received. The charge already made is not reversed unless it falls under the
-          error cases below.
+          with the subject “Cancel monthly donation” from your registered email, or cancel the
+          Razorpay subscription&apos;s UPI Autopay / e-mandate approval in your bank or UPI app. We
+          stop future charges as soon as the request is received. The charge already made is not
+          reversed unless it falls under the error cases below.
         </p>
       </section>
 

@@ -45,6 +45,12 @@ export default function PrivacyPage() {
           contact-sharing requests and grants, reports, blocks, appeals, notification settings,
           donations, and support correspondence.
         </p>
+        <p>
+          Your account carries the portal roles and permissions that decide which experience you use.
+          Switching between the customer and partner portals changes those roles, revokes the
+          previous identity&apos;s role-specific verification, and pauses content published under it
+          so it is no longer publicly discoverable; records are preserved for history and audit.
+        </p>
       </section>
 
       <section className="flex flex-col gap-2">
@@ -91,10 +97,12 @@ export default function PrivacyPage() {
         <h2 className="text-base font-semibold text-foreground">5. Chat and contact sharing</h2>
         <p>
           Phone numbers and email addresses are hidden from public cards. Contact details are
-          revealed only through an approved access grant, subject to the expiry and view limit shown
-          in the app. A verified fallback contact may receive a request when the listing owner is
-          unavailable. Grants can be rejected or revoked, but information already viewed or copied
-          by another person cannot be pulled back from that person&apos;s device.
+          revealed only through an approved access grant: a time-limited, view-limited grant (a
+          single view by default) whose remaining time and views the app shows, including grants
+          approved through a time-limited email approval link. A verified fallback contact may
+          receive a request when the listing owner is unavailable. Grants can be rejected or
+          revoked, but information already viewed or copied by another person cannot be pulled back
+          from that person&apos;s device.
         </p>
       </section>
 
@@ -102,9 +110,11 @@ export default function PrivacyPage() {
         <h2 className="text-base font-semibold text-foreground">6. Verification and moderation</h2>
         <p>
           Uploaded text, images, and documents may be checked automatically and, when necessary, by
-          authorised reviewers. Checks can look for unsafe material, QR codes, contact details,
-          promotional layouts, duplicates, or evidence needed for a verification request. Content
-          may be rejected, limited, or removed, and supported decisions can be appealed in the app.
+          authorised reviewers. Media whose safety cannot be confirmed is held and is not shown
+          publicly until it passes review; media that fails a check is not published or is removed.
+          Checks can look for unsafe material, QR codes, contact details, promotional layouts,
+          duplicates, or evidence needed for a verification request. Content may be rejected,
+          limited, or removed, and supported decisions can be appealed in the app.
         </p>
       </section>
 
@@ -114,9 +124,9 @@ export default function PrivacyPage() {
           Payment checkout is handled by Razorpay. Fledge receives transaction identifiers,
           amounts, status, and related records needed for confirmation, refunds, reconciliation, and
           fraud control; Fledge does not receive your full card details. We also use providers for
-          Google sign-in, Firebase phone authentication and push notifications, email delivery,
-          hosting, storage, maps, and operational monitoring. Each provider processes data under its
-          own terms and privacy policy.
+          Google sign-in, phone verification and push notifications (Firebase), email delivery,
+          hosting, object storage, maps, and operational monitoring. Each provider processes data
+          under its own terms and privacy policy.
         </p>
       </section>
 
