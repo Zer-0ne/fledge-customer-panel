@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Home, Search, Users, Timer, User } from 'lucide-react';
+import { Home, Search, Users, Timer, User, Building2 } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
 
 export interface MobileNavProps {
@@ -16,6 +16,9 @@ const NAV_ITEMS = [
   { href: '/search', label: 'Flats', icon: Search },
   { href: '/roommates', label: 'Roommates', icon: Users },
   { href: '/need-now', label: 'Need Now', icon: Timer },
+  // Community bridge surfaces (resale · services · utility) — without this
+  // entry they were only reachable from the desktop pill nav or a URL.
+  { href: '/neighbourhood', label: 'Community', icon: Building2 },
   { href: '/dashboard', label: 'Account', icon: User },
 ] as const;
 

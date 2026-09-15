@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { useAuth } from '@/components/providers/auth-provider';
-import { Users, Plus, Sparkles, ShieldCheck } from 'lucide-react';
+import { Users, Plus, Sparkles, ShieldCheck, Wand2 } from 'lucide-react';
 
 export default function RoommateDiscoveryPage() {
   const { user } = useAuth();
@@ -142,6 +142,12 @@ export default function RoommateDiscoveryPage() {
               <Link href="/roommate-posts">
                 <Button size="lg" variant="outline" className="rounded-2xl font-bold border-white/30 text-white hover:bg-white/10 hover:text-white transition-all">
                   My Posts
+                </Button>
+              </Link>
+              <Link href="/import">
+                <Button size="lg" variant="outline" className="rounded-2xl font-bold border-white/30 text-white hover:bg-white/10 hover:text-white transition-all">
+                  <Wand2 className="mr-2 size-5" />
+                  Post from WhatsApp
                 </Button>
               </Link>
             </div>
