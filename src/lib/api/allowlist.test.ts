@@ -23,6 +23,9 @@ describe('Customer BFF allowlist — Phase 12 community endpoints', () => {
     ['POST', '/api/v1/tenant-verifications/abc-123/refresh-code'],
     ['GET', '/api/v1/tenant-verifications/mine'],
     ['DELETE', '/api/v1/tenant-verifications/abc-123/evidence'],
+    // College/campus self-service (add a missing campus, pick an existing pair)
+    ['POST', '/api/v1/colleges/requests'],
+    ['PATCH', '/api/v1/me/college'],
     // Phase 7 notification center upgrades
     ['GET', '/api/v1/notifications/unread-count'],
     ['POST', '/api/v1/notifications/read-all'],

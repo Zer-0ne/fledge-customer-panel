@@ -26,6 +26,12 @@ export function mapRawToUser(item: unknown): User {
     bio: typeof nested.bio === 'string' ? nested.bio : null,
     collegeId: typeof nested.collegeId === 'string' ? nested.collegeId : null,
     campusId: typeof nested.campusId === 'string' ? nested.campusId : null,
+    collegeName: typeof nested.collegeName === 'string' ? nested.collegeName : null,
+    campusName: typeof nested.campusName === 'string' ? nested.campusName : null,
+    campusStatus:
+      nested.campusStatus === 'verified' || nested.campusStatus === 'pending' || nested.campusStatus === 'rejected'
+        ? nested.campusStatus
+        : null,
     createdAt: String(nested.createdAt || new Date().toISOString()),
     updatedAt: String(nested.updatedAt || nested.createdAt || new Date().toISOString()),
   };

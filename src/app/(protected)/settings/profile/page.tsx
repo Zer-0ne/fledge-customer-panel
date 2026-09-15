@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
 import { Badge } from '@/components/ui/badge';
 import { TrustBadge, TrustLevelSection } from '@/components/trust/trust-badge';
+import { CollegeCampusSection } from '@/components/settings/college-campus-section';
 import BorderGlow from '@/components/BorderGlow'
 import { UserRound } from 'lucide-react';
 
@@ -141,9 +142,10 @@ export default function ProfileSettingsPage() {
           <Field label="Email" value={data?.email || 'Not provided'} />
           <Field label="Phone" value={data?.phone || 'Not provided'} />
           <Field label="Member since" value={formatDate(data?.createdAt)} />
-          <Field label="College ID" value={data?.collegeId || 'Not set'} />
-          <Field label="Campus ID" value={data?.campusId || 'Not set'} />
         </dl>
+
+        {/* ── College & campus (self-service picker / add) ── */}
+        <CollegeCampusSection />
 
         {/* ── Verification Section ── */}
         <div className="pt-3 border-t border-border/60 space-y-3 min-w-0">

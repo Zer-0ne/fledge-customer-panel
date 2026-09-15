@@ -16,6 +16,10 @@ export const CUSTOMER_ALLOWLIST: AllowlistRule[] = [
   // Colleges & Campuses
   { method: 'GET', pattern: /^\/api\/v1\/colleges$/ },
   { method: 'GET', pattern: /^\/api\/v1\/colleges\/[^\/]+\/campuses$/ },
+  // College/campus self-service: add a missing campus (instantly usable, admin
+  // verifies after) and select an existing pair from the profile picker.
+  { method: 'POST', pattern: /^\/api\/v1\/colleges\/requests$/ },
+  { method: 'PATCH', pattern: /^\/api\/v1\/me\/college$/ },
 
   // Public Listings & Properties
   { method: 'GET', pattern: /^\/api\/v1\/listings$/ },

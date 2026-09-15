@@ -13,6 +13,10 @@ export interface User {
   bio?: string | null;
   collegeId?: string | null;
   campusId?: string | null;
+  /** Resolved names + campus moderation status (self-service campuses). */
+  collegeName?: string | null;
+  campusName?: string | null;
+  campusStatus?: 'verified' | 'pending' | 'rejected' | null;
   phoneVerifiedAt?: string | null;
   emailVerifiedAt?: string | null;
   trustBadge?: 'bronze' | 'silver' | 'gold' | 'diamond' | null;
