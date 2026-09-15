@@ -50,3 +50,6 @@ next-env.d.ts
 # python tooling
 __pycache__/
 *.pyc
+
+# Hermes kanban worktrees
+.worktrees/
