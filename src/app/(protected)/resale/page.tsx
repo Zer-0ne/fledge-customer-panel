@@ -6,6 +6,8 @@ import { ArrowLeft, BadgeCheck, HandCoins, Loader2, Plus, RefreshCw, Tag } from 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MediaPicker } from '@/components/community/media-picker';
+import { RoommatePostMedia } from '@/components/roommates/roommate-post-media';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -169,6 +171,9 @@ export default function ResalePage() {
                 transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.2) }}
                 className="flex flex-col rounded-3xl border bg-card p-4 shadow-sm"
               >
+                {post.mediaIds && post.mediaIds.length > 0 && (
+                  <RoommatePostMedia mediaIds={post.mediaIds} alt={post.title} className="mb-3" />
+                )}
                 <div className="flex items-start justify-between gap-2">
                   <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">{CATEGORY_LABEL.get(post.category) ?? post.category}</span>
                   {post.status !== 'active' && (
@@ -242,6 +247,9 @@ function ComposeResaleDialog({ open, busy, onClose, onSubmit }: {
   const [condition, setCondition] = React.useState<'new' | 'like_new' | 'used'>('used');
   const [negotiable, setNegotiable] = React.useState(true);
   const [locality, setLocality] = React.useState('');
+  // Photos are moderated by the same pipeline as every other post (OCR /
+  // safety checks run server-side); up to five per item.
+  const [images, setImages] = React.useState<{ mediaId: string; url?: string }[]>([]);
 
   const submit = async () => {
     const rupees = Number(price.replace(/[^0-9]/g, ''));
@@ -252,8 +260,9 @@ function ComposeResaleDialog({ open, busy, onClose, onSubmit }: {
     await onSubmit({
       category, title: title.trim(), description: description.trim(),
       pricePaise: rupees * 100, negotiable, condition, locality: locality.trim(),
+      mediaIds: images.map((image) => image.mediaId),
     });
-    setTitle(''); setDescription(''); setPrice(''); setLocality('');
+    setTitle(''); setDescription(''); setPrice(''); setLocality(''); setImages([]);
   };
 
   return (
@@ -289,6 +298,12 @@ function ComposeResaleDialog({ open, busy, onClose, onSubmit }: {
             <button type="button" onClick={() => setNegotiable(!negotiable)} className={`rounded-full border px-3 py-1.5 text-xs transition ${negotiable ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-accent'}`}>
               Negotiable
             </button>
+          </div>
+
+          {/* Photos — multi-image, same moderation pipeline as every other post. */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground">Photos (up to 5)</p>
+            <MediaPicker value={images} onChange={setImages} maxCount={5} />
           </div>
         </div>
 
