@@ -324,7 +324,7 @@ function ComposeResaleDialog({ open, busy, onClose, onSubmit }: {
           <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
           <Button onClick={() => { void submit(); }} disabled={busy || mediaChecking}>
             {busy || mediaChecking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-            {busy ? 'Listing…' : mediaChecking ? 'Checking photos…' : 'List it'}
+            {busy ? 'Listing…' : mediaChecking ? 'Uploading photos…' : 'List it'}
           </Button>
         </DialogFooter>
       </DialogContent>

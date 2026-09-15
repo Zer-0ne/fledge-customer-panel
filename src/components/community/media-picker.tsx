@@ -131,12 +131,19 @@ export function MediaPicker({
     onUploadingChange?.(active);
   };
 
-  const startCheck = () => {
+  /**
+   * Upload (network) and check (moderation) are separate: only the upload
+   * blocks the parent's submit button, so the poster never waits on the queue.
+   * A photo under review stays visible as a tile with its own badge; if the
+   * verdict is a rejection it is removed with the reason, and the post itself
+   * stays private until every photo passes (server-side gate).
+   */
+  const startUpload = () => {
     inFlight.current += 1;
     reportUploading(true);
   };
 
-  const finishCheck = () => {
+  const finishUpload = () => {
     inFlight.current = Math.max(0, inFlight.current - 1);
     if (inFlight.current === 0) reportUploading(false);
   };
@@ -147,9 +154,10 @@ export function MediaPicker({
     const room = Math.max(0, maxCount - value.length);
     for (const file of Array.from(files).slice(0, room)) {
       const localUrl = URL.createObjectURL(file);
-      startCheck();
+      startUpload();
       try {
         const mediaId = await uploadMediaPipeline(file, { purpose });
+        finishUpload();
         // Instant preview; the verdict arrives below and decides its fate.
         onChange((prev) => (prev.length >= maxCount ? prev : [...prev, { mediaId, url: localUrl }]));
         setVerdicts((prev) => ({ ...prev, [mediaId]: { state: 'checking' } }));
@@ -166,9 +174,9 @@ export function MediaPicker({
               image.mediaId === mediaId ? { ...image, url: approvedUrl } : image
             )));
           }
-        }).finally(() => { finishCheck(); });
+        });
       } catch (err) {
-        finishCheck();
+        finishUpload();
         setError(err instanceof Error ? err.message : 'Could not upload photo');
       }
     }
@@ -279,13 +287,13 @@ export function MediaPicker({
       {uploading && (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" />
-          Uploading and checking every photo…
+          Uploading…
         </p>
       )}
 
       {unverified > 0 && (
         <p className="text-xs text-amber-600">
-          {unverified === 1 ? 'One photo is' : `${String(unverified)} photos are`} still being checked —
+          Still checking {unverified === 1 ? 'one photo' : `${String(unverified)} photos`} —
           {' '}your post stays private until the check passes.
         </p>
       )}
