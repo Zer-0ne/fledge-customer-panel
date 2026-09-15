@@ -41,6 +41,7 @@ import { UserAvatar } from '@/components/neednow/user-avatar';
 import { useRemainingSeconds } from '@/components/neednow/use-remaining-time';
 import { EditRequestDialog } from '@/components/neednow/edit-request-dialog';
 import { NeedNowResponseRow } from '@/components/neednow/neednow-response-row';
+import { SeenByEntry } from '@/components/neednow/viewers-sheet';
 import {
   getRequest,
   requestResponses,
@@ -55,6 +56,7 @@ import {
   sentResponses,
   withdrawResponse,
   fetchMyListings,
+  recordNeedNowView,
   friendlyNeedNowError,
   formatBudgetRangePaise,
   formatDistanceMeters,
@@ -123,6 +125,24 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
+
+  // Record view for non-owners (fire-and-forget, no polling). Owner/self views are no-ops server-side.
+  React.useEffect(() => {
+    if (!request || request.viewerRelationship.isOwner) return;
+    if (request.status === 'REMOVED') return;
+    const record = (coords?: { lon: number; lat: number }) => {
+      void recordNeedNowView(request.id, coords ? { viewerLon: coords.lon, viewerLat: coords.lat } : undefined).catch(() => {});
+    };
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => record({ lon: pos.coords.longitude, lat: pos.coords.latitude }),
+        () => record(),
+        { timeout: 4000, maximumAge: 300000 }
+      );
+    } else {
+      record();
+    }
+  }, [request]);
 
   const remaining = useRemainingSeconds(request?.expiresAt);
   const timeLabel = request ? formatRemainingTime(remaining ?? request.remainingSeconds, request.status) : '';
@@ -250,6 +270,12 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
             <p className="text-[11px] text-muted-foreground">{NEED_NOW_VISIBILITY_LABELS[request.visibility]}</p>
           </div>
         </div>
+
+        {rel.isOwner && request.status !== 'REMOVED' && (
+          <div className="flex items-center">
+            <SeenByEntry requestId={request.id} isOwner={rel.isOwner} />
+          </div>
+        )}
 
         {/* State banners */}
         {rel.isBlocked && (

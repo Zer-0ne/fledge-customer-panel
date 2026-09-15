@@ -646,6 +646,93 @@ export async function withdrawResponse(id: string): Promise<NeedNowResponse> {
   return respondToResponse(id, 'withdraw');
 }
 
+// ─── Seen-by (owner-only viewers list, WhatsApp-status model) ───────────────────
+
+export interface NeedNowViewerDistance {
+  state: 'available' | 'unavailable';
+  label: string;
+  bucketMeters: number | null;
+}
+
+export interface NeedNowViewer {
+  viewerId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  distance: NeedNowViewerDistance;
+}
+
+export interface NeedNowViewersResponse {
+  viewers: NeedNowViewer[];
+  totalViewers: number;
+}
+
+function mapRawViewer(item: unknown): NeedNowViewer {
+  const raw = (item || {}) as Record<string, unknown>;
+  const dist = (raw.distance || {}) as Record<string, unknown>;
+  return {
+    viewerId: asString(raw.viewerId || raw.viewer_id),
+    displayName: asString(raw.displayName || raw.display_name, 'Student'),
+    avatarUrl: asNullableString(raw.avatarUrl ?? raw.avatar_url),
+    firstSeenAt: asString(raw.firstSeenAt || raw.first_seen_at),
+    lastSeenAt: asString(raw.lastSeenAt || raw.last_seen_at),
+    distance: {
+      state: dist.state === 'available' ? 'available' : 'unavailable',
+      label: asString(dist.label, dist.state === 'available' ? '' : 'Location unavailable'),
+      bucketMeters: asNullableNumber(dist.bucketMeters ?? dist.bucket_meters),
+    },
+  };
+}
+
+/** Formats lastSeenAt to relative time, e.g. "2h ago", "abhi". */
+export function formatViewerSeenAt(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '';
+  const diffMs = Date.now() - then;
+  if (diffMs < 45_000) return 'abhi';
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return '1 day ago';
+  return `${days} days ago`;
+}
+
+/** POST /housing-requests/:id/view — idempotent record view (204, fire-and-forget). */
+export async function recordNeedNowView(
+  id: string,
+  opts?: { viewerLon?: number; viewerLat?: number }
+): Promise<void> {
+  await apiFetch<unknown>({
+    path: `/api/v1/housing-requests/${id}/view`,
+    method: 'POST',
+    body: opts?.viewerLon != null && opts?.viewerLat != null ? { viewerLon: opts.viewerLon, viewerLat: opts.viewerLat } : {},
+  });
+}
+
+/** GET /housing-requests/:id/views — owner-only, returns viewers + totalViewers. */
+export async function getNeedNowViewers(id: string): Promise<NeedNowViewersResponse> {
+  const res = await apiFetch<unknown>({
+    path: `/api/v1/housing-requests/${id}/views`,
+    method: 'GET',
+  });
+  const obj = (res || {}) as Record<string, unknown>;
+  const data = (obj.data && typeof obj.data === 'object' ? obj.data : obj) as Record<string, unknown>;
+  const rawViewers = Array.isArray(data.viewers) ? data.viewers : Array.isArray(obj.viewers) ? obj.viewers : [];
+  const totalRaw = data.totalViewers ?? obj.totalViewers;
+  return {
+    viewers: (rawViewers as unknown[]).map(mapRawViewer).sort((a, b) => {
+      const at = new Date(a.lastSeenAt).getTime() || 0;
+      const bt = new Date(b.lastSeenAt).getTime() || 0;
+      return bt - at;
+    }),
+    totalViewers: typeof totalRaw === 'number' ? totalRaw : (rawViewers as unknown[]).length,
+  };
+}
+
 // ─── Saved ──────────────────────────────────────────────────────────────────
 
 /** POST /housing-requests/:id/save — saves the request for later. */

@@ -38,6 +38,7 @@ import {
 import { STAY_DURATION_LABELS } from '@/lib/api/services/neednow';
 import { NeedNowRequest } from '@/types';
 import BorderGlow from '@/components/BorderGlow'
+import { SeenByEntry } from './viewers-sheet';
 
 export interface NeedNowRequestCardProps {
   request: NeedNowRequest;
@@ -207,6 +208,12 @@ export function NeedNowRequestCard({ request, onChanged }: NeedNowRequestCardPro
           <Badge variant="secondary" className="text-[11px]">
             {STAY_DURATION_LABELS[request.stayDurationType]}
           </Badge>
+        </div>
+      )}
+
+      {request.viewerRelationship.isOwner && (
+        <div className="mt-3 flex items-center gap-2">
+          <SeenByEntry requestId={request.id} isOwner={request.viewerRelationship.isOwner} />
         </div>
       )}
 

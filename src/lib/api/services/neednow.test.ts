@@ -228,3 +228,73 @@ describe('createDraft', () => {
     expect(draft.status).toBe('DRAFT');
   });
 });
+
+describe('seen-by: formatViewerSeenAt', () => {
+  it('returns abhi for <45s', async () => {
+    const { formatViewerSeenAt } = await import('./neednow');
+    expect(formatViewerSeenAt(new Date(Date.now() - 20_000).toISOString())).toBe('abhi');
+  });
+  it('returns minutes ago', async () => {
+    const { formatViewerSeenAt } = await import('./neednow');
+    expect(formatViewerSeenAt(new Date(Date.now() - 5 * 60_000).toISOString())).toBe('5m ago');
+  });
+  it('returns hours ago', async () => {
+    const { formatViewerSeenAt } = await import('./neednow');
+    expect(formatViewerSeenAt(new Date(Date.now() - 3 * 3600_000).toISOString())).toBe('3h ago');
+  });
+});
+
+describe('seen-by: getNeedNowViewers', () => {
+  it('maps viewers + sorts DESC + returns totalViewers', async () => {
+    const { getNeedNowViewers } = await import('./neednow');
+    const now = new Date().toISOString();
+    const earlier = new Date(Date.now() - 3600_000).toISOString();
+    vi.mocked(clientModule.apiFetch).mockResolvedValueOnce({
+      viewers: [
+        { viewerId: 'u1', displayName: 'A', avatarUrl: null, firstSeenAt: earlier, lastSeenAt: earlier, distance: { state: 'unavailable', label: 'Location unavailable', bucketMeters: null } },
+        { viewerId: 'u2', displayName: 'B', avatarUrl: null, firstSeenAt: earlier, lastSeenAt: now, distance: { state: 'available', label: '1.0 km', bucketMeters: 1000 } },
+      ],
+      totalViewers: 2,
+    });
+    const res = await getNeedNowViewers('hr_1');
+    expect(res.totalViewers).toBe(2);
+    expect(res.viewers[0].viewerId).toBe('u2'); // most recent first
+    expect(res.viewers[1].distance.label).toBe('Location unavailable');
+    expect(clientModule.apiFetch).toHaveBeenCalledWith(expect.objectContaining({ path: '/api/v1/housing-requests/hr_1/views', method: 'GET' }));
+  });
+
+  it('unwraps data envelope', async () => {
+    const { getNeedNowViewers } = await import('./neednow');
+    vi.mocked(clientModule.apiFetch).mockResolvedValueOnce({
+      data: { viewers: [], totalViewers: 0 },
+    });
+    const res = await getNeedNowViewers('hr_2');
+    expect(res.totalViewers).toBe(0);
+    expect(res.viewers).toEqual([]);
+  });
+
+  it('never uses polling — single fetch', async () => {
+    const { getNeedNowViewers } = await import('./neednow');
+    vi.clearAllMocks();
+    vi.mocked(clientModule.apiFetch).mockResolvedValueOnce({ viewers: [], totalViewers: 0 });
+    await getNeedNowViewers('hr_x');
+    expect(vi.mocked(clientModule.apiFetch)).toHaveBeenCalledWith(expect.objectContaining({ path: '/api/v1/housing-requests/hr_x/views' }));
+    // ensure no setInterval in the service module source (static check is in lint, runtime check here)
+    expect(String(getNeedNowViewers)).not.toContain('setInterval');
+  });
+});
+
+describe('seen-by: recordNeedNowView', () => {
+  it('calls POST /view with empty body when no coords', async () => {
+    const { recordNeedNowView } = await import('./neednow');
+    vi.mocked(clientModule.apiFetch).mockResolvedValueOnce({});
+    await recordNeedNowView('hr_1');
+    expect(clientModule.apiFetch).toHaveBeenCalledWith(expect.objectContaining({ path: '/api/v1/housing-requests/hr_1/view', method: 'POST' }));
+  });
+  it('sends coords when provided', async () => {
+    const { recordNeedNowView } = await import('./neednow');
+    vi.mocked(clientModule.apiFetch).mockResolvedValueOnce({});
+    await recordNeedNowView('hr_1', { viewerLon: 77.2, viewerLat: 28.6 });
+    expect(clientModule.apiFetch).toHaveBeenCalledWith(expect.objectContaining({ body: { viewerLon: 77.2, viewerLat: 28.6 } }));
+  });
+});
