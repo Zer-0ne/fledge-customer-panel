@@ -54,7 +54,7 @@ export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNav
       className="fixed right-0 bottom-0 left-0 z-50 border-t border-border/70 bg-background/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl supports-[backdrop-filter]:bg-background/70 dark:border-white/10 md:hidden"
       aria-label="Mobile navigation"
     >
-      <div className="flex h-14 items-center justify-around px-1">
+      <div className="flex h-14 items-stretch justify-around gap-0 px-0.5">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -65,14 +65,17 @@ export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNav
               key={item.href}
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
+              title={item.label}
               className={cn(
-                'relative flex flex-1 flex-col items-center justify-center py-1 text-[10px] font-medium transition-colors',
+                // min-w-0 keeps the label truncation from forcing the row wider
+                // than the viewport (6 tabs on a 320px phone).
+                'relative flex min-w-0 flex-1 flex-col items-center justify-center px-0.5 py-1 text-[9px] font-medium transition-colors sm:text-[10px]',
                 isActive ? 'text-primary font-semibold' : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <span
                 className={cn(
-                  'relative flex size-8 items-center justify-center rounded-xl transition-all duration-200',
+                  'relative flex size-7 items-center justify-center rounded-xl transition-all duration-200 sm:size-8',
                   isActive &&
                     'bg-primary/15 text-primary shadow-xs ring-1 ring-primary/25 backdrop-blur-md scale-105'
                 )}
@@ -89,10 +92,12 @@ export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNav
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <Icon className="size-[18px]" strokeWidth={isActive ? 2.3 : 1.8} />
+                  <Icon className="size-4 sm:size-[18px]" strokeWidth={isActive ? 2.3 : 1.8} />
                 )}
               </span>
-              <span className="leading-tight mt-0.5 tracking-tight">{item.label}</span>
+              <span className="mt-0.5 w-full max-w-full truncate text-center leading-tight tracking-tight">
+                {item.label}
+              </span>
             </Link>
           );
         })}
