@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+<title id="title">Fledge</title>
+<!-- Flat geometric house mark on a sky-to-blue tile. Owl artwork is for trust
+     badges only (public/badges) — never the app icon. Regenerate with
+     `python3 scripts/generate-icons.py` from the customer-panel root. -->
+<defs>
+<linearGradient id="tile" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="512">
+<stop stop-color="#0EA5E9"/><stop offset="1" stop-color="#2563EB"/>
+</linearGradient>
+</defs>
+<rect width="512" height="512" rx="112" fill="url(#tile)"/>
+<g fill="#FFFFFF" stroke="#FFFFFF" stroke-width="20" stroke-linejoin="round">
+<polygon points="256,118 108,248 404,248"/>
+<rect x="158" y="248" width="196" height="170" rx="16"/>
+</g>
+<path d="M208 428V370a48 48 0 0 1 96 0v58Z" fill="url(#tile)"/>
+</svg>
