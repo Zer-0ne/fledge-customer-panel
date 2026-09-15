@@ -40,6 +40,8 @@ export interface ResalePost {
   streetLabel: string | null;
   cityCode: string | null;
   status: 'active' | 'reserved' | 'sold' | 'expired' | 'removed';
+  /** Photo moderation state: 'pending' → visible to the seller only. */
+  mediaState?: 'pending' | 'approved';
   createdAt: string;
 }
 

@@ -176,7 +176,11 @@ export default function ResalePage() {
                 )}
                 <div className="flex items-start justify-between gap-2">
                   <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">{CATEGORY_LABEL.get(post.category) ?? post.category}</span>
-                  {post.status !== 'active' && (
+                  {post.mediaState === 'pending' ? (
+                    <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-600" title="Photos are being checked — only you can see this item right now.">
+                      Under review
+                    </span>
+                  ) : post.status !== 'active' && (
                     <span className="rounded-full border px-2 py-0.5 text-[11px] text-emerald-600">{post.status}</span>
                   )}
                 </div>
@@ -303,7 +307,10 @@ function ComposeResaleDialog({ open, busy, onClose, onSubmit }: {
           {/* Photos — multi-image, same moderation pipeline as every other post. */}
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">Photos (up to 5)</p>
-            <MediaPicker value={images} onChange={setImages} maxCount={5} />
+            <MediaPicker value={images} onChange={setImages} maxCount={5} waitForReady={false} />
+            <p className="text-[11px] text-muted-foreground">
+              Photos are checked automatically in the background — your item stays visible to you and goes public as soon as they pass.
+            </p>
           </div>
         </div>
 

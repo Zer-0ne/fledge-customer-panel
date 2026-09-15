@@ -22,6 +22,13 @@ interface MediaPickerProps {
   purpose?: MediaPurpose;
   maxCount?: number;
   disabled?: boolean;
+  /**
+   * Wait for the moderation queue before handing the id back. Default true
+   * (used by verification-style flows). Posting flows pass false: the photo
+   * uploads instantly, the post goes up at once, and only becomes PUBLIC once
+   * the background worker approves every photo — the poster never waits.
+   */
+  waitForReady?: boolean;
   /** Show a "processing media" banner while uploads are in flight. */
   onUploadingChange?: (uploading: boolean) => void;
 }
@@ -61,6 +68,7 @@ export function MediaPicker({
   purpose = 'community',
   maxCount = 10,
   disabled = false,
+  waitForReady = true,
   onUploadingChange,
 }: MediaPickerProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -77,13 +85,23 @@ export function MediaPicker({
     setError(null);
     reportUploading(true);
     try {
+      // Accumulate locally: `value` is a stale prop inside the loop, so a
+      // multi-file pick would otherwise keep only the last image.
+      let next = [...value];
       for (const file of Array.from(files)) {
-        if (value.length >= maxCount) break;
+        if (next.length >= maxCount) break;
         const mediaId = await uploadMediaPipeline(file, { purpose });
-        // Resolve a preview URL after the worker finishes; rejected uploads
-        // throw with a clear reason instead of hanging on the spinner.
-        const url = await resolvePreviewUrl(mediaId);
-        onChange([...value, { mediaId, url }]);
+        if (waitForReady) {
+          // Resolve a preview URL after the worker finishes; rejected uploads
+          // throw with a clear reason instead of hanging on the spinner.
+          const url = await resolvePreviewUrl(mediaId);
+          next = [...next, { mediaId, url }];
+        } else {
+          // Instant local preview. Moderation runs in the background queue and
+          // the item only becomes public once every photo is approved.
+          next = [...next, { mediaId, url: URL.createObjectURL(file) }];
+        }
+        onChange(next);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not upload image');
