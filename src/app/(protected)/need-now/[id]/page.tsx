@@ -578,13 +578,13 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
         {!rel.isOwner && rel.existingResponseId && (
           <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 Your response
               </span>
               {myResponse && (
                 <Badge
                   variant={myResponse.status === 'ACCEPTED' ? 'success' : myResponse.status === 'DECLINED' ? 'destructive' : myResponse.status === 'WITHDRAWN' || myResponse.status === 'EXPIRED' ? 'outline' : 'secondary'}
-                  className="text-[10px]"
+                  className="text-[11px]"
                 >
                   {myResponse.status.charAt(0) + myResponse.status.slice(1).toLowerCase()}
                 </Badge>

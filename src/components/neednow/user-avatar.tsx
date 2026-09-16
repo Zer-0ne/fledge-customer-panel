@@ -58,7 +58,7 @@ export function UserAvatar({
       {verified && (
         <Badge
           variant="success"
-          className="absolute -bottom-0.5 -right-0.5 size-4.5 min-w-0 rounded-full border-2 border-background p-0 text-[10px]"
+          className="absolute -bottom-0.5 -right-0.5 size-4.5 min-w-0 rounded-full border-2 border-background p-0 text-[11px]"
           aria-label="Verified user"
         >
           <BadgeCheck className="size-3" />

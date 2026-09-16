@@ -330,7 +330,7 @@ export function LeafletMapInner({
               >
                 <Popup className="leaflet-custom-popup">
                   <div className="p-1 min-w-[220px]">
-                    <span className="inline-block rounded bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    <span className="inline-block rounded bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-primary">
                       {listing.property?.type || 'Rental Flat'}
                     </span>
                     <h4 className="font-bold text-sm text-slate-900 line-clamp-1 mt-1">

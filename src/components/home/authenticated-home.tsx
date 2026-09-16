@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { College, Listing, NeedNowRequest, RoommatePost } from '@/types';
 import { fetchColleges, fetchListings } from '@/lib/api/services/discovery';
@@ -10,7 +11,12 @@ import { fetchRoommatePosts } from '@/lib/api/services/roommates';
 import { resolveLocation, type UserLocation } from '@/lib/location';
 import { ListingCard } from '@/components/listings/listing-card';
 import { MasonryGrid } from '@/components/common/masonry-grid';
-import { InterestDialog } from '@/components/listings/interest-dialog';
+// Overlays only appear after an interaction — keep them out of the initial JS
+// the home route ships (they were previously in the same client chunk).
+const InterestDialog = dynamic(
+  () => import('@/components/listings/interest-dialog').then((m) => m.InterestDialog),
+  { ssr: false }
+);
 import { BlurFade } from "@/components/ui/blur-fade"
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient"
 import {
@@ -20,12 +26,17 @@ import {
 } from "@/components/ui/input-group"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Card, CardContent } from "@/components/ui/card"
-import { LiquidGlassCard } from "@/components/kokonutui/liquid-glass-card"
 import { SponsoredAd } from '@/components/ads/sponsored-ad';
 import { NeedNowFeedCard } from '@/components/neednow/neednow-feed-card';
-import { NeedNowStoryViewer } from '@/components/neednow/neednow-story-viewer';
+const NeedNowStoryViewer = dynamic(
+  () => import('@/components/neednow/neednow-story-viewer').then((m) => m.NeedNowStoryViewer),
+  { ssr: false }
+);
 import { RoommateCard } from '@/components/roommates/roommate-card';
-import { RoommateInterestDialog } from '@/components/roommates/roommate-interest-dialog';
+const RoommateInterestDialog = dynamic(
+  () => import('@/components/roommates/roommate-interest-dialog').then((m) => m.RoommateInterestDialog),
+  { ssr: false }
+);
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { ErrorState } from '@/components/ui/error-state';
@@ -331,25 +342,25 @@ export default function AuthenticatedHome() {
             onRetry={() => void loadNearbyNeeds()}
           />
         ) : nearbyNeeds.length === 0 ? (
-          <LiquidGlassCard className="rounded-3xl border-dashed p-8 text-center">
-            <div className="flex flex-col items-center gap-3">
-            <Timer className="text-muted-foreground" />
-            <p className="text-sm font-medium text-foreground">No active requirements nearby</p>
-            <p className="max-w-md text-xs text-muted-foreground">
-              Be the first to post a 24-hour requirement and nearby students will see it instantly.
-            </p>
-            <Button
-              render={<Link href="/need-now/new" />}
-              nativeButton={false}
-              size="sm"
-              variant="outline"
-              className="rounded-xl"
-            >
-              <Sparkles data-icon="inline-start" />
-              Post your requirement
-            </Button>
-            </div>
-          </LiquidGlassCard>
+          <div className="fl-gradient-border rounded-3xl border border-dashed border-border bg-card p-8 text-center">
+              <div className="flex flex-col items-center gap-3">
+              <Timer className="text-muted-foreground" />
+              <p className="text-sm font-medium text-foreground">No active requirements nearby</p>
+              <p className="max-w-md text-xs text-muted-foreground">
+                Be the first to post a 24-hour requirement and nearby students will see it instantly.
+              </p>
+              <Button
+                render={<Link href="/need-now/new" />}
+                nativeButton={false}
+                size="sm"
+                variant="outline"
+                className="rounded-xl"
+              >
+                <Sparkles data-icon="inline-start" />
+                Post your requirement
+              </Button>
+              </div>
+          </div>
         ) : (
           <div
             className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"

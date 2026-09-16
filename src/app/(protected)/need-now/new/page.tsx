@@ -416,7 +416,7 @@ function NewNeedNowPageInner() {
                   }`}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
-                  <span className="flex size-4 items-center justify-center rounded-full bg-background/20 text-[10px]">
+                  <span className="flex size-4 items-center justify-center rounded-full bg-background/20 text-[11px]">
                     {isDone ? <Check className="size-3" /> : stepNumber}
                   </span>
                   <span className="hidden sm:inline">{label}</span>

@@ -254,7 +254,7 @@ export default function NotificationPreferencesClient({ firebaseConfig }: { fire
               className="ml-auto shrink-0"
             />
           ) : (
-            <span className="ml-auto shrink-0 rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[10px] font-medium text-muted-foreground">
+            <span className="ml-auto shrink-0 rounded-full border border-border/60 bg-muted/40 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
               Not configured
             </span>
           )}
