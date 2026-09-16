@@ -22,9 +22,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-manrope), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
-  --font-heading: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-heading: var(--font-bricolage), var(--font-manrope), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -131,20 +131,24 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* Default accent = Monochrome Slate (see html[data-theme-color="slate"]) */
-  --primary: oklch(0.24 0.03 260);
+  /* Default accent = Fledge brand teal (see html[data-theme-color="teal"]) */
+  --primary: oklch(0.52 0.09 181);
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --muted-foreground: oklch(0.50 0.01 250);
+  --accent: oklch(0.96 0.02 181);
+  --accent-foreground: oklch(0.24 0.04 181);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  /* Default accent ring = Monochrome Slate */
-  --ring: oklch(0.42 0.03 260);
+  --border: oklch(0.918 0.005 250);
+  --input: oklch(0.918 0.005 250);
+  /* Default accent ring = Fledge brand teal */
+  --ring: oklch(0.52 0.09 181);
+  /* Brand support: soft teal wash used by orbs, highlight bands and accents */
+  --brand: oklch(0.72 0.13 178);
+  --brand-strong: oklch(0.52 0.09 181);
+  --brand-soft: oklch(0.96 0.03 181);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -168,20 +172,23 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  /* Default accent = Monochrome Slate (dark) */
-  --primary: oklch(0.92 0.01 260);
-  --primary-foreground: oklch(0.14 0.02 260);
+  /* Default accent = Fledge brand teal (dark) */
+  --primary: oklch(0.80 0.13 179);
+  --primary-foreground: oklch(0.19 0.03 180);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --muted-foreground: oklch(0.73 0.01 250);
+  --accent: oklch(0.30 0.03 181);
+  --accent-foreground: oklch(0.95 0.02 181);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  /* Default accent ring = Monochrome Slate (dark) */
-  --ring: oklch(0.70 0.01 260);
+  /* Default accent ring = Fledge brand teal (dark) */
+  --ring: oklch(0.80 0.13 179);
+  --brand: oklch(0.78 0.13 179);
+  --brand-strong: oklch(0.62 0.11 180);
+  --brand-soft: oklch(0.26 0.04 181);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -242,6 +249,12 @@ html[data-theme-color="slate"] {
   --ring: oklch(0.42 0.03 260);
 }
 
+html[data-theme-color="teal"] {
+  --primary: oklch(0.52 0.09 181);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.52 0.09 181);
+}
+
 /* ==========================================================================
    Color Theme Palettes (Dark Mode)
    ========================================================================== */
@@ -287,6 +300,12 @@ html.dark[data-theme-color="slate"] {
   --ring: oklch(0.70 0.01 260);
 }
 
+html.dark[data-theme-color="teal"] {
+  --primary: oklch(0.80 0.13 179);
+  --primary-foreground: oklch(0.19 0.03 180);
+  --ring: oklch(0.80 0.13 179);
+}
+
 /* ==========================================================================
    Font Scale Typography
    ========================================================================== */
@@ -318,6 +337,25 @@ html[data-font-scale="large"] {
   }
   html {
     @apply font-sans;
+  }
+  /* Display face carries the headings; body stays on the readable workhorse. */
+  h1,
+  h2,
+  h3 {
+    @apply font-heading;
+    letter-spacing: -0.015em;
+  }
+  h1 {
+    text-wrap: balance;
+  }
+  h2,
+  h3 {
+    text-wrap: pretty;
+  }
+  /* Readable floor: sub-12px type is hard to read on the phones this app
+     actually ships to (measured 9-11px across the chrome before this). */
+  small {
+    @apply text-xs;
   }
   input:not([type='checkbox']):not([type='radio']):not([type='range']),
   textarea,
@@ -496,4 +534,127 @@ html[data-font-scale="large"] {
 }
 .leaflet-popup-pane {
   z-index: 30 !important;
+}
+
+/* ==========================================================================
+   Fledge design utilities (2026-09-16 UI modernization)
+   Ambient atmosphere + surfaces + readable type scale. All motion respects
+   prefers-reduced-motion (see the media query at the end of this block).
+   ========================================================================== */
+
+/* --- Ambient gradient orbs: felt, not seen (10-20% opacity, blur-3xl) --- */
+@keyframes fl-orb-drift-1 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(28px, -42px, 0) scale(1.05); }
+  66% { transform: translate3d(-18px, 18px, 0) scale(0.96); }
+}
+@keyframes fl-orb-drift-2 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(-34px, 26px, 0) scale(1.08); }
+  66% { transform: translate3d(22px, -32px, 0) scale(0.94); }
+}
+@keyframes fl-orb-drift-3 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(18px, 24px, 0) scale(1.06); }
+}
+
+.fl-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  pointer-events: none;
+  will-change: transform;
+}
+.fl-orb-1 { animation: fl-orb-drift-1 14s ease-in-out infinite; }
+.fl-orb-2 { animation: fl-orb-drift-2 18s ease-in-out infinite; }
+.fl-orb-3 { animation: fl-orb-drift-3 11s ease-in-out infinite; }
+
+/* --- Gradient hairline border (mask-composite) --- */
+.fl-gradient-border {
+  position: relative;
+}
+.fl-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--brand) 45%, transparent),
+    color-mix(in oklch, var(--foreground) 8%, transparent) 45%,
+    color-mix(in oklch, var(--brand) 30%, transparent)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* --- Surfaces --- */
+.fl-surface {
+  background: color-mix(in oklch, var(--card) 92%, transparent);
+  border: 1px solid var(--border);
+}
+.fl-glass {
+  background: color-mix(in oklch, var(--card) 72%, transparent);
+  border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
+  /* backdrop-filter intentionally applied inline at usage sites —
+     lightningcss strips the unprefixed property under this project's
+     browser targets (see ad-glass-surface note above). */
+}
+.fl-lift {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.fl-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -18px color-mix(in oklch, var(--foreground) 30%, transparent);
+  border-color: color-mix(in oklch, var(--brand) 35%, var(--border));
+}
+
+/* --- Brand text gradient (single signature accent, used sparingly) --- */
+.fl-text-gradient {
+  background: linear-gradient(
+    100deg,
+    var(--brand-strong),
+    color-mix(in oklch, var(--brand) 85%, white) 55%,
+    var(--brand-strong)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* --- Touch targets: WCAG 2.2 SC 2.5.8 floor (24px) with 44px comfort --- */
+.fl-tap {
+  min-height: 2.75rem; /* 44px */
+}
+.fl-tap-sm {
+  min-height: 1.75rem; /* 28px */
+}
+
+/* --- Section rhythm: consistent vertical spacing between page bands --- */
+.fl-section {
+  padding-block: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+/* --- Numerals: tabular figures for prices, distances, counts --- */
+.fl-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fl-orb-1,
+  .fl-orb-2,
+  .fl-orb-3,
+  .fl-lift,
+  .gpu-idle-when-reduced {
+    animation: none !important;
+    transition: none !important;
+  }
+  .fl-lift:hover {
+    transform: none;
+  }
 }

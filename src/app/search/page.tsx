@@ -10,12 +10,13 @@ import {
 } from '@/lib/listings/filters';
 import { ListingFilters } from '@/components/listings/listing-filters';
 import { ListingGrid } from '@/components/listings/listing-grid';
+import { SaveSearchDialog } from '@/components/listings/save-search-dialog';
 import { InterestDialog } from '@/components/listings/interest-dialog';
 import { fetchListingInterests } from '@/lib/api/services/interests';
 import { useAuth } from '@/components/providers/auth-provider';
 import { LocationMap } from '@/components/map/location-map';
 import { resolveLocation } from '@/lib/location';
-import { Building2, LayoutGrid, Map as MapIcon, Columns } from 'lucide-react';
+import { Bookmark, Building2, LayoutGrid, Map as MapIcon, Columns } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SponsoredAd } from '@/components/ads/sponsored-ad';
 
@@ -35,6 +36,7 @@ function SearchContent() {
 
   React.useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- desktop default after mount; computing this during render would mismatch SSR
       setViewMode('split');
     }
   }, []);
@@ -42,6 +44,7 @@ function SearchContent() {
   // Interest Modal state
   const [selectedListingForInterest, setSelectedListingForInterest] = React.useState<Listing | null>(null);
   const [isInterestOpen, setIsInterestOpen] = React.useState(false);
+  const [isSaveSearchOpen, setIsSaveSearchOpen] = React.useState(false);
   const [expressedInterestListingIds, setExpressedInterestListingIds] = React.useState<Set<string>>(new Set());
 
   let isAuthenticated = false;
@@ -145,6 +148,20 @@ function SearchContent() {
     router.push('/search');
   };
 
+  /**
+   * Expressing interest needs a session. Guests used to land in a dialog that
+   * could only fail — send them to sign-in and come straight back here.
+   */
+  const handleInterestClick = (listing: Listing) => {
+    if (!isAuthenticated) {
+      const returnUrl = `/search${searchParamsString ? `?${searchParamsString}` : ''}`;
+      router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+    setSelectedListingForInterest(listing);
+    setIsInterestOpen(true);
+  };
+
   const handleLoadMore = async () => {
     if (!nextCursor || isLoadingMore) return;
     setIsLoadingMore(true);
@@ -158,50 +175,91 @@ function SearchContent() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 pb-20 md:pb-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-4 sm:space-y-6 pb-20 md:pb-8">
       {/* Header & View Mode Switcher */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl flex items-center gap-3">
-            <Building2 className="size-8 text-primary" />
-            Browse Flat Listings
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Flats &amp; PG near campus
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Explore student flats, apartments, and PG rentals around your college campus.
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isLoading
+              ? 'Finding listings near you…'
+              : `${listings.length}${nextCursor ? '+' : ''} ${listings.length === 1 ? 'listing' : 'listings'} match your search`}
           </p>
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex items-center rounded-xl border border-border bg-card p-1 shadow-xs self-start sm:self-auto">
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('grid')}
-            className="h-8 gap-1 text-xs"
-          >
-            <LayoutGrid className="size-3.5" />
-            Grid View
-          </Button>
-          <Button
-            variant={viewMode === 'split' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('split')}
-            className="h-8 gap-1 text-xs hidden md:flex"
-          >
-            <Columns className="size-3.5" />
-            Split View
-          </Button>
-          <Button
-            variant={viewMode === 'map' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('map')}
-            className="h-8 gap-1 text-xs"
-          >
-            <MapIcon className="size-3.5" />
-            Map View
-          </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Save search — the saved-search page existed with no way to reach it */}
+          {isAuthenticated && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSaveSearchOpen(true)}
+              className="h-9 gap-1.5 rounded-xl text-xs"
+            >
+              <Bookmark className="size-3.5" />
+              Save this search
+            </Button>
+          )}
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center rounded-xl border border-border bg-card p-1 shadow-xs">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className="h-8 gap-1 text-xs"
+            >
+              <LayoutGrid className="size-3.5" />
+              Grid
+            </Button>
+            <Button
+              variant={viewMode === 'split' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('split')}
+              className="hidden h-8 gap-1 text-xs md:flex"
+            >
+              <Columns className="size-3.5" />
+              Split
+            </Button>
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('map')}
+              className="h-8 gap-1 text-xs"
+            >
+              <MapIcon className="size-3.5" />
+              Map
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Guest nudge — browsing is open, acting needs an account */}
+      {!isAuthenticated && (
+        <div className="fl-gradient-border flex flex-col gap-3 rounded-2xl bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <Building2 className="mt-0.5 size-5 shrink-0 text-primary" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                You&apos;re browsing as a guest
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Sign in with Google to shortlist flats, message hosts and request the owner&apos;s
+                contact details.
+              </p>
+            </div>
+          </div>
+          <Button
+            render={<a href={`/login?returnUrl=${encodeURIComponent(`/search${searchParamsString ? `?${searchParamsString}` : ''}`)}`} />}
+            nativeButton={false}
+            className="h-10 shrink-0 rounded-xl px-4"
+          >
+            Sign in to shortlist
+          </Button>
+        </div>
+      )}
 
       {/* Filter Bar */}
       <ListingFilters
@@ -240,10 +298,7 @@ function SearchContent() {
               expressedInterestListingIds={expressedInterestListingIds}
               collegeId={filters.collegeId}
               campusId={filters.campusId}
-              onInterestClick={(listing) => {
-                setSelectedListingForInterest(listing);
-                setIsInterestOpen(true);
-              }}
+              onInterestClick={handleInterestClick}
             />
           </div>
           <div className="lg:col-span-5 lg:sticky lg:top-6">
@@ -276,10 +331,7 @@ function SearchContent() {
             expressedInterestListingIds={expressedInterestListingIds}
             collegeId={filters.collegeId}
             campusId={filters.campusId}
-            onInterestClick={(listing) => {
-              setSelectedListingForInterest(listing);
-              setIsInterestOpen(true);
-            }}
+            onInterestClick={handleInterestClick}
           />
         </>
       )}
@@ -294,6 +346,13 @@ function SearchContent() {
             setExpressedInterestListingIds((prev) => new Set([...prev, selectedListingForInterest.id]));
           }
         }}
+      />
+
+      {/* Save search — reachable from here and from the account menu */}
+      <SaveSearchDialog
+        open={isSaveSearchOpen}
+        onOpenChange={setIsSaveSearchOpen}
+        filters={filters}
       />
     </div>
   );

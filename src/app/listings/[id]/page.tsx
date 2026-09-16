@@ -109,11 +109,13 @@ export default function ListingDetailPage() {
 
   const handleFavoriteToggle = async () => {
     if (!isAuthenticated) {
+      // Public browse: send guests to sign-in instead of a toast dead end.
       showToast({
-        title: 'Authentication required',
-        description: 'Please log in to add listings to your favorites.',
+        title: 'Sign in to continue',
+        description: 'Create a free account to save flats and get alerts.',
         variant: 'info',
       });
+      router.push(`/login?returnUrl=${encodeURIComponent(`/listings/${id}`)}`);
       return;
     }
 
@@ -493,18 +495,18 @@ export default function ListingDetailPage() {
                     onClick={() => {
                       if (!isAuthenticated) {
                         showToast({
-                          title: 'Authentication required',
-                          description: 'Please log in to express interest in this flat.',
+                          title: 'Sign in to continue',
+                          description: 'Enquiries need an account so hosts can reply to you.',
                           variant: 'info',
                         });
-                        router.push('/login');
+                        router.push(`/login?returnUrl=${encodeURIComponent(`/listings/${id}`)}`);
                         return;
                       }
                       setIsInterestOpen(true);
                     }}
                   >
                     <Sparkles className="size-4" />
-                    Express Interest
+                    {isAuthenticated ? 'Send enquiry' : 'Sign in to enquire'}
                   </Button>
                 )}
 

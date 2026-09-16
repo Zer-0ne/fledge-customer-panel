@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Bricolage_Grotesque, Geist_Mono, Manrope } from 'next/font/google';
 import './globals.css';
 import { env } from '@/lib/env';
 import { ToastProvider } from '@/components/ui/toast';
@@ -19,9 +19,16 @@ import { Suspense } from 'react';
 import { AnnouncementModal } from '@/components/announcements/announcement-modal';
 import { NavigationProgressBar } from '@/components/providers/navigation-progress-bar';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const manrope = Manrope({
+  variable: '--font-manrope',
   subsets: ['latin'],
+  display: 'swap',
+});
+
+const bricolage = Bricolage_Grotesque({
+  variable: '--font-bricolage',
+  subsets: ['latin'],
+  display: 'swap',
 });
 
 const geistMono = Geist_Mono({
@@ -59,7 +66,7 @@ const themeScript = `
     if (isDark) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
 
-    const color = localStorage.getItem('theme-color') || 'slate';
+    const color = localStorage.getItem('theme-color') || 'teal';
     document.documentElement.setAttribute('data-theme-color', color);
 
     const fontScale = localStorage.getItem('theme-font-scale') || 'normal';
@@ -76,7 +83,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${manrope.variable} ${bricolage.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

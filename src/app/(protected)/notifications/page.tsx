@@ -50,7 +50,7 @@ function ModerationChips({ notification }: { notification: Notification }) {
           {violationFlags.slice(0, 3).map((flag) => (
             <span
               key={flag}
-              className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600 dark:bg-red-950/30 dark:text-red-400"
+              className="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600 dark:bg-red-950/30 dark:text-red-400"
             >
               {flagLabels[flag] ?? flag}
             </span>
@@ -60,7 +60,7 @@ function ModerationChips({ notification }: { notification: Notification }) {
       {riskLevel && (
         <span
           className={cn(
-            'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold',
+            'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold',
             riskLevel === 'HIGH' || riskLevel === 'CRITICAL'
               ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400'
               : riskLevel === 'MEDIUM'
@@ -313,7 +313,7 @@ export default function NotificationsPage() {
                       {notification.title}
                     </h2>
                     {!notification.isRead && (
-                      <Badge variant="secondary" className="shrink-0 text-[10px]">
+                      <Badge variant="secondary" className="shrink-0 text-[11px]">
                         New
                       </Badge>
                     )}

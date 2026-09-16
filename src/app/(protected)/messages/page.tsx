@@ -597,7 +597,7 @@ export default function MessagesPage() {
                       )}
                     </div>
                     {hasUnread ? (
-                      <span className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-primary-foreground font-bold text-[10px] flex items-center justify-center border-2 border-background shadow-xs sm:hidden">
+                      <span className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-primary-foreground font-bold text-[11px] flex items-center justify-center border-2 border-background shadow-xs sm:hidden">
                         {effectiveUnread > 99 ? '99+' : effectiveUnread}
                       </span>
                     ) : null}
@@ -617,7 +617,7 @@ export default function MessagesPage() {
                       <Badge
                         variant="outline"
                         title={listingLabel}
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium max-w-[150px] truncate ${
+                        className={`text-[11px] px-2 py-0.5 rounded-full font-medium max-w-[150px] truncate ${
                           conv.contextType === 'listing_interest'
                             ? 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                             : isHousing
@@ -630,7 +630,7 @@ export default function MessagesPage() {
                       {conv.contextState === 'expired' && (
                         <Badge
                           variant="warning"
-                          className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                          className="text-[11px] px-2 py-0.5 rounded-full font-medium"
                         >
                           Post expired
                         </Badge>
@@ -772,7 +772,7 @@ function RequestsPanel({
                     <span className="text-sm font-semibold text-foreground truncate">
                       {r.responder.displayName}
                     </span>
-                    <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Badge variant="outline" className="text-[11px] px-2 py-0.5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
                       {responseKindLabel(r)}
                     </Badge>
                   </div>
@@ -827,7 +827,7 @@ function RequestsPanel({
                     <span className="text-sm font-semibold text-foreground truncate">
                       {m.sender?.displayName || 'User'}
                     </span>
-                    <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Badge variant="outline" className="text-[11px] px-2 py-0.5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
                       Message request
                     </Badge>
                   </div>

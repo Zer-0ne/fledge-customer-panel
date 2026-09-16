@@ -58,9 +58,12 @@ function LoginContent() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-xl font-bold tracking-tight text-foreground">Welcome back</h2>
-        <p className="text-xs text-muted-foreground">
-          Continue with your Google account to access your account.
+        <h2 className="text-xl font-bold tracking-tight text-foreground">
+          {loggedOut ? 'Signed out' : 'Sign in to continue'}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          One tap with Google is all it takes — we use it to verify you&apos;re a real student, and
+          we never see your Google password.
         </p>
       </div>
 
@@ -72,25 +75,26 @@ function LoginContent() {
 
       <GoogleSignInButton returnUrl={returnUrl} onError={handleGoogleError} suppressAutoSignIn={loggedOut} />
 
-      <div className="rounded-xl border border-border/70 bg-muted/40 p-3 text-left">
-        <p className="text-[11px] leading-relaxed text-muted-foreground">
-          Tapping Continue with Google sends a Google identity token to Fledge so the API can create or
-          resume your account and session. Fledge receives your verified Google account identity;
-          it never receives your Google password.
-        </p>
-      </div>
-
       <div className="pt-1 text-center">
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
-          By continuing, you agree to the{' '}
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          By continuing you agree to our{' '}
           <Link href="/terms" className="font-medium text-primary hover:underline">
             Terms of Service
           </Link>{' '}
-          and acknowledge the{' '}
+          and{' '}
           <Link href="/privacy" className="font-medium text-primary hover:underline">
             Privacy Policy
           </Link>
           .
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-border/70 bg-muted/40 p-3 text-center">
+        <p className="text-xs text-muted-foreground">
+          Not ready to sign up?{' '}
+          <Link href="/search" className="font-medium text-primary hover:underline">
+            Browse flats as a guest
+          </Link>
         </p>
       </div>
     </div>

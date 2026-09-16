@@ -176,6 +176,8 @@ export interface Listing {
   depositPaise: number;
   bedrooms: number;
   bathrooms: number;
+  /** Present in the API payload, optional in practice (hosts often leave it blank). */
+  areaSqft?: number | null;
   furnishing: 'unfurnished' | 'semi-furnished' | 'fully-furnished';
   availableFrom: string;
   genderPreference?: 'any' | 'male' | 'female';
@@ -185,6 +187,8 @@ export interface Listing {
   isFavorited?: boolean;
   collegeName?: string;
   campusName?: string;
+  /** Straight-line distance to the chosen campus, when the API knows it. */
+  distanceMeters?: number | null;
   createdAt: string;
   updatedAt: string;
 }
