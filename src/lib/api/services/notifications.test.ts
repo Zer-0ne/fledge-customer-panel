@@ -97,6 +97,20 @@ describe('Notifications API Service', () => {
       expect(n.targetUrl).toBe('/roommate-interests?tab=incoming&postId=post-123');
     });
 
+    it('mapRawToNotification sends moderation notices to the post itself', () => {
+      const n = mapRawToNotification({
+        id: 'm1',
+        kind: 'moderation',
+        title: 'Post published',
+        body: 'Your post is now live and visible to everyone.',
+        entityType: 'roommate_post',
+        entityId: 'post-123',
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
+
+      expect(n.targetUrl).toBe('/roommate-posts/post-123/edit');
+    });
+
     it('normalizePreferencesResponse fills missing kinds with defaults', () => {
       const prefs = normalizePreferencesResponse({
         preferences: [{ kind: 'message', pushEnabled: false }],

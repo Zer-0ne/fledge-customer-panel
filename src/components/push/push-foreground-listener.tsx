@@ -10,6 +10,9 @@ interface PushData {
   category?: string;
   entityType?: string;
   entityId?: string;
+  // Backend sets `kind` (e.g. 'moderation') so the route can pick the post
+  // screen over the interests list for a moderation notice.
+  kind?: string;
   deepLinkType?: string;
   deepLinkData?: Record<string, unknown>;
   conversationId?: string;
@@ -31,7 +34,9 @@ export function resolvePushRoute(data: PushData): string | null {
     case 'property': return id ? `/listings/${id}` : '/listings';
     case 'conversation': return id ? `/messages/${id}` : null;
     case 'contact_share_request': return id ? `/contact-share/${id}` : '/messages';
-    case 'roommate_post': return id ? `/roommate-interests?tab=incoming&postId=${id}` : '/roommate-interests';
+    case 'roommate_post':
+      if (data.kind === 'moderation' && id) return `/roommate-posts/${id}/edit`;
+      return id ? `/roommate-interests?tab=incoming&postId=${id}` : '/roommate-interests';
     default: return null;
   }
 }

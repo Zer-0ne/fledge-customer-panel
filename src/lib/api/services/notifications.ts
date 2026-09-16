@@ -96,6 +96,8 @@ export function mapRawToNotification(item: unknown): Notification {
           ? raw.link
           : null;
 
+  const kind = String(raw.kind || raw.type || 'system_alert');
+
   // Phase 9 deep links: backend notifications carry an entity target; derive
   // the app route when the payload did not include one. Unknown/unauthorized
   // targets fall back to null (row renders without a link).
@@ -105,13 +107,19 @@ export function mapRawToNotification(item: unknown): Notification {
     else if (entityType === 'housing_response') targetUrl = '/need-now';
     else if (entityType === 'listing') targetUrl = `/listings/${entityId}`;
     else if (entityType === 'conversation') targetUrl = `/messages/${entityId}`;
-    else if (entityType === 'roommate_post') targetUrl = `/roommate-interests?tab=incoming&postId=${entityId}`;
+    // A moderation notice is about the post itself (status, reason, actions);
+    // the interests list is only the right landing spot for interest rows.
+    else if (entityType === 'roommate_post') {
+      targetUrl = kind === 'moderation'
+        ? `/roommate-posts/${entityId}/edit`
+        : `/roommate-interests?tab=incoming&postId=${entityId}`;
+    }
   }
 
   return {
     id: String(raw.id || ''),
     userId: String(raw.userId || ''),
-    kind: String(raw.kind || raw.type || 'system_alert'),
+    kind,
     title: String(raw.title || raw.subject || 'Notification'),
     body,
     message: body,

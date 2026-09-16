@@ -8,4 +8,13 @@ describe('resolvePushRoute', () => {
     );
     expect(resolvePushRoute({ entityType: 'roommate_post' })).toBe('/roommate-interests');
   });
+
+  it('routes moderation pushes to the post itself, not the interests list', () => {
+    expect(resolvePushRoute({ entityType: 'roommate_post', entityId: 'p1', kind: 'moderation' })).toBe(
+      '/roommate-posts/p1/edit',
+    );
+    expect(resolvePushRoute({ entityType: 'roommate_post', kind: 'moderation' })).toBe(
+      '/roommate-interests',
+    );
+  });
 });
