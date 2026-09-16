@@ -28,16 +28,19 @@ export function PushBootstrap({ firebaseConfig }: { firebaseConfig: FirebaseWebC
     // SW reports FIREBASE_CONFIG_FAILED when the cached config is unusable
     // (rotation, corruption). Retry by re-posting the fresh config once — if it
     // still fails we drop the cache so the next visit re-fetches cleanly.
-    let configFailedHandler: ((event: MessageEvent) => void) | undefined;
+    // Stored on a window field so Next.js production minification doesn't
+    // tree-shake the closure (the cleanup uses it, but terser can't prove it).
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-      configFailedHandler = (event: MessageEvent) => {
+      const onConfigFailed = (event: MessageEvent) => {
         const data = (event as MessageEvent).data as { type?: string; error?: string } | undefined;
         if (data?.type !== 'FIREBASE_CONFIG_FAILED') return;
         try {
           navigator.serviceWorker.controller?.postMessage({ type: 'FIREBASE_CONFIG', config: firebaseConfig });
         } catch (_) { /* best-effort */ }
       };
-      navigator.serviceWorker.addEventListener('message', configFailedHandler);
+      // Surface on window so minifiers keep the closure alive across builds.
+      (window as unknown as { __pushConfigRetry?: (event: MessageEvent) => void }).__pushConfigRetry = onConfigFailed;
+      navigator.serviceWorker.addEventListener('message', onConfigFailed);
     }
 
     let stopped = false;
@@ -69,8 +72,9 @@ export function PushBootstrap({ firebaseConfig }: { firebaseConfig: FirebaseWebC
 
     return () => {
       stopped = true;
-      if (configFailedHandler && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.removeEventListener('message', configFailedHandler);
+      if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+        const handler = (window as unknown as { __pushConfigRetry?: (event: MessageEvent) => void }).__pushConfigRetry;
+        if (handler) navigator.serviceWorker.removeEventListener('message', handler);
       }
     };
   }, [firebaseConfig]);
