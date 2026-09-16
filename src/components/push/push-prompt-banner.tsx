@@ -63,7 +63,7 @@ export function PushPromptBanner() {
     // HttpOnly cp_access_token cookie (not readable from JS), so we ask the
     // lightweight bootstrap endpoint once: 200 → logged in, else public page.
     // /api/v1/auth/bootstrap is cached + cheap (<2ms on the panel side).
-    void fetch('/api/v1/auth/bootstrap', { credentials: 'include', cache: 'no-store' })
+    void fetch('/api/auth/bootstrap', { credentials: 'include', cache: 'no-store' })
       .then((r) => {
         if (!r.ok) return;
         const supported = isWebPushSupported();
