@@ -13,6 +13,8 @@ import {
   archiveNotification,
   fetchQuietHours,
   updateQuietHours,
+  fetchCategoryPreferences,
+  saveCategoryPreference,
 } from './notifications';
 import { apiFetch } from '@/lib/api/client';
 
@@ -222,6 +224,41 @@ describe('Notifications API Service', () => {
       expect(qh.enabled).toBe(true);
       expect(qh.start).toBe('23:00');
       expect(qh.end).toBe('07:30');
+    });
+
+    it('fetchCategoryPreferences reads the category × channel matrix', async () => {
+      mockApiFetch.mockResolvedValueOnce({
+        preferences: [
+          { category: 'HOUSING', channel: 'PUSH', enabled: false },
+          { category: 'CHAT', channel: 'IN_APP', enabled: true },
+          { category: 'BROKEN' },
+        ],
+        quietHours: { enabled: false, start: '22:00', end: '08:00', timezone: 'Asia/Kolkata' },
+      });
+      const rows = await fetchCategoryPreferences();
+      expect(rows).toEqual([
+        { category: 'HOUSING', channel: 'PUSH', enabled: false },
+        { category: 'CHAT', channel: 'IN_APP', enabled: true },
+      ]);
+      expect(mockApiFetch).toHaveBeenCalledWith({
+        path: '/api/v1/notifications/preferences',
+        method: 'GET',
+      });
+    });
+
+    it('fetchCategoryPreferences tolerates a malformed payload', async () => {
+      mockApiFetch.mockResolvedValueOnce(null);
+      expect(await fetchCategoryPreferences()).toEqual([]);
+    });
+
+    it('saveCategoryPreference PUTs one category × channel toggle', async () => {
+      mockApiFetch.mockResolvedValueOnce(undefined);
+      await saveCategoryPreference('MODERATION', 'PUSH', false);
+      expect(mockApiFetch).toHaveBeenCalledWith({
+        path: '/api/v1/notifications/preferences',
+        method: 'PUT',
+        body: { preferences: [{ category: 'MODERATION', channel: 'PUSH', enabled: false }] },
+      });
     });
 
     it('fetchQuietHours falls back to defaults', async () => {

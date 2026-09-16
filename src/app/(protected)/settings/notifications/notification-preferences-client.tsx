@@ -2,15 +2,21 @@
 
 import * as React from 'react';
 import {
-  fetchNotificationPreferences,
-  updateNotificationPreference,
-  preferenceKindLabel,
-  preferenceKindDescription,
+  fetchCategoryPreferences,
+  saveCategoryPreference,
   fetchQuietHours,
   updateQuietHours,
   type QuietHours,
 } from '@/lib/api/services/notifications';
-import { NotificationPreference, NotificationPreferenceKind } from '@/types';
+import {
+  MANDATORY_CATEGORY_COPY,
+  PREFERENCE_CATEGORIES,
+  PREFERENCE_CHANNELS,
+  buildPreferenceMatrix,
+  isMandatoryCategory,
+  type PreferenceChannel,
+  type PreferenceMatrix,
+} from '@/lib/notifications/preference-matrix';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -34,12 +40,10 @@ const TIMEZONES = ['Asia/Kolkata', 'Asia/Dubai', 'UTC', 'America/New_York', 'Eur
 
 export default function NotificationPreferencesClient({ firebaseConfig }: { firebaseConfig: FirebaseWebConfig | null }) {
   configureWebPush(firebaseConfig);
-  const [preferences, setPreferences] = React.useState<NotificationPreference[]>([]);
+  const [matrix, setMatrix] = React.useState<PreferenceMatrix | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [savingKinds, setSavingKinds] = React.useState<Set<NotificationPreferenceKind>>(
-    new Set()
-  );
+  const [savingCells, setSavingCells] = React.useState<Set<string>>(new Set());
   const [quietHours, setQuietHours] = React.useState<QuietHours>({ enabled: false, start: '22:00', end: '08:00', timezone: 'Asia/Kolkata' });
   const [savingQuietHours, setSavingQuietHours] = React.useState(false);
   const [pushActive, setPushActive] = React.useState(false);
@@ -51,8 +55,8 @@ export default function NotificationPreferencesClient({ firebaseConfig }: { fire
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchNotificationPreferences();
-      setPreferences(data);
+      const rows = await fetchCategoryPreferences();
+      setMatrix(buildPreferenceMatrix(rows));
       const qh = await fetchQuietHours();
       setQuietHours(qh);
     } catch (err: unknown) {
@@ -91,34 +95,39 @@ export default function NotificationPreferencesClient({ firebaseConfig }: { fire
     }
   };
 
-  const handleToggle = async (kind: NotificationPreferenceKind, pushEnabled: boolean) => {
-    const previous = preferences;
-    setPreferences((prev) =>
-      prev.map((p) => (p.kind === kind ? { ...p, pushEnabled } : p))
+  const handleCellToggle = async (
+    category: string,
+    channel: PreferenceChannel,
+    enabled: boolean
+  ) => {
+    const cellKey = `${category}:${channel}`;
+    const previous = matrix;
+    // Optimistic flip; roll back to the snapshot on failure (savingKinds pattern).
+    setMatrix((prev) =>
+      prev ? { ...prev, [category]: { ...prev[category], [channel]: enabled } } : prev
     );
-    setSavingKinds((prev) => new Set(prev).add(kind));
+    setSavingCells((prev) => new Set(prev).add(cellKey));
 
     try {
-      const updated = await updateNotificationPreference(kind, pushEnabled);
-      setPreferences((prev) =>
-        prev.map((p) => (p.kind === kind ? updated : p))
-      );
+      await saveCategoryPreference(category, channel, enabled);
       showToast({
-        title: pushEnabled ? 'Notifications enabled' : 'Notifications disabled',
-        description: preferenceKindLabel(kind),
+        title: enabled ? 'Notifications enabled' : 'Notifications disabled',
+        description: `${PREFERENCE_CATEGORIES.find((c) => c.id === category)?.label ?? category} · ${
+          PREFERENCE_CHANNELS.find((c) => c.id === channel)?.label ?? channel
+        }`,
         variant: 'success',
       });
     } catch {
-      setPreferences(previous);
+      setMatrix(previous);
       showToast({
         title: 'Update failed',
         description: 'Could not save notification preference.',
         variant: 'error',
       });
     } finally {
-      setSavingKinds((prev) => {
+      setSavingCells((prev) => {
         const next = new Set(prev);
-        next.delete(kind);
+        next.delete(cellKey);
         return next;
       });
     }
@@ -166,39 +175,60 @@ export default function NotificationPreferencesClient({ firebaseConfig }: { fire
       <div>
         <h2 className="text-lg font-semibold text-foreground">Notification preferences</h2>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Choose which push categories you want to receive. Kinds match the API: listing interest,
-          roommate interest, and messages.
+          Choose how each kind of update reaches you. Security, payment and system notices are
+          always on — quiet hours never suppress them.
         </p>
       </div>
 
       <ul className="space-y-3">
-        {preferences.map((pref) => (
-          <BorderGlow key={pref.kind} className='rounded-xl!'>
-          <li
-            className="rounded-xl border border-border/80 bg-card p-4 flex items-start justify-between gap-4"
-          >
-            <div className="flex items-start gap-3 min-w-0">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Bell className="size-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  {preferenceKindLabel(pref.kind)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  {preferenceKindDescription(pref.kind)}
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={pref.pushEnabled}
-              disabled={savingKinds.has(pref.kind)}
-              onCheckedChange={(checked) => void handleToggle(pref.kind, checked)}
-              aria-label={`Toggle ${preferenceKindLabel(pref.kind)}`}
-            />
-          </li>
-          </BorderGlow>
-        ))}
+        {(matrix ? PREFERENCE_CATEGORIES : []).map((category) => {
+          const mandatory = isMandatoryCategory(category.id);
+          const state = matrix?.[category.id];
+          return (
+            <BorderGlow key={category.id} className='rounded-xl!'>
+              <li className="rounded-xl border border-border/80 bg-card p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Bell className="size-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{category.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      {category.description}
+                    </p>
+                    {mandatory && (
+                      <p className="text-xs font-medium text-muted-foreground mt-1.5">
+                        {MANDATORY_CATEGORY_COPY}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {PREFERENCE_CHANNELS.map((channel) => {
+                    const cellKey = `${category.id}:${channel.id}`;
+                    return (
+                      <label
+                        key={channel.id}
+                        title={channel.hint}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/20 px-2.5 py-2"
+                      >
+                        <span className="text-xs font-medium text-foreground">{channel.label}</span>
+                        <Switch
+                          checked={mandatory ? true : (state?.[channel.id] ?? true)}
+                          disabled={mandatory || savingCells.has(cellKey)}
+                          onCheckedChange={(checked) =>
+                            void handleCellToggle(category.id, channel.id, checked)
+                          }
+                          aria-label={`${category.label} · ${channel.label}`}
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              </li>
+            </BorderGlow>
+          );
+        })}
       </ul>
 
       <BorderGlow className='rounded-xl!'>

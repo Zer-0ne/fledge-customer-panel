@@ -393,3 +393,54 @@ export async function updateQuietHours(input: QuietHours): Promise<void> {
     body: input,
   });
 }
+
+/** One category × channel row from the engine's preference endpoint. */
+export interface CategoryChannelPreference {
+  category: string;
+  channel: string;
+  enabled: boolean;
+}
+
+/**
+ * Category × channel preference matrix (`GET /api/v1/notifications/preferences`).
+ * Only explicit rows come back — a missing category × channel is enabled.
+ */
+export async function fetchCategoryPreferences(): Promise<CategoryChannelPreference[]> {
+  const res = await apiFetch<unknown>({
+    path: '/api/v1/notifications/preferences',
+    method: 'GET',
+  });
+  if (typeof res !== 'object' || res === null) return [];
+  const obj = res as Record<string, unknown>;
+  const list = Array.isArray(obj.preferences)
+    ? obj.preferences
+    : Array.isArray(obj.data)
+      ? obj.data
+      : [];
+  return list
+    .map((raw) => {
+      const row = (raw ?? {}) as Record<string, unknown>;
+      const category = typeof row.category === 'string' ? row.category : '';
+      const channel = typeof row.channel === 'string' ? row.channel : '';
+      if (!category || !channel) return null;
+      return { category, channel, enabled: Boolean(row.enabled) };
+    })
+    .filter((row): row is CategoryChannelPreference => row !== null);
+}
+
+/**
+ * Persists a single category × channel toggle. One call per switch — the
+ * contract takes an array, but one-entry writes keep the optimistic UI and
+ * the rollback scoped to the toggled cell.
+ */
+export async function saveCategoryPreference(
+  category: string,
+  channel: string,
+  enabled: boolean
+): Promise<void> {
+  await apiFetch<unknown>({
+    path: '/api/v1/notifications/preferences',
+    method: 'PUT',
+    body: { preferences: [{ category, channel, enabled }] },
+  });
+}
