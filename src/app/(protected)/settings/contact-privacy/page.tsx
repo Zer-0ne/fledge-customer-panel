@@ -146,7 +146,7 @@ export default function ContactPrivacyPage() {
 
         {/* Default Mode section */}
         <div className="space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-1">
             Default Mode
           </p>
           <div className="rounded-2xl border border-border/60 bg-card divide-y divide-border/40">
@@ -158,7 +158,7 @@ export default function ContactPrivacyPage() {
 
         {/* Safety section */}
         <div className="space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-1">
             Safety
           </p>
           <div className="rounded-2xl border border-border/60 bg-card divide-y divide-border/40">

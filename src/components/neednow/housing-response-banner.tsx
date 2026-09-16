@@ -137,7 +137,7 @@ export function HousingResponseBanner({
             </p>
           )}
         </div>
-        <Badge variant="secondary" className="text-[10px] shrink-0">
+        <Badge variant="secondary" className="text-[11px] shrink-0">
           Pending
         </Badge>
       </div>

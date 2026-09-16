@@ -240,7 +240,7 @@ export default function ImportFromCommunityPage() {
                   active ? 'border-primary bg-primary/10 text-primary' : done ? 'border-emerald-500/40 text-emerald-600' : 'text-muted-foreground'
                 }`}
               >
-                <span className="flex h-4 w-4 items-center justify-center rounded-full border text-[10px]">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full border text-[11px]">
                   {done ? <Check className="h-3 w-3" /> : index + 1}
                 </span>
                 {item.label}

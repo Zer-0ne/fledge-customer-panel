@@ -225,7 +225,7 @@ export function MediaPicker({
                 </div>
               )}
               {verdict?.state === 'checking' && (
-                <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-black/65 px-2 py-1 text-[10px] font-medium text-white">
+                <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-black/65 px-2 py-1 text-xs font-medium text-white">
                   <Loader2 className="size-3 animate-spin" />
                   Checking…
                 </div>
@@ -236,7 +236,7 @@ export function MediaPicker({
                 </div>
               )}
               {verdict?.state === 'unverified' && (
-                <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-amber-600/85 px-2 py-1 text-[10px] font-medium text-white">
+                <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-amber-600/85 px-2 py-1 text-xs font-medium text-white">
                   <ShieldAlert className="size-3" />
                   Not checked yet
                 </div>
@@ -268,7 +268,7 @@ export function MediaPicker({
             ) : (
               <ImagePlus className="size-5" />
             )}
-            <span className="text-[11px] font-medium">
+            <span className="text-xs font-medium">
               {uploading ? 'Uploading…' : 'Add photo'}
             </span>
           </button>
@@ -300,7 +300,7 @@ export function MediaPicker({
 
       {error && <p className="text-xs text-destructive">{error}</p>}
 
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         Use real photos of the room or flat. Promotional artwork, broker flyers, QR codes
         and images with phone numbers, WhatsApp, emails or websites are rejected automatically.
       </p>

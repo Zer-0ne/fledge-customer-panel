@@ -47,7 +47,7 @@ export function PostSeenByEntry({ surface, postId }: { surface: SeenSurface; pos
     if (open && viewers === null) void load();
   }, [load, open, viewers]);
 
-  const label = total === null ? '— ne dekha' : total === 0 ? '0 ne dekha' : total === 1 ? '1 ne dekha' : `${total} ne dekha`;
+  const label = total === null ? '— views' : total === 0 ? 'No views' : total === 1 ? '1 view' : `${total} views`;
 
   return (
     <>
@@ -60,7 +60,7 @@ export function PostSeenByEntry({ surface, postId }: { surface: SeenSurface; pos
         <Eye className="size-3.5 text-primary" />
         {total === null ? (
           <span className="inline-flex items-center gap-1">
-            <span className="size-2 animate-pulse rounded-full bg-muted-foreground/30" /> ne dekha
+            <span className="size-2 animate-pulse rounded-full bg-muted-foreground/30" /> views
           </span>
         ) : label}
       </button>
@@ -68,8 +68,8 @@ export function PostSeenByEntry({ surface, postId }: { surface: SeenSurface; pos
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Users className="size-4" /> Dekha kisne</DialogTitle>
-            <DialogDescription className="text-xs">Sirf aap dekh sakte hain — viewers ko pata nahi chalega.</DialogDescription>
+            <DialogTitle className="flex items-center gap-2"><Users className="size-4" /> Who viewed this</DialogTitle>
+            <DialogDescription className="text-xs">Only you can see this — viewers are never notified.</DialogDescription>
           </DialogHeader>
 
           {loading && (
@@ -80,7 +80,7 @@ export function PostSeenByEntry({ surface, postId }: { surface: SeenSurface; pos
           )}
           {!loading && !error && viewers !== null && viewers.length === 0 && (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              Abhi tak kisi ne nahi dekha. Jab koi aapki post dekhega, uska naam aur time yahan dikhega.
+              No views yet. When someone opens your post, their name and the time show up here.
             </p>
           )}
           {!loading && !error && viewers !== null && viewers.length > 0 && (

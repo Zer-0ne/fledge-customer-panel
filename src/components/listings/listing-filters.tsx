@@ -224,14 +224,14 @@ export function ListingFilters({
             }
           />
           {filters.latitude && filters.longitude && (
-            <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[10px]">
+            <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[11px]">
               <span className="font-mono text-primary/70">
                 {filters.latitude.toFixed(4)}, {filters.longitude.toFixed(4)}
               </span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-4 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
+                className="h-4 px-1.5 text-[11px] text-destructive hover:bg-destructive/10"
                 onClick={() => onFilterChange({ latitude: undefined, longitude: undefined })}
               >
                 Clear

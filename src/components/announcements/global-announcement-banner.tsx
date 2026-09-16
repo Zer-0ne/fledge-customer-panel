@@ -206,7 +206,7 @@ export function GlobalAnnouncementBanner() {
 
               {/* Action Required Badge */}
               {current.requireAcknowledgement && !isAcknowledged && (
-                <span className="shrink-0 rounded-md border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                <span className="shrink-0 rounded-md border border-rose-500/20 bg-rose-500/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
                   Action required
                 </span>
               )}

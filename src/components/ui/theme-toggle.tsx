@@ -136,7 +136,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
           <div className="space-y-1.5 mb-3">
             <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider flex items-center justify-between">
               <span>Accent Palette</span>
-              <span className="capitalize text-foreground font-semibold text-[10px]">
+              <span className="capitalize text-foreground font-semibold text-[11px]">
                 {colorTheme}
               </span>
             </label>

@@ -190,14 +190,14 @@ function AnnouncementCard({
             </span>
             <span
               className={cn(
-                'rounded-full border px-2 py-0.5 text-[10px] font-semibold',
+                'rounded-full border px-2 py-0.5 text-[11px] font-semibold',
                 style.badge,
               )}
             >
               {style.label}
             </span>
             {item.requireAcknowledgement && !isAcknowledged && (
-              <span className="rounded-full bg-destructive/10 border border-destructive/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-destructive">
+              <span className="rounded-full bg-destructive/10 border border-destructive/20 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-destructive">
                 Action required
               </span>
             )}

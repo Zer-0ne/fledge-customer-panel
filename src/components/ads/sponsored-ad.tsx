@@ -130,7 +130,7 @@ function GlassBadge({ children, gold = false }: { children: React.ReactNode; gol
   return (
     <span
       className={cn(
-        'rounded-sm px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider backdrop-blur-lg',
+        'rounded-sm px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider backdrop-blur-lg',
         gold
           ? 'border border-[#e9c349]/40 bg-[#e9c349]/15 text-[#e9c349]'
           : 'border border-white/20 bg-white/10 text-white'
@@ -146,7 +146,7 @@ function PartnerBadge({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-sm border border-[#e9c349]/40 bg-[#e9c349]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#e9c349] backdrop-blur-lg',
+        'inline-flex items-center gap-1 rounded-sm border border-[#e9c349]/40 bg-[#e9c349]/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#e9c349] backdrop-blur-lg',
         className
       )}
     >
@@ -162,7 +162,7 @@ function StandardCard({ ad }: { ad: AdCreative }) {
     <div className="ad-glass-surface flex flex-col gap-3 rounded-xl p-4" style={GLASS_BLUR}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="rounded border border-white/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/60">
+          <span className="rounded border border-white/20 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white/60">
             Sponsored
           </span>
           {ad.advertiserBadge === 'PREMIUM' && <PartnerBadge className="border-white/20 bg-white/[0.08] text-white/80" />}
@@ -209,10 +209,10 @@ function BoostCard({ ad }: { ad: AdCreative }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#131313] via-transparent to-black/30" />
         <div className="absolute left-4 top-4 flex gap-2">
-          <span className="rounded-sm bg-[#d2bbff]/90 px-3 py-1 text-[10px] font-bold text-[#3f008e] shadow-xl backdrop-blur-md">
+          <span className="rounded-sm bg-[#d2bbff]/90 px-3 py-1 text-[11px] font-bold text-[#3f008e] shadow-xl backdrop-blur-md">
             {TIER_BADGE.BOOST}
           </span>
-          <span className="rounded-sm border border-white/10 bg-black/60 px-3 py-1 text-[10px] font-medium text-white/80 backdrop-blur-md">
+          <span className="rounded-sm border border-white/10 bg-black/60 px-3 py-1 text-[11px] font-medium text-white/80 backdrop-blur-md">
             Sponsored
           </span>
           {ad.advertiserBadge === 'PREMIUM' && <PartnerBadge />}
@@ -290,7 +290,7 @@ function HeroCard({ ad, tier }: { ad: AdCreative; tier: string }) {
             {ad.advertiserBadge === 'PREMIUM' && <GlassBadge gold>{'✦'} Premium Partner</GlassBadge>}
           </div>
           {ad.sponsorName && (
-            <span className="font-mono-jb text-[10px] uppercase tracking-widest text-white/40">
+            <span className="font-mono-jb text-[11px] uppercase tracking-widest text-white/40">
               {ad.sponsorName}
             </span>
           )}
@@ -312,7 +312,7 @@ function HeroCard({ ad, tier }: { ad: AdCreative; tier: string }) {
               {ad.featureChips.slice(0, 6).map((chip) => (
                 <span
                   key={chip}
-                  className="rounded-sm border border-white/15 bg-white/[0.08] px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-white/85 backdrop-blur-md"
+                  className="rounded-sm border border-white/15 bg-white/[0.08] px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/85 backdrop-blur-md"
                 >
                   {chip}
                 </span>

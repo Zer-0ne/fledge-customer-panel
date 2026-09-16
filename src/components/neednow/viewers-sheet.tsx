@@ -52,7 +52,7 @@ export function ViewersSheet({ requestId, open, onOpenChange }: ViewersSheetProp
       setViewers(res.viewers);
       setTotal(res.totalViewers);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Viewers load nahi ho paaye');
+      setError(err instanceof Error ? err.message : 'Could not load viewers');
     } finally {
       setLoading(false);
     }
@@ -76,10 +76,10 @@ export function ViewersSheet({ requestId, open, onOpenChange }: ViewersSheetProp
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Eye className="size-4 text-primary" />
-            Dekha kisne
+            Who viewed this
             {total !== null && !loading && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">{total}</span>}
           </DialogTitle>
-          <DialogDescription className="text-xs">Sirf aap dekh sakte hain — viewers ko pata nahi chalega.</DialogDescription>
+          <DialogDescription className="text-xs">Only you can see this — viewers are never notified.</DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 min-h-[180px]">
@@ -106,8 +106,8 @@ export function ViewersSheet({ requestId, open, onOpenChange }: ViewersSheetProp
               <div className="flex size-12 items-center justify-center rounded-full bg-muted">
                 <Users className="size-6 text-muted-foreground" />
               </div>
-              <p className="mt-3 text-sm font-semibold text-foreground">Abhi tak kisi ne nahi dekha</p>
-              <p className="mt-1 text-xs text-muted-foreground max-w-[260px]">Jab koi aapki requirement dekhega, yahan uska naam aur time dikhega.</p>
+              <p className="mt-3 text-sm font-semibold text-foreground">No views yet</p>
+              <p className="mt-1 text-xs text-muted-foreground max-w-[260px]">When someone opens your requirement, their name and the time show up here.</p>
             </div>
           )}
 
@@ -163,7 +163,7 @@ export function SeenByEntry({ requestId, isOwner }: { requestId: string; isOwner
 
   if (!isOwner) return null;
 
-  const label = total === null ? '— ne dekha' : total === 0 ? '0 ne dekha' : total === 1 ? '1 ne dekha' : `${total} ne dekha`;
+  const label = total === null ? '— views' : total === 0 ? 'No views' : total === 1 ? '1 view' : `${total} views`;
 
   return (
     <>
@@ -177,7 +177,7 @@ export function SeenByEntry({ requestId, isOwner }: { requestId: string; isOwner
         {total === null ? (
           <span className="inline-flex items-center gap-1">
             <span className="size-2 rounded-full bg-muted-foreground/30 animate-pulse" />
-            ne dekha
+            views
           </span>
         ) : (
           label

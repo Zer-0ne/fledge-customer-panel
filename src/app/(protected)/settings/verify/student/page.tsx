@@ -255,7 +255,7 @@ export default function StudentVerifyPage() {
                   <OptionIcon className="size-5 shrink-0" />
                   <div>
                     <p className="text-sm font-medium">{option.title}</p>
-                    <p className="text-[10px] text-muted-foreground">{option.subtitle}</p>
+                    <p className="text-[11px] text-muted-foreground">{option.subtitle}</p>
                   </div>
                 </button>
               );
@@ -353,7 +353,7 @@ export default function StudentVerifyPage() {
                       {v.rejectionReason && (
                         <p className="text-xs text-red-500 mt-0.5">{v.rejectionReason}</p>
                       )}
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
                         Submitted {formatDate(v.requestedAt)}
                       </p>
                     </div>
