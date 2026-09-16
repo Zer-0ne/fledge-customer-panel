@@ -251,6 +251,10 @@ export async function ensureSwConfigured(): Promise<void> {
     const registrations = await navigator.serviceWorker.getRegistrations();
     for (const registration of registrations) {
       registration?.active?.postMessage({ type: 'FIREBASE_CONFIG', config: cfg });
+      // Force an update check: app-triggered update() bypasses the browser's
+      // 24h soft-update throttle, so SW fixes reach already-registered
+      // browsers on the next page load instead of waiting for the throttle.
+      void registration.update().catch(() => { /* offline — SW keeps serving */ });
     }
   } catch {
     // Best-effort — push remains disabled until the next enable cycle.
