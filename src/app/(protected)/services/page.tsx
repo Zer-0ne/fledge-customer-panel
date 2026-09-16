@@ -10,6 +10,9 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showToast } from '@/components/ui/toast';
+import { PostContactActions } from '@/components/post-engagement/post-contact-actions';
+import { PostSeenByEntry, recordSeen } from '@/components/post-engagement/post-seen-by';
+import { useAuth } from '@/components/providers/auth-provider';
 import {
   SERVICE_CATEGORIES, ServiceCategory, ServiceProvider, ServiceEnquiry,
   fetchServiceEnquiries, fetchServiceProviders, registerServiceProvider,
@@ -20,6 +23,7 @@ const LABEL = new Map<string, string>(SERVICE_CATEGORIES.map((item) => [item.cod
 
 export default function ServicesPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [providers, setProviders] = React.useState<ServiceProvider[] | null>(null);
   const [enquiries, setEnquiries] = React.useState<ServiceEnquiry[]>([]);
   const [error, setError] = React.useState<string | null>(null);
@@ -141,24 +145,44 @@ export default function ServicesPage() {
               transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.2) }}
               className="flex flex-col rounded-3xl border bg-card p-4 shadow-sm"
             >
-              <div className="flex items-start justify-between gap-2">
-                <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">{LABEL.get(provider.category) ?? provider.category}</span>
-                {provider.verifiedAt && (
-                  <span className="flex items-center gap-1 text-[11px] text-emerald-600"><BadgeCheck className="h-3.5 w-3.5" /> Verified</span>
-                )}
-              </div>
-              <h3 className="mt-2 text-sm font-semibold">{provider.displayName}</h3>
-              {provider.description && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{provider.description}</p>}
-              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                {provider.rating ? (
-                  <span className="flex items-center gap-1 text-foreground"><Star className="h-3.5 w-3.5" /> {provider.rating} ({provider.ratingCount})</span>
-                ) : <span>No ratings yet</span>}
-                {provider.locality && <span>· {provider.locality}</span>}
-                {provider.priceNote && <span>· {provider.priceNote}</span>}
-              </div>
-              <Button size="sm" className="mt-3" onClick={() => setTarget(provider)}>
-                <Send className="mr-1.5 h-3.5 w-3.5" /> Enquire
-              </Button>
+              {(() => {
+                const isOwner = Boolean(user?.id) && user?.id === provider.userId;
+                return (
+                  <>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">{LABEL.get(provider.category) ?? provider.category}</span>
+                      {provider.verifiedAt && (
+                        <span className="flex items-center gap-1 text-[11px] text-emerald-600"><BadgeCheck className="h-3.5 w-3.5" /> Verified</span>
+                      )}
+                    </div>
+                    <h3 className="mt-2 text-sm font-semibold">{provider.displayName}</h3>
+                    {provider.description && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{provider.description}</p>}
+                    <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                      {provider.rating ? (
+                        <span className="flex items-center gap-1 text-foreground"><Star className="h-3.5 w-3.5" /> {provider.rating} ({provider.ratingCount})</span>
+                      ) : <span>No ratings yet</span>}
+                      {provider.locality && <span>· {provider.locality}</span>}
+                      {provider.priceNote && <span>· {provider.priceNote}</span>}
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <PostContactActions surface="SERVICE_PROVIDER" postId={provider.id} isOwner={isOwner} />
+                      {isOwner && <PostSeenByEntry surface="SERVICE_PROVIDER" postId={provider.id} />}
+                    </div>
+                    {!isOwner && (
+                      <Button
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => {
+                          recordSeen('SERVICE_PROVIDER', provider.id);
+                          setTarget(provider);
+                        }}
+                      >
+                        <Send className="mr-1.5 h-3.5 w-3.5" /> Enquire
+                      </Button>
+                    )}
+                  </>
+                );
+              })()}
             </motion.article>
           ))}
         </div>

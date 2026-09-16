@@ -6,6 +6,7 @@ import { RoommatePost, College, Campus } from '@/types';
 import { fetchRoommatePosts, fetchRoommateInterests } from '@/lib/api/services/roommates';
 import { fetchColleges, fetchCampuses } from '@/lib/api/services/discovery';
 import { RoommateCard } from '@/components/roommates/roommate-card';
+import { recordSeen } from '@/components/post-engagement/post-seen-by';
 import { RoommateFilters, RoommateFilterValues } from '@/components/roommates/roommate-filters';
 import { RoommateInterestDialog } from '@/components/roommates/roommate-interest-dialog';
 import { MasonryGrid } from '@/components/common/masonry-grid';
@@ -238,7 +239,10 @@ export default function RoommateDiscoveryPage() {
                   post={post}
                   isOwner={false}
                   hasExpressedInterest={expressedInterestPostIds.has(post.id)}
-                  onInterestClick={(p) => setSelectedPostForInterest(p)}
+                  onInterestClick={(p) => {
+                    if (user?.id && p.userId !== user.id) recordSeen('ROOMMATE_POST', p.id);
+                    setSelectedPostForInterest(p);
+                  }}
                 />
               ))}
             </MasonryGrid>

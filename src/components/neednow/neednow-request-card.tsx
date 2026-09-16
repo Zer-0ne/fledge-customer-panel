@@ -39,6 +39,7 @@ import { STAY_DURATION_LABELS } from '@/lib/api/services/neednow';
 import { NeedNowRequest } from '@/types';
 import BorderGlow from '@/components/BorderGlow'
 import { SeenByEntry } from './viewers-sheet';
+import { PostContactActions } from '@/components/post-engagement/post-contact-actions';
 
 export interface NeedNowRequestCardProps {
   request: NeedNowRequest;
@@ -211,11 +212,12 @@ export function NeedNowRequestCard({ request, onChanged }: NeedNowRequestCardPro
         </div>
       )}
 
-      {request.viewerRelationship.isOwner && (
-        <div className="mt-3 flex items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <PostContactActions surface="HOUSING_REQUEST" postId={request.id} isOwner={request.viewerRelationship.isOwner} />
+        {request.viewerRelationship.isOwner && (
           <SeenByEntry requestId={request.id} isOwner={request.viewerRelationship.isOwner} />
-        </div>
-      )}
+        )}
+      </div>
 
       <EditRequestDialog
         request={request}

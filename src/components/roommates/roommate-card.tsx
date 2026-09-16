@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { MagicCard } from '@/components/ui/magic-card';
 import { ShimmerButton } from '@/components/ui/shimmer-button';
 import { showToast } from '@/components/ui/toast';
+import { PostContactActions } from '@/components/post-engagement/post-contact-actions';
+import { PostSeenByEntry } from '@/components/post-engagement/post-seen-by';
 import Link from 'next/link';
 import {
   Users,
@@ -189,6 +191,12 @@ export function RoommateCard({ post, onInterestClick, isOwner = false, hasExpres
             </Badge>
           )}
         </div>
+      </div>
+
+      {/* Number on the post + owner-only seen-by */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <PostContactActions surface="ROOMMATE_POST" postId={post.id} isOwner={isOwner} />
+        {isOwner && <PostSeenByEntry surface="ROOMMATE_POST" postId={post.id} />}
       </div>
 
       {/* Footer / Action */}

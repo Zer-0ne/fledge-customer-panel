@@ -19,6 +19,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PostStateCard } from '@/components/community/moderation-state';
+import { PostContactActions } from '@/components/post-engagement/post-contact-actions';
+import { PostSeenByEntry } from '@/components/post-engagement/post-seen-by';
 
 export default function MyRoommatePostsPage() {
   const router = useRouter();
@@ -141,12 +143,17 @@ export default function MyRoommatePostsPage() {
         {posts !== null && !error && posts.length > 0 && (
           <div className="space-y-4">
             {posts.map((post) => (
-              <PostStateCard
-                key={post.id}
-                post={post}
-                showReport
-                onReport={setReportPost}
-              />
+              <div key={post.id} className="space-y-2">
+                <PostStateCard
+                  post={post}
+                  showReport
+                  onReport={setReportPost}
+                />
+                <div className="flex flex-wrap items-center gap-2 px-1">
+                  <PostContactActions surface="ROOMMATE_POST" postId={post.id} isOwner />
+                  <PostSeenByEntry surface="ROOMMATE_POST" postId={post.id} />
+                </div>
+              </div>
             ))}
           </div>
         )}
