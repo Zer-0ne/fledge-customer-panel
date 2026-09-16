@@ -9,6 +9,13 @@ import {
   markNotificationRead,
 } from '@/lib/api/services/notifications';
 
+export interface NotificationFilters {
+  /** Registry category (e.g. HOUSING) — omitted for the All/Unread chips. */
+  category?: string;
+  /** Server-side unread-only filter. */
+  unreadOnly?: boolean;
+}
+
 interface NotificationState {
   items: Notification[];
   nextBefore: string | null;
@@ -18,7 +25,9 @@ interface NotificationState {
   error: string | null;
   markingIds: Set<string>;
   archivingIds: Set<string>;
-  loadInitial: () => Promise<void>;
+  /** Active server-side filters — loadMore reuses them. */
+  filters: NotificationFilters;
+  loadInitial: (filters?: NotificationFilters) => Promise<void>;
   loadMore: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<number>;
@@ -36,11 +45,17 @@ export const useNotificationStore = create<NotificationState>()((set, get) => ({
   error: null,
   markingIds: new Set(),
   archivingIds: new Set(),
+  filters: {},
 
-  loadInitial: async () => {
-    set({ isLoading: true, error: null });
+  loadInitial: async (filters) => {
+    set({ isLoading: true, error: null, filters: filters ?? {} });
     try {
-      const page = await fetchNotifications();
+      // The store keeps the requested filters so loadMore pages with the
+      // same chip selection instead of silently dropping back to "All".
+      const page = await fetchNotifications({
+        category: filters?.category,
+        unreadOnly: filters?.unreadOnly,
+      });
       set({ items: page.items, nextBefore: page.nextBefore, hasMore: page.hasMore });
     } catch (err: unknown) {
       set({ error: err instanceof Error ? err.message : 'Failed to load notifications.' });
@@ -50,11 +65,15 @@ export const useNotificationStore = create<NotificationState>()((set, get) => ({
   },
 
   loadMore: async () => {
-    const { nextBefore, isLoadingMore } = get();
+    const { nextBefore, isLoadingMore, filters } = get();
     if (!nextBefore || isLoadingMore) return;
     set({ isLoadingMore: true });
     try {
-      const page = await fetchNotifications({ before: nextBefore });
+      const page = await fetchNotifications({
+        before: nextBefore,
+        category: filters.category,
+        unreadOnly: filters.unreadOnly,
+      });
       set((state) => {
         const seen = new Set(state.items.map((n) => n.id));
         return {

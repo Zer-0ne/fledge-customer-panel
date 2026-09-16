@@ -4,6 +4,13 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/providers/auth-provider';
 import { useNotificationStore } from '@/lib/stores/use-notification-store';
+import {
+  NOTICE_FILTERS,
+  groupNotificationsByDay,
+  noticeFilterById,
+  noticeFilterQuery,
+  type NoticeFilterId,
+} from '@/lib/notifications/notice-centre';
 import { Notification } from '@/types';
 import { formatRelativeTime } from '@/lib/formatting';
 import { Button } from '@/components/ui/button';
@@ -91,9 +98,13 @@ export default function NotificationsPage() {
   const prepend = useNotificationStore((s) => s.prepend);
   const unreadCount = useNotificationStore((s) => s.unreadCount());
 
+  const [activeFilter, setActiveFilter] = React.useState<NoticeFilterId>('all');
+
   React.useEffect(() => {
-    loadInitial();
-  }, [loadInitial]);
+    void loadInitial(noticeFilterQuery(noticeFilterById(activeFilter)));
+  }, [loadInitial, activeFilter]);
+
+  const groups = React.useMemo(() => groupNotificationsByDay(items, new Date()), [items]);
 
   // Listen for live incoming notifications
   React.useEffect(() => {
@@ -195,7 +206,11 @@ export default function NotificationsPage() {
   if (error) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-        <ErrorState title="Notifications unavailable" description={error} onRetry={loadInitial} />
+        <ErrorState
+          title="Notifications unavailable"
+          description={error}
+          onRetry={() => void loadInitial(noticeFilterQuery(noticeFilterById(activeFilter)))}
+        />
       </main>
     );
   }
@@ -225,11 +240,38 @@ export default function NotificationsPage() {
         </div>
       </div>
 
+      <div
+        role="tablist"
+        aria-label="Filter notifications"
+        className="flex items-center gap-1 overflow-x-auto rounded-xl bg-muted/60 p-1"
+      >
+        {NOTICE_FILTERS.map((filter) => (
+          <button
+            key={filter.id}
+            type="button"
+            role="tab"
+            aria-selected={activeFilter === filter.id}
+            onClick={() => setActiveFilter(filter.id)}
+            className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              activeFilter === filter.id
+                ? 'bg-card text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
       {items.length === 0 ? (
         <EmptyState
           icon={Bell}
-          title="No notifications yet"
-          description="Activity about interests, messages, and updates will show up here."
+          title={activeFilter === 'all' ? 'No notifications yet' : `No ${noticeFilterById(activeFilter).label.toLowerCase()} notifications`}
+          description={
+            activeFilter === 'all'
+              ? 'Activity about interests, messages, and updates will show up here.'
+              : 'Nothing matches this filter right now — try another chip or come back later.'
+          }
           action={
             <Link href="/dashboard">
               <Button size="sm" variant="outline">
@@ -239,8 +281,14 @@ export default function NotificationsPage() {
           }
         />
       ) : (
-        <ul className="space-y-2">
-          {items.map((notification) => {
+        <div className="space-y-6">
+          {groups.map((group) => (
+            <section key={group.key} className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {group.label}
+              </h2>
+              <ul className="space-y-2">
+                {group.items.map((notification) => {
             const content = (
               <BorderGlow className='rounded-xl!'>
               <div
@@ -358,8 +406,11 @@ export default function NotificationsPage() {
                 </div>
               </li>
             );
-          })}
-        </ul>
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
       )}
 
       {hasMore && nextBefore && (
