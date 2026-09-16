@@ -18,6 +18,7 @@ import { GlobalAnnouncementBanner } from '@/components/announcements/global-anno
 import { Suspense } from 'react';
 import { AnnouncementModal } from '@/components/announcements/announcement-modal';
 import { NavigationProgressBar } from '@/components/providers/navigation-progress-bar';
+import { PushPromptBanner } from '@/components/push/push-prompt-banner';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -87,6 +88,7 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <ThemeProvider>
           <PushBootstrap firebaseConfig={firebaseConfig} />
+          <PushPromptBanner />
           <AuthProvider>
             <AnnouncementProvider>
               <ToastProvider>

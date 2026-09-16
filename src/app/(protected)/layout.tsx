@@ -6,7 +6,6 @@ import { useAuth } from '@/components/providers/auth-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import PushForegroundListener from '@/components/push/push-foreground-listener';
-import { PushPromptBanner } from '@/components/push/push-prompt-banner';
 import ContactShareDialogs from '@/components/contact/contact-share-dialogs';
 import { OnboardingFlow } from '@/components/onboarding/onboarding-flow';
 
@@ -51,7 +50,6 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     <>
       <PushForegroundListener />
       <ContactShareDialogs />
-      <PushPromptBanner />
       {isOnboardingPending ? <OnboardingFlow /> : null}
       {children}
     </>

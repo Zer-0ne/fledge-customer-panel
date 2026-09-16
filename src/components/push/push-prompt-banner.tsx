@@ -59,17 +59,25 @@ export function PushPromptBanner() {
   const [busy, setBusy] = React.useState(false);
 
   React.useEffect(() => {
-    const supported = isWebPushSupported();
-    const shouldShow = shouldShowEnableBanner({
-      configured: isWebPushConfigured(),
-      supported,
-      active: isWebPushActive(),
-      permission: supported ? Notification.permission : 'denied',
-      dismissedAt: readPushPromptDismissedAt(window.localStorage),
-      now: Date.now(),
-    });
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot visibility check on mount
-    if (shouldShow) setVisible(true);
+    // Hidden on public pages — only show after login. Auth state lives in the
+    // HttpOnly cp_access_token cookie (not readable from JS), so we ask the
+    // lightweight bootstrap endpoint once: 200 → logged in, else public page.
+    // /api/v1/auth/bootstrap is cached + cheap (<2ms on the panel side).
+    void fetch('/api/v1/auth/bootstrap', { credentials: 'include', cache: 'no-store' })
+      .then((r) => {
+        if (!r.ok) return;
+        const supported = isWebPushSupported();
+        const shouldShow = shouldShowEnableBanner({
+          configured: isWebPushConfigured(),
+          supported,
+          active: isWebPushActive(),
+          permission: supported ? Notification.permission : 'denied',
+          dismissedAt: readPushPromptDismissedAt(window.localStorage),
+          now: Date.now(),
+        });
+        if (shouldShow) setVisible(true);
+      })
+      .catch(() => { /* offline / CORS — silently hide */ });
   }, []);
 
   if (!visible) return null;
