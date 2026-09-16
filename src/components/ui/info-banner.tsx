@@ -22,6 +22,8 @@ export interface InfoBannerProps
   icon?: React.ReactNode;
   title?: string;
   description?: React.ReactNode;
+  /** Trailing slot rendered after the text (e.g. a "Turn on" button). */
+  action?: React.ReactNode;
 }
 
 /**
@@ -33,6 +35,7 @@ function InfoBanner({
   icon,
   title,
   description,
+  action,
   className,
   children,
   ...props
@@ -44,6 +47,9 @@ function InfoBanner({
         {title ? <span className="font-semibold">{title} </span> : null}
         {description ?? children}
       </span>
+      {action ? (
+        <span className="ml-auto flex shrink-0 items-center gap-2">{action}</span>
+      ) : null}
     </div>
   );
 }
