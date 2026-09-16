@@ -40,7 +40,7 @@ export function Footer({ appName = 'Fledge' }: { appName?: string }) {
             </p>
           </div>
 
-          <nav className="grid grid-cols-2 gap-8 text-xs sm:grid-cols-3" aria-label="Footer">
+          <nav className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3" aria-label="Footer">
             <FooterColumn title="Product" links={PRODUCT_LINKS} />
             <FooterColumn title="Company" links={COMPANY_LINKS} />
             <FooterColumn title="Legal" links={LEGAL_LINKS} />
@@ -51,7 +51,7 @@ export function Footer({ appName = 'Fledge' }: { appName?: string }) {
           <span>© {new Date().getFullYear()} {appName}. All rights reserved.</span>
           <a
             href={`mailto:${FLEDGE_SUPPORT_EMAIL}`}
-            className="transition-colors hover:text-foreground hover:underline"
+            className="inline-flex min-h-7 items-center transition-colors hover:text-foreground hover:underline"
           >
             {FLEDGE_SUPPORT_EMAIL}
           </a>
@@ -69,13 +69,13 @@ function FooterColumn({
   links: { href: string; label: string }[];
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <p className="font-medium text-foreground">{title}</p>
+    <div className="flex flex-col gap-0.5">
+      <p className="mb-1 font-medium text-foreground">{title}</p>
       {links.map((link) => (
         <Link
           key={link.href}
           href={link.href}
-          className="text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex min-h-7 items-center text-muted-foreground transition-colors hover:text-foreground"
         >
           {link.label}
         </Link>

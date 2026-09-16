@@ -34,14 +34,21 @@ describe("decideProxyAction — customer panel route protection", () => {
       expect(decideProxyAction({ pathname: "/donate", isAuthenticated: false })).toEqual({ type: "pass" });
       expect(decideProxyAction({ pathname: "/donate", isAuthenticated: true })).toEqual({ type: "pass" });
     });
+
+    it("passes the public browse surfaces — landing, search and listing detail", () => {
+      expect(decideProxyAction({ pathname: "/", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/search", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/search/", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/listings/abc-123", isAuthenticated: false })).toEqual({ type: "pass" });
+      // A sibling route that only shares the prefix stays gated.
+      expect(decideProxyAction({ pathname: "/search-history", isAuthenticated: false })).toEqual({
+        type: "redirect",
+        to: "/login",
+      });
+    });
   });
 
   describe("protected paths", () => {
-    it("protects the home page — login required", () => {
-      expect(decideProxyAction({ pathname: "/", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
-      expect(decideProxyAction({ pathname: "/", isAuthenticated: true })).toEqual({ type: "pass" });
-    });
-
     it("redirects unauthenticated users on protected routes", () => {
       expect(decideProxyAction({ pathname: "/dashboard", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
       expect(decideProxyAction({ pathname: "/messages/abc-123", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
@@ -49,9 +56,7 @@ describe("decideProxyAction — customer panel route protection", () => {
       expect(decideProxyAction({ pathname: "/settings", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
     });
 
-    it("protects discovery pages that fire API calls", () => {
-      expect(decideProxyAction({ pathname: "/search", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
-      expect(decideProxyAction({ pathname: "/listings/abc-123", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
+    it("protects pages that require a session identity", () => {
       expect(decideProxyAction({ pathname: "/properties/abc-123", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
       expect(decideProxyAction({ pathname: "/roommates", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
       expect(decideProxyAction({ pathname: "/users/abc-123", isAuthenticated: false })).toEqual({ type: "redirect", to: "/login" });
@@ -59,6 +64,7 @@ describe("decideProxyAction — customer panel route protection", () => {
 
     it("passes authenticated users everywhere", () => {
       expect(decideProxyAction({ pathname: "/dashboard", isAuthenticated: true })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/", isAuthenticated: true })).toEqual({ type: "pass" });
       expect(decideProxyAction({ pathname: "/search", isAuthenticated: true })).toEqual({ type: "pass" });
       expect(decideProxyAction({ pathname: "/messages/abc-123", isAuthenticated: true })).toEqual({ type: "pass" });
     });

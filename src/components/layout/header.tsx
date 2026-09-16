@@ -15,10 +15,22 @@ import {
   HeartHandshake,
   Timer,
   Wand2,
+  Wrench,
+  MoreHorizontal,
+  ShoppingBag,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { PwaInstallButton } from '@/components/pwa/pwa-install-button';
+import { UserMenu } from '@/components/layout/user-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/components/providers/auth-provider';
 
 export interface HeaderProps {
@@ -29,17 +41,26 @@ export interface HeaderProps {
   unreadMessagesCount?: number;
 }
 
+/**
+ * Five primary destinations, then everything else behind "More".
+ * (Was: seven pill links + four header icons. At md–lg the labels were hidden
+ * entirely, so the bar was icon-only — Timer / Wand / Building2 are not
+ * guessable. Labels now start at md, with the wordmark yielding instead.)
+ */
 const NAV_LINKS = [
   { href: '/', label: 'Explore', icon: Home },
   { href: '/search', label: 'Flats', icon: Search },
   { href: '/roommates', label: 'Roommates', icon: Users },
   { href: '/need-now', label: 'Need Now', icon: Timer },
-  // Community bridge: paste a group post, get a structured post back.
-  { href: '/import', label: 'Post from group', icon: Wand2 },
-  // Non-housing surfaces (daily utility board, weekly services, seasonal resale)
-  { href: '/neighbourhood', label: 'Neighbourhood', icon: Building2 },
-  { href: '/donate', label: 'Donate', icon: HeartHandshake },
-];
+  { href: '/neighbourhood', label: 'Community', icon: Building2 },
+] as const;
+
+const MORE_LINKS = [
+  { href: '/import', label: 'Post from a group', icon: Wand2 },
+  { href: '/services', label: 'Home services', icon: Wrench },
+  { href: '/resale', label: 'Resale board', icon: ShoppingBag },
+  { href: '/utility', label: 'Utility board', icon: Sparkles },
+] as const;
 
 function isNavActive(pathname: string, href: string) {
   return pathname === href || (href !== '/' && pathname.startsWith(href));
@@ -62,14 +83,12 @@ export function Header({
          process.env.NEXT_PUBLIC_SHOW_BETA_TAG ??
          'true') !== '0';
   let contextUser = null;
-  let contextUserPermissions: string[] = [];
   let contextUnreadNotifications = 0;
   let contextUnreadMessages = 0;
 
   try {
     const auth = useAuth();
     contextUser = auth.user;
-    contextUserPermissions = auth.permissions;
     contextUnreadNotifications = auth.unreadNotificationCount;
     contextUnreadMessages = auth.unreadMessageCount;
   } catch {
@@ -82,39 +101,33 @@ export function Header({
   const unreadMessagesCount =
     propUnreadMessages !== undefined ? propUnreadMessages : contextUnreadMessages;
 
-  const canAnyPartner = (contextUserPermissions ?? []).some(
-    (p: string) =>
-      p === '*' ||
-      p === 'property.manage_own' ||
-      p === 'listing.manage_own' ||
-      p === 'advertising.manage'
-  );
-  const partnerPortalUrl =
-    (process.env.NEXT_PUBLIC_PARTNER_URL || '').trim() || 'http://localhost:3002';
-
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/60 backdrop-blur-2xl supports-[backdrop-filter]:bg-background/40 dark:border-white/5">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-1.5 px-3 sm:gap-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 w-full border-b border-border/70 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex shrink-0 items-center gap-1.5 sm:gap-2 transition-opacity hover:opacity-80">
-          <div className="flex size-7.5 sm:size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
-            <Building2 className="size-4" />
-          </div>
-          <div className="flex items-center gap-1 sm:gap-1.5">
-            <span className="text-sm sm:text-base font-bold tracking-tight text-foreground">{appName}</span>
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80"
+          aria-label={`${appName} home`}
+        >
+          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+            <Building2 className="size-4.5" />
+          </span>
+          <span className="hidden items-center gap-1.5 lg:flex">
+            <span className="text-base font-bold tracking-tight text-foreground">{appName}</span>
             {isBeta && (
-              <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold tracking-wide text-primary ring-1 ring-inset ring-primary/20">
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-semibold tracking-wide text-primary ring-1 ring-inset ring-primary/20">
                 Beta
               </span>
             )}
-          </div>
+          </span>
         </Link>
 
-        {/* Desktop nav — pill bar */}
+        {/* Desktop nav */}
         <nav
-          className="hidden items-center gap-0.5 rounded-full bg-white/10 p-0.5 ring-1 ring-white/10 backdrop-blur-md dark:bg-white/5 dark:ring-white/5 md:flex"
+          className="hidden items-center gap-0.5 rounded-full bg-muted/60 p-1 ring-1 ring-border/60 md:flex"
           aria-label="Primary"
         >
           {NAV_LINKS.map((link) => {
@@ -126,55 +139,80 @@ export function Header({
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
-                  active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'
+                  'relative flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium transition-colors',
+                  active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 {active && (
                   <motion.span
                     layoutId="header-nav-active"
-                    className="absolute inset-0 rounded-full bg-white/80 shadow-sm ring-1 ring-white/20 backdrop-blur-md dark:bg-white/10 dark:ring-white/10"
+                    className="absolute inset-0 rounded-full bg-background shadow-sm ring-1 ring-border/70"
                     transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
                   />
                 )}
-                <Icon className="relative size-3.5" />
-                <span className="relative hidden lg:inline">{link.label}</span>
+                <Icon className="relative size-4" strokeWidth={active ? 2.3 : 1.9} />
+                <span className="relative">{link.label}</span>
               </Link>
             );
           })}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <button
+                  type="button"
+                  className="relative flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground outline-none transition-colors hover:text-foreground"
+                  aria-label="More destinations"
+                />
+              }
+            >
+              <MoreHorizontal className="size-4" />
+              More
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {MORE_LINKS.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <DropdownMenuItem
+                    key={link.href}
+                    render={<Link href={link.href} />}
+                    className="min-h-10 cursor-pointer gap-2.5 text-sm"
+                  >
+                    <Icon className="size-4 text-muted-foreground" />
+                    {link.label}
+                  </DropdownMenuItem>
+                );
+              })}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                render={<Link href="/donate" />}
+                className="min-h-10 cursor-pointer gap-2.5 text-sm"
+              >
+                <HeartHandshake className="size-4 text-muted-foreground" />
+                Support Fledge
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         {/* Right side actions */}
-        <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           <PwaInstallButton />
-          <ThemeToggle className="size-8 sm:size-9 rounded-full" />
+          <ThemeToggle className="size-9 rounded-full" />
 
           {user ? (
             <>
-              {canAnyPartner ? (
-                <Button
-                  render={<a href={partnerPortalUrl} />}
-                  nativeButton={false}
-                  variant="ghost"
-                  size="icon"
-                  className="hidden size-8 sm:size-9 rounded-full lg:inline-flex"
-                  aria-label="Partner portal"
-                >
-                  <Building2 className="size-4 sm:size-[18px] text-muted-foreground" />
-                </Button>
-              ) : null}
-
               <Button
                 render={<Link href="/messages" />}
                 nativeButton={false}
                 variant="ghost"
                 size="icon"
-                className="relative size-8 sm:size-9 rounded-full"
-                aria-label="Messages"
+                className="relative size-9 rounded-full"
+                aria-label={`Messages${unreadMessagesCount > 0 ? ` (${unreadMessagesCount} unread)` : ''}`}
               >
-                <MessageSquare className="size-4 sm:size-[18px] text-muted-foreground" />
+                <MessageSquare className="size-4.5 text-muted-foreground" />
                 {unreadMessagesCount > 0 && (
-                  <span className="absolute right-0.5 top-0.5 sm:right-1 sm:top-1 flex h-3.5 sm:h-4 min-w-3.5 sm:min-w-4 items-center justify-center rounded-full bg-primary px-0.5 sm:px-1 text-[9px] sm:text-[10px] font-bold text-primary-foreground">
+                  <span className="absolute top-1 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
                     {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
                   </span>
                 )}
@@ -185,44 +223,23 @@ export function Header({
                 nativeButton={false}
                 variant="ghost"
                 size="icon"
-                className="relative size-8 sm:size-9 rounded-full"
-                aria-label="Notifications"
+                className="relative size-9 rounded-full"
+                aria-label={`Notifications${unreadNotificationsCount > 0 ? ' (unread)' : ''}`}
               >
-                <Bell className="size-4 sm:size-[18px] text-muted-foreground" />
+                <Bell className="size-4.5 text-muted-foreground" />
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute right-1 top-1 sm:right-1.5 sm:top-1.5 size-2 rounded-full bg-destructive" />
+                  <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive" />
                 )}
               </Button>
 
-              <Button
-                render={<Link href="/dashboard" />}
-                nativeButton={false}
-                variant="ghost"
-                size="icon"
-                className="ml-0.5 hidden size-8 sm:size-9 rounded-full sm:inline-flex"
-                aria-label="Profile"
-              >
-                {user.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={user.avatarUrl}
-                    alt=""
-                    className="size-6 sm:size-7 rounded-full object-cover ring-2 ring-background"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <span className="flex size-6 sm:size-7 items-center justify-center rounded-full bg-primary/10 text-[11px] sm:text-xs font-semibold text-primary">
-                    {user.displayName.charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </Button>
+              <UserMenu />
             </>
           ) : (
             <Button
               render={<Link href="/login" />}
               nativeButton={false}
-              size="sm"
-              className="h-8 text-xs px-2.5 sm:h-9 sm:text-sm sm:px-3 rounded-full"
+              size="lg"
+              className="h-10 rounded-full px-4 text-sm font-semibold"
             >
               Sign in
             </Button>

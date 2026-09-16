@@ -13,21 +13,31 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       <div className="w-full max-w-md space-y-6 z-10">
         {/* Header Branding */}
-        <div className="flex flex-col items-center text-center space-y-2">
+        <div className="flex flex-col items-center text-center space-y-3">
           <Link
             href="/"
-            className="flex items-center gap-2.5 transition-transform hover:scale-105 duration-200"
+            aria-label={`${env.NEXT_PUBLIC_APP_NAME} home`}
+            className="flex items-center gap-2.5 transition-transform duration-200 hover:scale-105"
           >
             <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
               <Building2 className="size-6" />
             </div>
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <p className="text-sm font-semibold tracking-tight text-foreground">
             {env.NEXT_PUBLIC_APP_NAME}
+          </p>
+          <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+            Student flats and PG, verified before you pay
           </h1>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-            <ShieldCheck className="size-3.5 text-primary" />
-            <span>Verified Student & Flat Sharing Community</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="size-3.5 text-primary" />
+              Student &amp; host verification
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="size-3.5 text-primary" />
+              Contact shared only with consent
+            </span>
           </div>
         </div>
 

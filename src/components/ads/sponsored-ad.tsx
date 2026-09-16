@@ -162,7 +162,7 @@ function StandardCard({ ad }: { ad: AdCreative }) {
     <div className="ad-glass-surface flex flex-col gap-3 rounded-xl p-4" style={GLASS_BLUR}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="rounded border border-white/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/60">
+          <span className="rounded border border-white/20 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white/60">
             Sponsored
           </span>
           {ad.advertiserBadge === 'PREMIUM' && <PartnerBadge className="border-white/20 bg-white/[0.08] text-white/80" />}
@@ -312,7 +312,7 @@ function HeroCard({ ad, tier }: { ad: AdCreative; tier: string }) {
               {ad.featureChips.slice(0, 6).map((chip) => (
                 <span
                   key={chip}
-                  className="rounded-sm border border-white/15 bg-white/[0.08] px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-white/85 backdrop-blur-md"
+                  className="rounded-sm border border-white/15 bg-white/[0.08] px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/85 backdrop-blur-md"
                 >
                   {chip}
                 </span>

@@ -9,10 +9,9 @@ import { toggleListingFavorite } from '@/lib/api/services/discovery';
 import { showToast } from '@/components/ui/toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MagicCard } from '@/components/ui/magic-card';
-import { ShimmerButton } from '@/components/ui/shimmer-button';
-import { Heart, Bed, Bath, MapPin, Sparkles, Building, CheckCircle2 } from 'lucide-react';
+import { Heart, Bed, Bath, MapPin, Sparkles, Building, CheckCircle2, Navigation } from 'lucide-react';
 import { useAuth } from '@/components/providers/auth-provider';
+import { useRouter } from 'next/navigation';
 
 export interface ListingCardProps {
   listing: Listing;
@@ -29,7 +28,6 @@ export function ListingCard({
 }: ListingCardProps) {
   const [isFavorited, setIsFavorited] = React.useState(!!listing.isFavorited);
   const [isFavLoading, setIsFavLoading] = React.useState(false);
-  const [imageIndex, setImageIndex] = React.useState(0);
   const [hovered, setHovered] = React.useState(false);
 
   const images = React.useMemo(() => {
@@ -42,17 +40,22 @@ export function ListingCard({
   // Auto-playing image carousel — same cadence as the Flutter app (4s).
   // Pauses while the user hovers/interacts so it never fights the cursor.
   const multiImage = images.length > 1;
-  React.useEffect(() => {
-    setImageIndex(0);
-  }, [listing.id, images.length]);
+  // Index is stored with the listing it belongs to, so a different listing
+  // starts at slide 0 without a setState-in-effect reset.
+  const [carousel, setCarousel] = React.useState({ listingId: listing.id, index: 0 });
+  const imageIndex = carousel.listingId === listing.id ? carousel.index : 0;
+  const setImageIndex = React.useCallback(
+    (index: number) => setCarousel({ listingId: listing.id, index }),
+    [listing.id]
+  );
 
   React.useEffect(() => {
     if (!multiImage || hovered) return;
     const timer = window.setInterval(() => {
-      setImageIndex((i) => (i + 1) % images.length);
+      setImageIndex((imageIndex + 1) % images.length);
     }, 4000);
     return () => window.clearInterval(timer);
-  }, [multiImage, hovered, images.length]);
+  }, [multiImage, hovered, images.length, imageIndex, setImageIndex]);
 
   let isAuthenticated = false;
   try {
@@ -61,17 +64,24 @@ export function ListingCard({
   } catch {
     // Rendered outside AuthProvider
   }
+  const router = useRouter();
+
+  /**
+   * Guests can browse; saving/interests need a session. Previously these taps
+   * only produced an "Authentication required" toast — a dead end. Send them to
+   * sign-in and return them to the exact listing they tapped.
+   */
+  const requireSignIn = (reason: string) => {
+    showToast({ title: 'Sign in to continue', description: reason, variant: 'info' });
+    router.push(`/login?returnUrl=${encodeURIComponent(`/listings/${listing.id}`)}`);
+  };
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      showToast({
-        title: 'Authentication required',
-        description: 'Please log in to save listings to your favorites.',
-        variant: 'info',
-      });
+      requireSignIn('Create a free account to save flats and get alerts.');
       return;
     }
 
@@ -106,11 +116,7 @@ export function ListingCard({
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      showToast({
-        title: 'Authentication required',
-        description: 'Please log in to express interest in this listing.',
-        variant: 'info',
-      });
+      requireSignIn('Sign in to send an enquiry — hosts reply in the app.');
       return;
     }
 
@@ -128,9 +134,8 @@ export function ListingCard({
     .join(' • ');
 
   return (
-    <MagicCard className="rounded-2xl">
     <div
-      className="group relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
+      className="fl-lift group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -154,9 +159,9 @@ export function ListingCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
         </Link>
 
-        {/* Carousel dots */}
+        {/* Carousel dots — 24px hit area around a 6px visual dot (WCAG 2.5.8) */}
         {multiImage && (
-          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5">
+          <div className="absolute right-3 bottom-3 z-10 flex items-center gap-0.5">
             {images.map((_, i) => (
               <button
                 key={`dot-${listing.id}-${i}`}
@@ -167,29 +172,33 @@ export function ListingCard({
                   e.stopPropagation();
                   setImageIndex(i);
                 }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === imageIndex
-                    ? 'w-4 bg-white'
-                    : 'w-1.5 bg-white/50 hover:bg-white/80'
-                }`}
-              />
+                className="group/dot flex size-6 items-center justify-center"
+              >
+                <span
+                  className={`block h-1.5 rounded-full transition-all duration-300 ${
+                    i === imageIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50 group-hover/dot:bg-white/80'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}
 
         {/* Top Badges */}
-        <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-10">
-          <Badge variant="secondary" className="backdrop-blur-md bg-black/40 text-white border-0 font-medium">
-            {listing.bedrooms} BHK
-          </Badge>
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap items-center gap-1.5">
+          {listing.bedrooms ? (
+            <Badge variant="secondary" className="border-0 bg-black/45 font-medium text-white backdrop-blur-md">
+              {listing.bedrooms} BHK
+            </Badge>
+          ) : null}
           {listing.furnishing && (
-            <Badge variant="secondary" className="capitalize backdrop-blur-md bg-black/40 text-white border-0">
+            <Badge variant="secondary" className="border-0 bg-black/45 capitalize text-white backdrop-blur-md">
               {listing.furnishing.replace('-', ' ')}
             </Badge>
           )}
           {listing.petFriendly && (
-            <Badge variant="secondary" className="backdrop-blur-md bg-emerald-600/80 text-white border-0 font-medium">
-              🐾 Pets OK
+            <Badge variant="secondary" className="border-0 bg-emerald-600/80 font-medium text-white backdrop-blur-md">
+              Pets OK
             </Badge>
           )}
         </div>
@@ -210,20 +219,28 @@ export function ListingCard({
         </button>
 
         {/* Bottom Rent Badge overlay on image */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white z-10">
-          <div>
-            <span className="text-xl font-bold tracking-tight">
+        <div className="absolute right-3 bottom-3 left-3 z-10 flex items-end justify-between text-white">
+          <div className="flex items-baseline gap-1">
+            <span className="fl-num text-xl font-bold tracking-tight drop-shadow-sm">
               {formatPaiseToINR(listing.monthlyRentPaise)}
             </span>
-            <span className="text-xs text-white/80 font-normal"> / month</span>
+            <span className="text-xs font-normal text-white/80">/ month</span>
           </div>
+          {listing.distanceMeters != null && (
+            <span className="fl-num inline-flex items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-medium backdrop-blur-md">
+              <Navigation className="size-3" />
+              {listing.distanceMeters < 1000
+                ? `${Math.round(listing.distanceMeters)} m`
+                : `${(listing.distanceMeters / 1000).toFixed(1)} km`}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Content */}
       <div className="flex flex-1 flex-col justify-between p-4 gap-3">
         <div className="space-y-1.5">
-          <Link href={`/listings/${listing.id}`}>
+          <Link href={`/listings/${listing.id}`} className="inline-flex min-h-7 items-center">
             <h3 className="line-clamp-1 font-semibold text-foreground text-base group-hover:text-primary transition-colors">
               {listing.title}
             </h3>
@@ -238,15 +255,19 @@ export function ListingCard({
         </div>
 
         {/* Amenities / Specs Row */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground border-t border-border/40 pt-2.5">
-          <div className="flex items-center gap-1">
-            <Bed className="size-3.5" />
-            <span>{listing.bedrooms} Bed</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Bath className="size-3.5" />
-            <span>{listing.bathrooms} Bath</span>
-          </div>
+        <div className="flex items-center gap-3 border-t border-border/40 pt-2.5 text-xs text-muted-foreground">
+          {listing.bedrooms ? (
+            <div className="flex items-center gap-1">
+              <Bed className="size-3.5" />
+              <span>{listing.bedrooms} Bed</span>
+            </div>
+          ) : null}
+          {listing.bathrooms ? (
+            <div className="flex items-center gap-1">
+              <Bath className="size-3.5" />
+              <span>{listing.bathrooms} Bath</span>
+            </div>
+          ) : null}
           {listing.property?.type && (
             <div className="flex items-center gap-1 capitalize">
               <Building className="size-3.5" />
@@ -260,27 +281,25 @@ export function ListingCard({
           {hasExpressedInterest ? (
             <Link href="/interests?tab=outgoing" className="w-full">
               <Button
-                size="sm"
                 variant="outline"
-                className="w-full justify-center gap-1.5 rounded-xl border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all font-medium"
+                className="h-11 w-full justify-center gap-1.5 rounded-xl border-emerald-500/30 bg-emerald-500/10 font-medium text-emerald-600 transition-all hover:bg-emerald-500/20 dark:text-emerald-400 sm:h-9"
               >
                 <CheckCircle2 className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-                Interest Sent (View)
+                Enquiry sent — view
               </Button>
             </Link>
           ) : (
-            <ShimmerButton
+            <Button
               type="button"
-              className="h-8 w-full gap-1.5 rounded-xl px-3 py-1.5 text-xs font-medium"
+              className="h-11 w-full gap-1.5 rounded-xl text-sm font-medium sm:h-9"
               onClick={handleInterest}
             >
-              <Sparkles />
-              Express Interest
-            </ShimmerButton>
+              <Sparkles className="size-3.5" />
+              {isAuthenticated ? 'Send enquiry' : 'Sign in to enquire'}
+            </Button>
           )}
         </div>
       </div>
     </div>
-    </MagicCard>
   );
 }
