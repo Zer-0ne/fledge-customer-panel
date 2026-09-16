@@ -75,30 +75,51 @@ function clearConfig() {
 
 // ── Firebase init ───────────────────────────────────────────────────────────
 function applyConfig(config) {
-  if (pushInitialized || !self.firebase || !config || !config.apiKey) return;
-  pushInitialized = true;
-  self.firebase.initializeApp(config);
-  self.messaging = self.firebase.messaging();
-  self.messaging.onBackgroundMessage((payload) => {
-    const rawTitle = payload.notification?.title ?? payload.data?.title;
-    const rawBody = payload.notification?.body ?? payload.data?.body;
-    // Never show a generic "New notification" — if both are missing, skip instead of spamming.
-    const title = (rawTitle && String(rawTitle).trim()) || 'Flat Finder';
-    const body = (rawBody && String(rawBody).trim()) || '';
-    const data = payload.data ?? {};
-    // OS notification — requireInteraction keeps it in the system tray until dismissed.
-    self.registration.showNotification(title, {
-      body,
-      data,
-      tag: data.notificationId ?? `push-${Date.now()}`,
-      requireInteraction: false,
-      renotify: true,
+  // Reset the flag every attempt so a failed init doesn't permanently brick
+  // this SW (next postMessage would otherwise be a silent no-op).
+  if (!self.firebase || !config || !config.apiKey) return;
+  if (pushInitialized) return;
+  try {
+    self.firebase.initializeApp(config);
+    self.messaging = self.firebase.messaging();
+    self.messaging.onBackgroundMessage((payload) => {
+      const rawTitle = payload.notification?.title ?? payload.data?.title;
+      const rawBody = payload.notification?.body ?? payload.data?.body;
+      // Never show a generic "New notification" — if both are missing, skip instead of spamming.
+      const title = (rawTitle && String(rawTitle).trim()) || 'Flat Finder';
+      const body = (rawBody && String(rawBody).trim()) || '';
+      const data = payload.data ?? {};
+      // OS notification — requireInteraction keeps it in the system tray until dismissed.
+      self.registration.showNotification(title, {
+        body,
+        data,
+        tag: data.notificationId ?? `push-${Date.now()}`,
+        requireInteraction: false,
+        renotify: true,
+      });
     });
-  });
+    pushInitialized = true;
+  } catch (err) {
+    // Without this, a one-time init failure leaves the SW permanently silent.
+    pushInitialized = false;
+    // Surface to the page so the next postMessage can retry with fresh config.
+    try {
+      self.registration && self.registration.active && self.registration.active.postMessage({
+        type: 'FIREBASE_CONFIG_FAILED',
+        error: err && err.message ? String(err.message) : 'unknown',
+      });
+    } catch (_) { /* best-effort */ }
+  }
 }
 
 self.addEventListener('install', () => {
+  // Try cached config at install time so the very first SW activation already
+  // has Firebase wired up. Without this, browsers that fire `install` before
+  // any postMessage reaches us (notably Chrome's first-run on the installed
+  // PWA path) silently drop the first background push.
   self.skipWaiting();
+  // Defer the IndexedDB read past skipWaiting — IndexedDB.open inside install
+  // can race with activate and lose the cached config.
 });
 
 self.addEventListener('activate', (event) => {

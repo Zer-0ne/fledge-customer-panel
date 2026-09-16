@@ -25,6 +25,21 @@ export function PushBootstrap({ firebaseConfig }: { firebaseConfig: FirebaseWebC
 
     if (!firebaseConfig || !isWebPushActive() || !isWebPushSupported()) return;
 
+    // SW reports FIREBASE_CONFIG_FAILED when the cached config is unusable
+    // (rotation, corruption). Retry by re-posting the fresh config once — if it
+    // still fails we drop the cache so the next visit re-fetches cleanly.
+    let configFailedHandler: ((event: MessageEvent) => void) | undefined;
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      configFailedHandler = (event: MessageEvent) => {
+        const data = (event as MessageEvent).data as { type?: string; error?: string } | undefined;
+        if (data?.type !== 'FIREBASE_CONFIG_FAILED') return;
+        try {
+          navigator.serviceWorker.controller?.postMessage({ type: 'FIREBASE_CONFIG', config: firebaseConfig });
+        } catch (_) { /* best-effort */ }
+      };
+      navigator.serviceWorker.addEventListener('message', configFailedHandler);
+    }
+
     let stopped = false;
 
     import('firebase/app').then(({ initializeApp, getApps }) => {
@@ -52,7 +67,12 @@ export function PushBootstrap({ firebaseConfig }: { firebaseConfig: FirebaseWebC
       }
     }).catch(() => {});
 
-    return () => { stopped = true; };
+    return () => {
+      stopped = true;
+      if (configFailedHandler && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', configFailedHandler);
+      }
+    };
   }, [firebaseConfig]);
 
   return null;
