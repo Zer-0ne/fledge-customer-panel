@@ -801,7 +801,7 @@ export default function ChatThreadPage() {
               {conversation?.contextType === 'housing_request_response' ? (
                 <Badge
                   variant="outline"
-                  className="text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[200px] sm:max-w-[300px] truncate border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  className="text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[200px] sm:max-w-[300px] truncate border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
                   title={housingContext ? `${housingContext.title}${housingContext.location ? ` · ${housingContext.location}` : ''}` : 'Need Now'}
                 >
                   Need Now{housingContext?.location ? `: ${housingContext.location}` : ''}
@@ -809,7 +809,7 @@ export default function ChatThreadPage() {
               ) : conversation?.contextType && (
                 <Badge
                   variant="outline"
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[200px] sm:max-w-[300px] truncate ${
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[200px] sm:max-w-[300px] truncate ${
                     conversation.contextType === 'listing_interest'
                       ? 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                       : 'border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400'
@@ -827,13 +827,13 @@ export default function ChatThreadPage() {
               {chatClosed && (
                 <Badge
                   variant="warning"
-                  className="text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0"
+                  className="text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0"
                 >
                   Post expired
                 </Badge>
               )}
               {socketStatus === 'connected' && (
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 shrink-0">Live</span>
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 shrink-0">Live</span>
               )}
             </div>
             {peer?.bio && <p className="text-[11px] text-muted-foreground truncate">{peer.bio}</p>}
@@ -894,7 +894,7 @@ export default function ChatThreadPage() {
               <div className="flex min-w-0 items-center gap-2.5">
                 {isRoommate ? <Users className="size-4 shrink-0 text-purple-500" /> : <Home className="size-4 shrink-0 text-primary" />}
                 <div className="min-w-0">
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Related {isRoommate ? 'roommate post' : 'listing'}</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Related {isRoommate ? 'roommate post' : 'listing'}</p>
                   <p className="truncate text-xs font-semibold text-foreground">{title}</p>
                 </div>
               </div>
@@ -912,7 +912,7 @@ export default function ChatThreadPage() {
             <div className="flex min-w-0 items-center gap-2.5">
               <Timer className="size-4 shrink-0 text-amber-500" />
               <div className="min-w-0">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Related Need Now requirement</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Related Need Now requirement</p>
                 <p className="truncate text-xs font-semibold text-foreground">
                   {housingContext.title}
                   {housingContext.location ? <span className="font-normal text-muted-foreground"> · {housingContext.location}</span> : null}
@@ -993,7 +993,7 @@ export default function ChatThreadPage() {
                   <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.content}</p>
                 </div>
 
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground px-1">
+                <div className="flex items-center gap-1 text-[11px] text-muted-foreground px-1">
                   <time dateTime={msg.createdAt}>{formatDate(msg.createdAt)}</time>
                   {isMe && status && (
                     <span className="ml-0.5 inline-flex items-center gap-0.5">

@@ -54,14 +54,14 @@ export default function AdStylePreviewPage() {
       <div className="relative w-full max-w-md">
         {/* ============ STANDARD AD — campus cafe ============ */}
         <section>
-          <p className="font-mono-jb mb-2 text-[10px] uppercase tracking-[0.3em] text-white/30">Standard</p>
+          <p className="font-mono-jb mb-2 text-[11px] uppercase tracking-[0.3em] text-white/30">Standard</p>
           <article
             className="ad-glass-surface flex flex-col gap-3 rounded-xl border border-white/5 p-4"
             style={GLASS_BLUR}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="rounded border border-[#c4c7c7]/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#c4c7c7]/60">
+                <span className="rounded border border-[#c4c7c7]/20 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#c4c7c7]/60">
                   Sponsored
                 </span>
                 <span className="font-mono-jb text-[11px] text-[#c4c7c7]/80">Brew &amp; Bites Cafe</span>
@@ -95,7 +95,7 @@ export default function AdStylePreviewPage() {
 
         {/* ============ BOOST AD — student restaurant ============ */}
         <section className="mt-10">
-          <p className="font-mono-jb mb-2 text-[10px] uppercase tracking-[0.3em] text-white/30">Boost</p>
+          <p className="font-mono-jb mb-2 text-[11px] uppercase tracking-[0.3em] text-white/30">Boost</p>
           <article
             className="ad-glass-surface ad-titanium-edge overflow-hidden rounded-xl bg-gradient-to-b from-[#20201f]/50 to-[#131313]"
             style={GLASS_BLUR}
@@ -110,10 +110,10 @@ export default function AdStylePreviewPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#131313] via-transparent to-black/30" />
               <div className="absolute left-4 top-4 flex gap-2">
-                <span className="rounded-sm bg-[#d2bbff]/90 px-3 py-1 text-[10px] font-bold text-[#3f008e] shadow-xl backdrop-blur-md">
+                <span className="rounded-sm bg-[#d2bbff]/90 px-3 py-1 text-[11px] font-bold text-[#3f008e] shadow-xl backdrop-blur-md">
                   Boosted
                 </span>
-                <span className="rounded-sm border border-white/10 bg-black/60 px-3 py-1 text-[10px] font-medium text-white/80 backdrop-blur-md">
+                <span className="rounded-sm border border-white/10 bg-black/60 px-3 py-1 text-[11px] font-medium text-white/80 backdrop-blur-md">
                   Sponsored
                 </span>
               </div>
@@ -138,7 +138,7 @@ export default function AdStylePreviewPage() {
 
         {/* ============ PREMIUM AD — PG residences ============ */}
         <section className="mt-10">
-          <p className="font-mono-jb mb-2 text-[10px] uppercase tracking-[0.3em] text-white/30">Premium</p>
+          <p className="font-mono-jb mb-2 text-[11px] uppercase tracking-[0.3em] text-white/30">Premium</p>
           <div className="relative">
             {/* titanium edge frame */}
             <div className="relative aspect-[4/5] rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 via-transparent to-white/5 p-0.5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.6)]">
@@ -157,10 +157,10 @@ export default function AdStylePreviewPage() {
 
                 {/* top row — badge + wordmark */}
                 <div className="absolute left-6 right-6 top-6 flex items-center justify-between">
-                  <span className="rounded-sm border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-lg">
+                  <span className="rounded-sm border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur-lg">
                     Premium Partner
                   </span>
-                  <span className="font-mono-jb text-[10px] uppercase tracking-widest text-white/40">
+                  <span className="font-mono-jb text-[11px] uppercase tracking-widest text-white/40">
                     Nest Residences
                   </span>
                 </div>
@@ -185,7 +185,7 @@ export default function AdStylePreviewPage() {
                       <FlipVertical2 className="size-5" />
                     </button>
                   </div>
-                  <p className="font-mono-jb mt-6 text-center text-[10px] uppercase tracking-[0.3em] text-white/30">
+                  <p className="font-mono-jb mt-6 text-center text-[11px] uppercase tracking-[0.3em] text-white/30">
                     Flip to View Details
                   </p>
                 </div>
@@ -209,7 +209,7 @@ export default function AdStylePreviewPage() {
 
         {/* ============ MAXIMUM AD — premium PG residences ============ */}
         <section className="mt-10">
-          <p className="font-mono-jb mb-2 text-[10px] uppercase tracking-[0.3em] text-white/30">Maximum</p>
+          <p className="font-mono-jb mb-2 text-[11px] uppercase tracking-[0.3em] text-white/30">Maximum</p>
           <div className="relative">
             {/* travelling-light frame (MAXIMUM tier) */}
             <div className="relative aspect-[4/5] overflow-hidden rounded-2xl p-[1.5px] shadow-[0_24px_50px_-15px_rgba(0,0,0,0.7)]">
@@ -237,10 +237,10 @@ export default function AdStylePreviewPage() {
 
                 {/* top row — badge + wordmark */}
                 <div className="absolute left-6 right-6 top-6 flex items-center justify-between">
-                  <span className="rounded-sm border border-[#e9c349]/40 bg-[#e9c349]/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#e9c349] backdrop-blur-lg">
+                  <span className="rounded-sm border border-[#e9c349]/40 bg-[#e9c349]/15 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#e9c349] backdrop-blur-lg">
                     Exclusive Partner
                   </span>
-                  <span className="font-mono-jb text-[10px] uppercase tracking-widest text-white/45">
+                  <span className="font-mono-jb text-[11px] uppercase tracking-widest text-white/45">
                     Skyline Residences
                   </span>
                 </div>
@@ -256,7 +256,7 @@ export default function AdStylePreviewPage() {
                     {['Wi-Fi 6', 'AC Rooms', 'Meals Included', 'Housekeeping'].map((a) => (
                       <span
                         key={a}
-                        className="rounded-sm border border-white/15 bg-white/[0.08] px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-white/85 backdrop-blur-md"
+                        className="rounded-sm border border-white/15 bg-white/[0.08] px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/85 backdrop-blur-md"
                       >
                         {a}
                       </span>
@@ -279,7 +279,7 @@ export default function AdStylePreviewPage() {
                     </button>
                   </div>
 
-                  <p className="font-mono-jb mt-5 text-center text-[10px] uppercase tracking-[0.3em] text-white/35">
+                  <p className="font-mono-jb mt-5 text-center text-[11px] uppercase tracking-[0.3em] text-white/35">
                     All-inclusive from ₹12,999/mo
                   </p>
                 </div>

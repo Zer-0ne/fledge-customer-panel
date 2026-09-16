@@ -11,7 +11,12 @@ import {
 import { ListingFilters } from '@/components/listings/listing-filters';
 import { ListingGrid } from '@/components/listings/listing-grid';
 import { SaveSearchDialog } from '@/components/listings/save-search-dialog';
-import { InterestDialog } from '@/components/listings/interest-dialog';
+import dynamic from 'next/dynamic';
+// Interaction-only overlay — loaded on demand instead of in the search chunk.
+const InterestDialog = dynamic(
+  () => import('@/components/listings/interest-dialog').then((m) => m.InterestDialog),
+  { ssr: false }
+);
 import { fetchListingInterests } from '@/lib/api/services/interests';
 import { useAuth } from '@/components/providers/auth-provider';
 import { LocationMap } from '@/components/map/location-map';

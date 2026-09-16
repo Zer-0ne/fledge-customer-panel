@@ -187,7 +187,7 @@ export function FallbackContactManager() {
         <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground space-y-2">
           <ShieldAlert className="size-8 mx-auto text-muted-foreground/60" />
           <p>No fallback contacts added yet.</p>
-          <p className="text-[11px]">Add a property manager, roommate, or family member to use fallback contact sharing.</p>
+          <p className="text-xs">Add a property manager, roommate, or family member to use fallback contact sharing.</p>
         </div>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">
@@ -202,7 +202,7 @@ export function FallbackContactManager() {
                     <User className="size-3.5 text-muted-foreground" />
                     {contact.displayName}
                   </h4>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {RELATIONSHIP_OPTIONS.find((r) => r.value === contact.relationshipType)?.label || contact.relationshipType}
                   </span>
                 </div>
@@ -210,8 +210,8 @@ export function FallbackContactManager() {
                   variant="outline"
                   className={
                     contact.verificationStatus === 'VERIFIED'
-                      ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]'
-                      : 'bg-amber-500/10 text-amber-600 border-amber-500/30 text-[10px]'
+                      ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-xs'
+                      : 'bg-amber-500/10 text-amber-600 border-amber-500/30 text-xs'
                   }
                 >
                   {contact.verificationStatus}
@@ -220,7 +220,7 @@ export function FallbackContactManager() {
 
               {verifyingId === contact.id ? (
                 <div className="space-y-2 pt-1 border-t border-border">
-                  <span className="text-[11px] font-medium text-foreground">Enter 6-digit code:</span>
+                  <span className="text-xs font-medium text-foreground">Enter 6-digit code:</span>
                   <div className="flex gap-2">
                     <Input
                       type="text"
@@ -246,12 +246,12 @@ export function FallbackContactManager() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleRequestVerification(contact.id)}
-                      className="h-7 text-[11px] text-amber-600 border-amber-500/30 hover:bg-amber-500/10 gap-1"
+                      className="h-7 text-xs text-amber-600 border-amber-500/30 hover:bg-amber-500/10 gap-1"
                     >
                       <Send className="size-3" /> Request Verification OTP
                     </Button>
                   ) : (
-                    <span className="text-[11px] text-emerald-600 flex items-center gap-1 font-medium">
+                    <span className="text-xs text-emerald-600 flex items-center gap-1 font-medium">
                       <CheckCircle2 className="size-3" /> Ready for fallback use
                     </span>
                   )}

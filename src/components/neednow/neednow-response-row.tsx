@@ -97,8 +97,8 @@ export function NeedNowResponseRow({ response, onChanged }: NeedNowResponseRowPr
                   </span>
                 )}
               </p>
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                <Badge variant="secondary" className="text-[10px]">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Badge variant="secondary" className="text-xs">
                   {kindLabel}
                 </Badge>
                 {isPending && (
@@ -115,11 +115,11 @@ export function NeedNowResponseRow({ response, onChanged }: NeedNowResponseRowPr
           <Link href={`/need-now/${response.request.id}`} className="block rounded-xl bg-muted/40 p-3 space-y-1 hover:bg-muted/70 transition-colors group">
             <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
               {NEED_NOW_INTENT_LABELS[response.request.intentType]}
-              <span className="ml-2 text-[10px] font-medium text-muted-foreground">
+              <span className="ml-2 text-xs font-medium text-muted-foreground">
                 {requestTimeLabel}
               </span>
             </p>
-            <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
               <span className="flex items-center gap-1 min-w-0">
                 <MapPin className="size-3 text-primary/70 shrink-0" />
                 <span className="truncate">{response.request.location.name}</span>

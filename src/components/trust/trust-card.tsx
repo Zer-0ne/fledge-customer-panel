@@ -119,7 +119,7 @@ export function TrustCard() {
         <div className="flex items-center gap-2">
           <ShieldCheck className="size-4 text-primary shrink-0" />
           <h2 className="font-semibold text-foreground">Trust Score</h2>
-          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
             <TrendingUp className="size-3" />
             out of 100
           </span>
@@ -149,7 +149,7 @@ export function TrustCard() {
             <span className={cn('text-4xl font-extrabold tabular-nums leading-none', scoreTone(score))}>
               {score}
             </span>
-            <span className="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Trust score
             </span>
           </div>
@@ -200,7 +200,7 @@ export function TrustCard() {
             {badges.map((badge) => (
               <span
                 key={badge}
-                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
               >
                 <Award className="size-3" />
                 {badgeLabel(badge)}

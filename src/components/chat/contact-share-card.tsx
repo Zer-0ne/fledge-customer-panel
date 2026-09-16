@@ -412,12 +412,12 @@ export function ContactShareCard({
           <Lock className="size-4 text-muted-foreground shrink-0" />
           <div>
             <h4 className="font-semibold text-foreground text-xs">In-App Chat Only</h4>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Direct phone contact sharing is currently disabled by the owner or platform.
             </p>
           </div>
         </div>
-        <Badge variant="outline" className="text-[10px] shrink-0 bg-background">
+        <Badge variant="outline" className="text-xs shrink-0 bg-background">
           Chat Only
         </Badge>
       </div>
@@ -434,7 +434,7 @@ export function ContactShareCard({
           </div>
           <div>
             <h4 className="text-xs font-semibold text-foreground">Controlled Contact Fallback</h4>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Request direct phone contact when chatting is insufficient.
             </p>
           </div>
@@ -475,7 +475,7 @@ export function ContactShareCard({
             </Button>
           ) : null}
         </div>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {consumed ? 'The requester has seen your number. Nothing more to do.' : 'The requester can view your number once. Revoke anytime to cancel access.'}
         </p>
       </div>
@@ -488,7 +488,7 @@ export function ContactShareCard({
           <ShieldCheck className="size-4 shrink-0" />
           Temporary Contact Access {grant?.status === 'revoked' ? 'Revoked' : 'Expired'}
         </div>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {grant?.status === 'revoked' ? 'The owner revoked this access.' : 'Views are used up or the time limit passed. Send a fresh request to see the number again.'}
         </p>
         {!isIncoming ? (
@@ -510,11 +510,11 @@ export function ContactShareCard({
             Temporary Contact Access Granted
           </div>
           <div className="flex items-center gap-1.5">
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[10px]">
+            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-xs">
               {contactSource === 'FALLBACK_CONTACT' ? 'Fallback Contact' : 'Owner Contact'}
             </Badge>
             {remainingTime && (
-              <Badge variant="secondary" className="text-[10px] gap-1">
+              <Badge variant="secondary" className="text-xs gap-1">
                 <Clock className="size-3" /> {remainingTime}
               </Badge>
             )}
@@ -584,7 +584,7 @@ export function ContactShareCard({
             <h4 className="text-xs font-semibold text-foreground truncate">
               Contact Share Request Received
             </h4>
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate">
               Requester is asking for direct phone contact permission.
             </p>
           </div>
@@ -624,13 +624,13 @@ export function ContactShareCard({
           </div>
           <div>
             <h4 className="text-xs font-semibold text-foreground">Contact Share Request Sent</h4>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Waiting for recipient to review and approve access.
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-[10px]">
+          <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs">
             Pending
           </Badge>
           <Button

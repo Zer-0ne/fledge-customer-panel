@@ -185,7 +185,7 @@ export default function ContactApprovalPage() {
               <span className="flex items-center gap-1">
                 <Clock className="size-3" /> Token Expires
               </span>
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="text-[11px]">
                 {new Date(context.tokenExpiresAt).toLocaleString()}
               </Badge>
             </div>
