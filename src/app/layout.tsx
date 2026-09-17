@@ -55,7 +55,18 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0c0e12',
+  // viewport-fit=cover — the standalone PWA paints edge-to-edge (iOS
+  // black-translucent status bar, Android display cutouts); the shell adds
+  // safe-area padding (Header pt-safe, MobileNav pb-safe).
+  viewportFit: 'cover',
+  // Status-bar tint: Chrome (Android) colours the installed app's status bar
+  // from the ACTIVE theme-color meta — the ThemeProvider re-points it on every
+  // in-app theme change; these static media variants cover the first paint
+  // before hydration.
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
 };
 
 const themeScript = `

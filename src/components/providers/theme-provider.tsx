@@ -139,6 +139,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.setAttribute('data-font-scale', fontScale);
   }, [fontScale]);
 
+  // Keep the browser/PWA status-bar tint in sync with the IN-APP theme (the
+  // user can force light/dark regardless of the OS setting; the static
+  // media-based theme-color metas only cover the first paint).
+  // Chrome quirk: setAttribute() on an existing theme-color meta is ignored —
+  // remove the old tags and append a fresh one.
+  React.useEffect(() => {
+    const probe = document.createElement('div');
+    probe.style.color = 'var(--background)';
+    probe.style.display = 'none';
+    document.body.appendChild(probe);
+    const color =
+      window.getComputedStyle(probe).color || (resolvedTheme === 'dark' ? '#0a0a0a' : '#ffffff');
+    probe.remove();
+
+    document.querySelectorAll('meta[name="theme-color"]').forEach((el) => el.remove());
+    const meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    meta.content = color;
+    document.head.appendChild(meta);
+  }, [resolvedTheme]);
+
   const setTheme = (nextTheme: Theme) => {
     setThemeState(nextTheme);
     try {
