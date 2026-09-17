@@ -15,9 +15,21 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
 
   React.useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace(`/login?returnUrl=${encodeURIComponent(pathname)}`);
-    }
+    if (isLoading || isAuthenticated) return;
+    const target = `/login?returnUrl=${encodeURIComponent(pathname)}`;
+    // Fast path: client-side replace.
+    router.replace(target);
+    // Auth gates must never strand the user behind a "Redirecting to login…"
+    // message. If the client router has not moved shortly after the attempt
+    // (stalled transition, stale bundle, blocked navigation), take the hard
+    // path: a real navigation that cannot be swallowed. The timer is cleared on
+    // unmount, so a successful SPA redirect cancels it automatically.
+    const hardFallback = window.setTimeout(() => {
+      if (window.location.pathname !== '/login') {
+        window.location.replace(target);
+      }
+    }, 700);
+    return () => window.clearTimeout(hardFallback);
   }, [isLoading, isAuthenticated, router, pathname]);
 
   if (isLoading) {
