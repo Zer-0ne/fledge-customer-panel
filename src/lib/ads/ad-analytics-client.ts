@@ -3,7 +3,12 @@
  * Mirrors customer-panel analytics-client pattern for ad tokens.
  */
 import { AdAnalyticsQueue, type QueuedAdEvent } from './ad-analytics-queue';
-import { env } from '@/lib/env';
+import {
+  AUTH_FAILURE_COOLDOWN_MS,
+  AUTH_FAILURE_STRIKE_LIMIT,
+  noteTelemetryFailure,
+  telemetryBase,
+} from '@/lib/telemetry/endpoint';
 
 const MAX_BATCH = 50;
 const FLUSH_INTERVAL_MS = 60 * 60 * 1000; // 1h — hourly bulk (60-120m range, keep 1h for now)
@@ -16,6 +21,10 @@ let flushing = false;
 let nextFlushAllowedAt = 0;
 let shedCooldownMs = SHED_COOLDOWN_MS;
 let shedFlushTimer: ReturnType<typeof setTimeout> | null = null;
+/** Consecutive 401/403 flushes — past the limit the flusher goes dormant for
+ * this page load instead of hammering a session that cannot succeed. */
+let authFailureStrikes = 0;
+let suspended = false;
 
 function genId(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -26,17 +35,7 @@ function genId(): string {
 }
 
 function getApiBase(): string {
-  try {
-    const base = env.NEXT_PUBLIC_API_BASE_URL;
-    if (base) return base.replace(/\/$/, '');
-  } catch {}
-  return '/api/proxy';
-}
-
-async function getAuthHeader(): Promise<Record<string, string>> {
-  // Ads events use cookie auth via BFF proxy (same as analytics-client).
-  // No bearer header needed — credentials: 'include' carries httpOnly cookies.
-  return {};
+  return telemetryBase();
 }
 
 export async function initializeAdAnalytics(): Promise<void> {
@@ -79,7 +78,7 @@ export async function trackAdEventLocal(token: string, type: 'impression' | 'cli
 }
 
 export async function flushAdAnalytics(): Promise<void> {
-  if (!queue || flushing) return;
+  if (!queue || flushing || suspended) return;
   if (Date.now() < nextFlushAllowedAt) return;
   flushing = true;
   try {
@@ -107,18 +106,20 @@ async function sendChunk(batch: QueuedAdEvent[]): Promise<void> {
   const tokens = batch.map((e) => ({ type: e.type, token: e.token }));
   await queue.markInflight(ids);
   try {
-    const base = getApiBase().replace(/\/$/, '');
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(await getAuthHeader()),
-    };
-    const res = await fetch(`${base}/api/v1/ads/events/batch`, {
+    const post = (base: string) => fetch(`${base}/api/v1/ads/events/batch`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ events: tokens }),
       keepalive: true,
       credentials: 'include',
     });
+
+    let res = await post(getApiBase());
+    if ((res.status === 401 || res.status === 403) && noteTelemetryFailure(res.status)) {
+      // Configured base rejected the HttpOnly session cookie — retry once
+      // against the same-origin proxy, which always carries it.
+      res = await post(getApiBase());
+    }
     if (res.ok) {
       const body = (await res.json().catch(() => ({}))) as {
         accepted?: number;
@@ -175,7 +176,8 @@ async function sendChunk(batch: QueuedAdEvent[]): Promise<void> {
         const leftover = rejectedIds.filter((id) => !accounted.has(id));
         if (leftover.length) await queue.markFailed(leftover);
       }
-      // Success resets shed backoff
+      // Success resets shed backoff + auth strikes
+      authFailureStrikes = 0;
       shedCooldownMs = SHED_COOLDOWN_MS;
       nextFlushAllowedAt = 0;
       if (shedFlushTimer) {
@@ -201,11 +203,14 @@ async function sendChunk(batch: QueuedAdEvent[]): Promise<void> {
       nextFlushAllowedAt = Date.now() + shedCooldownMs;
       return;
     }
-    // 400/401/403 — per-token permanent; remove and ack to avoid loop
-    // For 401, auth may be missing — requeue to retry after refresh
-    if (res.status === 401) {
+    // 401/403 — session missing or expired: requeue with a long cooldown, and
+    // after the strike limit stop retrying for this page load entirely. This is
+    // the fix for the infinite /batch 401 loop that made the UI look stuck.
+    if (res.status === 401 || res.status === 403) {
+      authFailureStrikes += 1;
+      if (authFailureStrikes >= AUTH_FAILURE_STRIKE_LIMIT) suspended = true;
       await queue.requeue(ids);
-      nextFlushAllowedAt = Date.now() + 30_000;
+      nextFlushAllowedAt = Date.now() + AUTH_FAILURE_COOLDOWN_MS;
       return;
     }
     await queue.markFailed(ids);

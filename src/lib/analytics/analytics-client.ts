@@ -4,7 +4,6 @@
  * Phase 4: Added acquisition tracking, Web Vitals, error capture, 30min session timeout.
  */
 
-import { env } from '@/lib/env';
 import { isKnownEvent, FORBIDDEN_PROPERTIES, type EventSpec, getEventSpec } from './analytics-event-registry';
 import { AnalyticsQueue, type QueuedEvent } from './analytics-queue';
 import {
@@ -20,6 +19,12 @@ import {
 import { autoCaptureAcquisition, getAcquisitionData } from './analytics-acquisition';
 import { initializeWebVitals } from './analytics-web-vitals';
 import { initializeErrorCapture } from './analytics-error-capture';
+import {
+  AUTH_FAILURE_COOLDOWN_MS,
+  AUTH_FAILURE_STRIKE_LIMIT,
+  noteTelemetryFailure,
+  telemetryBase,
+} from '@/lib/telemetry/endpoint';
 
 const MAX_BATCH_SIZE = 50;
 // Load-shedding friendly: 1 batch per hour — local IndexedDB queue, no polling storm during shedding. Also flushes on hidden/online. Was 60s before.
@@ -50,6 +55,11 @@ let shedFlushTimer: ReturnType<typeof setTimeout> | null = null;
  * dispose all call flush(); without this lock overlapping flushes re-send the
  * same events and the backend answers every eventId as a duplicate. */
 let flushing = false;
+/** Consecutive 401/403 flushes — the session is unusable past the limit, so the
+ * flusher goes dormant until the next page load instead of looping. */
+let authFailureStrikes = 0;
+/** Set when auth failures hit the strike limit (see authFailureStrikes). */
+let suspended = false;
 
 function generateId(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -229,7 +239,7 @@ export function resetIdentity(): void {
 /** Flush pending events to the backend. Serialized — concurrent callers wait
  * for the in-flight flush instead of re-sending the same batch. */
 export async function flush(): Promise<void> {
-  if (!enabled || !queue || flushing) return;
+  if (!enabled || !queue || flushing || suspended) return;
   if (Date.now() < nextFlushAllowedAt) return;
   flushing = true;
   try {
@@ -261,10 +271,10 @@ async function sendBatch(batch: QueuedEvent[]): Promise<void> {
   await queue.markInflight(freshIds);
 
   try {
-    const baseUrl = env.NEXT_PUBLIC_API_BASE_URL || '/api/proxy';
-    const response = await fetch(`${baseUrl}/api/v1/analytics/events/batch`, {
+    const post = (baseUrl: string) => fetch(`${baseUrl}/api/v1/analytics/events/batch`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         batchId: generateId(),
         platform: 'next_web',
@@ -284,7 +294,16 @@ async function sendBatch(batch: QueuedEvent[]): Promise<void> {
       }),
     });
 
+    let response = await post(telemetryBase());
+    if ((response.status === 401 || response.status === 403) && noteTelemetryFailure(response.status)) {
+      // Configured base rejected the HttpOnly session cookie — retry once
+      // against the same-origin proxy, which always carries it.
+      response = await post(telemetryBase());
+    }
+
     if (response.ok) {
+      // Healthy again — the session works, forget earlier auth strikes.
+      authFailureStrikes = 0;
       // Shed window is over — reset the backoff so a later 503 starts fresh.
       shedCooldownMs = SHED_COOLDOWN_MS;
       const body = await response.json() as {
@@ -316,6 +335,14 @@ async function sendBatch(batch: QueuedEvent[]): Promise<void> {
       nextFlushAllowedAt = Date.now() + Math.max(retryAfterMs, shedCooldownMs);
       shedCooldownMs = Math.min(shedCooldownMs * 2, MAX_SHED_COOLDOWN_MS);
       scheduleCooldownFlush();
+      await queue.requeue(freshIds);
+    } else if (response.status === 401 || response.status === 403) {
+      // Session missing/expired — NEVER retry hot (was the infinite /batch 401
+      // loop that kept the UI "loading"). Requeue, long cooldown, and go
+      // dormant after the strike limit until the next page load.
+      authFailureStrikes += 1;
+      if (authFailureStrikes >= AUTH_FAILURE_STRIKE_LIMIT) suspended = true;
+      nextFlushAllowedAt = Date.now() + AUTH_FAILURE_COOLDOWN_MS;
       await queue.requeue(freshIds);
     } else {
       await queue.markFailed(freshIds);
