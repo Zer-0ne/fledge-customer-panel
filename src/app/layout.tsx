@@ -17,6 +17,7 @@ import { AnnouncementProvider } from '@/components/announcements/announcement-pr
 import { GlobalAnnouncementBanner } from '@/components/announcements/global-announcement-banner';
 import { FaviconSync } from '@/components/brand/favicon-sync';
 import { Suspense } from 'react';
+import { DomSelfHeal } from '@/components/providers/dom-self-heal';
 import { AnnouncementModal } from '@/components/announcements/announcement-modal';
 // Navigation progress bar — disabled on request (see usage note in the tree below).
 // import { NavigationProgressBar } from '@/components/providers/navigation-progress-bar';
@@ -104,7 +105,8 @@ export default function RootLayout({
         <AnalyticsInit />
         <ServiceWorkerRegister />
         <ThemeProvider>
-          <PushBootstrap firebaseConfig={firebaseConfig} />
+        <DomSelfHeal />
+        <PushBootstrap firebaseConfig={firebaseConfig} />
           <PushPromptBanner />
           <FaviconSync />
           <AuthProvider>

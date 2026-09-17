@@ -142,20 +142,44 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Keep the browser/PWA status-bar tint in sync with the IN-APP theme (the
   // user can force light/dark regardless of the OS setting; the static
   // media-based theme-color metas only cover the first paint).
-  // Chrome quirk: setAttribute() on an existing theme-color meta is ignored —
-  // remove the old tags and append a fresh one.
+  //
+  // CRITICAL (2026-09-17): never remove() the meta tags here. Next renders the
+  // `theme-color` metas as part of its metadata tree, and React hydrates the
+  // whole document — removing a React-managed node behind its back makes the
+  // next commit call removeChild on a node whose parent is already gone:
+  // "Uncaught TypeError: can't access property removeChild, n.stateNode.parentNode
+  // is null". React's render loop dies with it and every later router update
+  // (navigation clicks) silently stops working until a manual reload.
+  // Instead: update `content` in place (Chrome re-reads theme-color on
+  // attribute change), and keep one dedicated tag we own for fallback.
   React.useEffect(() => {
     const probe = document.createElement('div');
     probe.style.color = 'var(--background)';
     probe.style.display = 'none';
+    // Append → read → remove are synchronous in a single task, so React never
+    // sees this node between commits.
     document.body.appendChild(probe);
     const color =
       window.getComputedStyle(probe).color || (resolvedTheme === 'dark' ? '#0a0a0a' : '#ffffff');
     probe.remove();
 
-    document.querySelectorAll('meta[name="theme-color"]').forEach((el) => el.remove());
+    // Update every existing theme-color meta in place — no removals.
+    const metas = document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]');
+    if (metas.length > 0) {
+      metas.forEach((el) => {
+        if (el.getAttribute('content') !== color) el.setAttribute('content', color);
+      });
+      return;
+    }
+    // No metadata tag at all (unusual) — add one we own, once.
+    const existing = document.querySelector<HTMLMetaElement>('meta[data-app-theme-color]');
+    if (existing) {
+      if (existing.getAttribute('content') !== color) existing.setAttribute('content', color);
+      return;
+    }
     const meta = document.createElement('meta');
     meta.name = 'theme-color';
+    meta.setAttribute('data-app-theme-color', 'true');
     meta.content = color;
     document.head.appendChild(meta);
   }, [resolvedTheme]);
