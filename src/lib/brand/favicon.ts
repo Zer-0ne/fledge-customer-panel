@@ -1,9 +1,11 @@
 /**
  * Runtime browser-tab icon switcher (Settings → Appearance → Browser tab icon).
  *
- * Swaps the <link rel="icon"> tags that Next.js metadata renders, and persists
- * the choice in localStorage. `FaviconSync` (mounted in the root layout)
- * re-applies the stored variant on every load.
+ * Retargets EVERY <link rel="icon"> in the document (Next.js metadata renders
+ * its own set; React can re-insert the originals on hydration/re-render), and
+ * watches the head with a MutationObserver so late re-insertions are
+ * re-retargeted immediately. The choice persists in localStorage and
+ * `FaviconSync` (root layout) re-applies it on every load.
  *
  * NOTE — what this CANNOT do: change the home-screen icon of an ALREADY
  * INSTALLED PWA. Browsers only re-read installed icons when the web app
@@ -18,42 +20,80 @@ import {
   variantSvgPath,
 } from './favicon-variants';
 
-function ensureLink(matcher: (link: HTMLLinkElement) => boolean, create: () => HTMLLinkElement): HTMLLinkElement {
-  for (const link of Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]'))) {
-    if (matcher(link)) return link;
-  }
-  const link = create();
-  document.head.appendChild(link);
-  return link;
+/** Variant currently applied to the document (null until first apply). */
+let activeVariantId: string | null = null;
+let observer: MutationObserver | null = null;
+
+function normalize(id: string): string {
+  return isFaviconVariantId(id) ? id : DEFAULT_FAVICON_VARIANT;
 }
 
-/** Points every favicon link at the given variant (client-only). */
+function isSvgLink(link: HTMLLinkElement): boolean {
+  const type = link.getAttribute('type') ?? '';
+  const href = link.getAttribute('href') ?? '';
+  return type.includes('svg') || href.endsWith('.svg');
+}
+
+function isPngLink(link: HTMLLinkElement): boolean {
+  const type = link.getAttribute('type') ?? '';
+  const href = link.getAttribute('href') ?? '';
+  return type.includes('png') || href.endsWith('.png');
+}
+
+/** Points every existing favicon link at the active variant. */
+function retargetIconLinks(): void {
+  if (typeof document === 'undefined' || activeVariantId === null) return;
+  const links = Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]'));
+
+  let sawSvg = false;
+  let sawPng = false;
+  for (const link of links) {
+    if (isSvgLink(link)) {
+      if (link.getAttribute('href') !== variantSvgPath(activeVariantId)) {
+        link.setAttribute('href', variantSvgPath(activeVariantId));
+      }
+      sawSvg = true;
+    } else if (isPngLink(link)) {
+      if (link.getAttribute('href') !== variantPngPath(activeVariantId)) {
+        link.setAttribute('href', variantPngPath(activeVariantId));
+      }
+      sawPng = true;
+    }
+  }
+
+  // Defensive: no metadata links at all (unusual) — add our own.
+  if (!sawSvg) {
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/svg+xml';
+    link.href = variantSvgPath(activeVariantId);
+    document.head.appendChild(link);
+  }
+  if (!sawPng) {
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/png';
+    link.sizes = '32x32';
+    link.href = variantPngPath(activeVariantId);
+    document.head.appendChild(link);
+  }
+}
+
+/** React/Next can re-insert their metadata links — re-retarget when they do. */
+function ensureObserver(): void {
+  if (observer || typeof MutationObserver === 'undefined') return;
+  observer = new MutationObserver(() => {
+    retargetIconLinks();
+  });
+  observer.observe(document.head, { childList: true });
+}
+
+/** Applies the variant to the current document (client-only, idempotent). */
 export function applyFaviconVariant(id: string): void {
   if (typeof document === 'undefined') return;
-  const variantId = isFaviconVariantId(id) ? id : DEFAULT_FAVICON_VARIANT;
-
-  const svgLink = ensureLink(
-    (link) => (link.getAttribute('type') ?? '').includes('svg') || link.href.endsWith('.svg'),
-    () => {
-      const link = document.createElement('link');
-      link.rel = 'icon';
-      link.type = 'image/svg+xml';
-      return link;
-    },
-  );
-  svgLink.href = variantSvgPath(variantId);
-
-  const pngLink = ensureLink(
-    (link) => link.getAttribute('sizes') === '32x32' || (link.getAttribute('type') ?? '') === 'image/png',
-    () => {
-      const link = document.createElement('link');
-      link.rel = 'icon';
-      link.type = 'image/png';
-      link.sizes = '32x32';
-      return link;
-    },
-  );
-  pngLink.href = variantPngPath(variantId);
+  activeVariantId = normalize(id);
+  retargetIconLinks();
+  ensureObserver();
 }
 
 /** Stored variant (falls back to the default when unset/unavailable). */
@@ -69,9 +109,10 @@ export function readFaviconVariant(): string {
 
 /** Applies + persists the chosen variant. */
 export function setFaviconVariant(id: string): void {
-  applyFaviconVariant(id);
+  const variantId = normalize(id);
+  applyFaviconVariant(variantId);
   try {
-    window.localStorage.setItem(FAVICON_STORAGE_KEY, id);
+    window.localStorage.setItem(FAVICON_STORAGE_KEY, variantId);
   } catch {
     // Private mode / storage disabled — the icon still switches for this visit.
   }
