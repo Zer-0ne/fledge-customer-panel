@@ -107,6 +107,24 @@ function persistDisabled(disabled) {
     .catch(() => { /* best-effort */ });
 }
 
+// ── Notification level (web parity with the native Android channels) ────────
+// The app + backend map every event's `category` to an Android channel
+// (customer/lib/core/push/push_service.dart → channelForCategory): messages /
+// account are LOUD (sound), updates is DEFAULT, promotions is LOW (silent).
+// Web has no channels, so we mirror the same levels on the notification:
+//   promotions  → silent: true  (no sound, no vibration)
+//   messages/account → vibrate  (buzz on devices with vibration)
+//   updates     → browser default
+const QUIET_CATEGORIES = new Set(['ANNOUNCEMENTS', 'PROMOTIONS', 'ADS']);
+const HIGH_CATEGORIES = new Set(['CHAT', 'SECURITY', 'ACCOUNT', 'PAYMENTS']);
+
+function levelOptionsFor(category) {
+  const c = String(category ?? '').toUpperCase();
+  if (QUIET_CATEGORIES.has(c)) return { silent: true };
+  if (HIGH_CATEGORIES.has(c)) return { vibrate: [200, 100, 200] };
+  return {};
+}
+
 // ── Firebase init ───────────────────────────────────────────────────────────
 function applyConfig(config) {
   if (!self.firebase || !config || !config.apiKey) return;
@@ -134,6 +152,7 @@ function applyConfig(config) {
         data,
         icon: '/icons/icon-192.png',
         badge: '/icons/badge.png',
+        ...levelOptionsFor(data.category),
         tag: data.notificationId ?? `push-${Date.now()}`,
         requireInteraction: false,
         renotify: true,
@@ -179,6 +198,7 @@ async function renderRawPush(event) {
       data,
       icon: '/icons/icon-192.png',
       badge: '/icons/badge.png',
+      ...levelOptionsFor(data.category),
       tag: data.notificationId ?? `push-${Date.now()}`,
       renotify: true,
     });
