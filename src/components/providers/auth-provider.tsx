@@ -281,39 +281,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // the logout response would re-mint the auth cookies and the login page
     // would silently restore the session ("logout logs me back in").
     beginLogout();
+
+    // Google One Tap auto-select off — synchronous, must not be lost.
+    if (typeof window !== 'undefined' && window.google?.accounts?.id?.disableAutoSelect) {
+      try {
+        window.google.accounts.id.disableAutoSelect();
+      } catch {}
+    }
+
+    // Cookie clearing is the ONE thing that must happen before the redirect.
+    // It is capped so a slow network can never make the user sit on the
+    // logout screen: after the cap the caller redirects and the server-side
+    // session sweep covers the rest.
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    } finally {
-      // Disable Google One Tap auto-select so the user isn't automatically logged back in
-      if (typeof window !== 'undefined' && window.google?.accounts?.id?.disableAutoSelect) {
-        try {
-          window.google.accounts.id.disableAutoSelect();
-        } catch {}
-      }
-      // Reset analytics identity
+      await Promise.race([
+        fetch('/api/auth/logout', { method: 'POST', keepalive: true }).catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, 1_500)),
+      ]);
+    } catch {}
+
+    // Local state drops immediately — no waiting on any network cleanup.
+    setUser(null);
+    setPermissions([]);
+    setUnreadNotificationCount(0);
+    setUnreadMessageCount(0);
+    setOnboarding(null);
+
+    // Everything below is best-effort BACKGROUND work: the page is about to
+    // navigate to /login, and leftovers (push token, SW cache) are covered by
+    // the stale-token sweep / next boot. Nothing here may delay the redirect.
+    void (async () => {
       try {
         const { resetIdentity } = await import('@/lib/analytics/analytics-client');
         resetIdentity();
       } catch {}
-      // Push leak fix: deactivate this browser's WEB push installation so the
-      // backend push_tokens row is deleted (isActive=false) and the SW
-      // IndexedDB firebase-push-config cache is cleared. Without this the
-      // orphan token keeps receiving background pushes after cookie-clear/logout.
+    })();
+    void (async () => {
       try {
-        await import('@/lib/push/push-notifications').then((m) => m.deactivateWebPushInstallation());
+        const m = await import('@/lib/push/push-notifications');
+        await m.deactivateWebPushInstallation();
       } catch {}
+    })();
+    void (async () => {
       try {
-        if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        if ('serviceWorker' in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations();
           for (const r of regs) r.active?.postMessage({ type: 'FIREBASE_CONFIG_CLEAR' });
         }
       } catch {}
-      setUser(null);
-      setPermissions([]);
-      setUnreadNotificationCount(0);
-      setUnreadMessageCount(0);
-      setOnboarding(null);
-    }
+    })();
   };
 
   return (
