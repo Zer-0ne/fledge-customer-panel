@@ -22,6 +22,7 @@ import { initializeErrorCapture } from './analytics-error-capture';
 import {
   AUTH_FAILURE_COOLDOWN_MS,
   AUTH_FAILURE_STRIKE_LIMIT,
+  TELEMETRY_MIN_FLUSH_GAP_MS,
   noteTelemetryFailure,
   telemetryBase,
 } from '@/lib/telemetry/endpoint';
@@ -60,6 +61,10 @@ let flushing = false;
 let authFailureStrikes = 0;
 /** Set when auth failures hit the strike limit (see authFailureStrikes). */
 let suspended = false;
+/** Burst guard: the last flush attempt time (see TELEMETRY_MIN_FLUSH_GAP_MS). */
+let lastFlushAttemptAt = 0;
+/** Most batches drained by one flush — a big backlog drains slowly, never as a burst. */
+const MAX_BATCHES_PER_FLUSH = 2;
 
 function generateId(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -241,12 +246,17 @@ export function resetIdentity(): void {
 export async function flush(): Promise<void> {
   if (!enabled || !queue || flushing || suspended) return;
   if (Date.now() < nextFlushAllowedAt) return;
+  // Burst guard: never open a second flush right after the previous attempt —
+  // visibilitychange + online + interval can otherwise fire back to back.
+  if (Date.now() - lastFlushAttemptAt < TELEMETRY_MIN_FLUSH_GAP_MS) return;
+  lastFlushAttemptAt = Date.now();
   flushing = true;
   try {
     const pending = await queue.pending();
     if (pending.length === 0) return;
 
-    for (let i = 0; i < pending.length; i += MAX_BATCH_SIZE) {
+    const drainLimit = MAX_BATCH_SIZE * MAX_BATCHES_PER_FLUSH;
+    for (let i = 0; i < pending.length && i < drainLimit; i += MAX_BATCH_SIZE) {
       const batch = pending.slice(i, i + MAX_BATCH_SIZE);
       await sendBatch(batch);
     }

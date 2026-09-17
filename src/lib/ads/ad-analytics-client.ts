@@ -6,6 +6,7 @@ import { AdAnalyticsQueue, type QueuedAdEvent } from './ad-analytics-queue';
 import {
   AUTH_FAILURE_COOLDOWN_MS,
   AUTH_FAILURE_STRIKE_LIMIT,
+  TELEMETRY_MIN_FLUSH_GAP_MS,
   noteTelemetryFailure,
   telemetryBase,
 } from '@/lib/telemetry/endpoint';
@@ -25,6 +26,10 @@ let shedFlushTimer: ReturnType<typeof setTimeout> | null = null;
  * this page load instead of hammering a session that cannot succeed. */
 let authFailureStrikes = 0;
 let suspended = false;
+/** Burst guard: the last flush attempt time (see TELEMETRY_MIN_FLUSH_GAP_MS). */
+let lastFlushAttemptAt = 0;
+/** Most chunks drained by one flush — a big backlog drains slowly, never as a burst. */
+const MAX_CHUNKS_PER_FLUSH = 2;
 
 function genId(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -80,6 +85,10 @@ export async function trackAdEventLocal(token: string, type: 'impression' | 'cli
 export async function flushAdAnalytics(): Promise<void> {
   if (!queue || flushing || suspended) return;
   if (Date.now() < nextFlushAllowedAt) return;
+  // Burst guard: visibilitychange + online + interval + threshold can fire back
+  // to back; never open a second flush inside the minimum gap.
+  if (Date.now() - lastFlushAttemptAt < TELEMETRY_MIN_FLUSH_GAP_MS) return;
+  lastFlushAttemptAt = Date.now();
   flushing = true;
   try {
     const pending = await queue.pending();
@@ -91,7 +100,8 @@ export async function flushAdAnalytics(): Promise<void> {
       else await queue!.removeByIds([ev.id]);
     }
     if (!filtered.length) return;
-    for (let i = 0; i < filtered.length; i += MAX_BATCH) {
+    const drainLimit = MAX_BATCH * MAX_CHUNKS_PER_FLUSH;
+    for (let i = 0; i < filtered.length && i < drainLimit; i += MAX_BATCH) {
       await sendChunk(filtered.slice(i, i + MAX_BATCH));
       if (Date.now() < nextFlushAllowedAt) break;
     }
