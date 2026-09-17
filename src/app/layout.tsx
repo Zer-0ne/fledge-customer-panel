@@ -18,7 +18,8 @@ import { GlobalAnnouncementBanner } from '@/components/announcements/global-anno
 import { FaviconSync } from '@/components/brand/favicon-sync';
 import { Suspense } from 'react';
 import { AnnouncementModal } from '@/components/announcements/announcement-modal';
-import { NavigationProgressBar } from '@/components/providers/navigation-progress-bar';
+// Navigation progress bar — disabled on request (see usage note in the tree below).
+// import { NavigationProgressBar } from '@/components/providers/navigation-progress-bar';
 import { PushPromptBanner } from '@/components/push/push-prompt-banner';
 
 const geistSans = Geist({
@@ -109,9 +110,16 @@ export default function RootLayout({
           <AuthProvider>
             <AnnouncementProvider>
               <ToastProvider>
-                <Suspense fallback={null}>
-                  <NavigationProgressBar />
-                </Suspense>
+                {/*
+                  Navigation progress bar — DISABLED on request (2026-09-17).
+                  Navigation must feel native with no top loading chrome.
+                  Re-enable by uncommenting the block below (the component is
+                  still maintained in src/components/providers/navigation-progress-bar.tsx
+                  and is fully passive — it never touches navigation).
+                  <Suspense fallback={null}>
+                    <NavigationProgressBar />
+                  </Suspense>
+                */}
                 <SkipToContent />
                 <Header appName={env.NEXT_PUBLIC_APP_NAME} />
                 <GlobalAnnouncementBanner />
