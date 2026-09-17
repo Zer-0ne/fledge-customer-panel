@@ -1,20 +1,23 @@
 'use client';
-
 /**
- * Navigation Progress Bar — sleek top-of-screen route progress indicator.
+ * Navigation Progress Bar — route progress indicator with a no-fake-wait rule.
  *
- * Behaviour contract (2026-09-17, user report "click does nothing, the bar
- * fills and vanishes, I have to click twice"):
- * 1. Any internal link click starts the bar immediately (capture phase).
- * 2. The bar completes ONLY when the route actually changes.
- * 3. If the route has not changed NAV_FALLBACK_MS after the click — stalled
- *    transition, stale bundle, swallowed click — the click is honoured with a
- *    real navigation. The user must never have to click twice.
- * 4. A final failsafe hides the bar so it can never sit on screen forever.
+ * Behaviour contract:
+ * 1. Internal link clicks are observed in the capture phase.
+ * 2. The bar appears ONLY when the navigation actually takes longer than
+ *    SHOW_AFTER_MS (~150ms). Instant route changes show NO loading chrome at
+ *    all — flashing a bar on a fast route reads as a fake wait and makes the
+ *    app feel slower than it is.
+ * 3. The bar completes only when the route really changes.
+ * 4. If a clicked internal link has not navigated NAV_FALLBACK_MS later
+ *    (stalled transition, stale bundle, swallowed click) the click is honoured
+ *    with a real navigation — the user never has to click twice.
  */
 import * as React from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
+/** Grace period before the bar appears at all (no chrome for fast routes). */
+const SHOW_AFTER_MS = 150;
 /** How long a click may stay un-navigated before we navigate for real. */
 const NAV_FALLBACK_MS = 5_000;
 /** Hard cap: never let the bar remain visible longer than this. */
@@ -42,6 +45,9 @@ export function NavigationProgressBar() {
   const cleanupTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const stuckTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const navFallbackRef = React.useRef<NodeJS.Timeout | null>(null);
+  const showTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  /** True once the bar was actually surfaced for the current navigation. */
+  const shownRef = React.useRef(false);
   /** The internal href of the last click that has not navigated yet. */
   const pendingHrefRef = React.useRef<string | null>(null);
 
@@ -58,13 +64,25 @@ export function NavigationProgressBar() {
       clearTimeout(navFallbackRef.current);
       navFallbackRef.current = null;
     }
+    if (showTimerRef.current) {
+      clearTimeout(showTimerRef.current);
+      showTimerRef.current = null;
+    }
     pendingHrefRef.current = null;
   }, []);
 
   /** Complete the bar (100%) and fade it out. Idempotent. */
   const finish = React.useCallback(() => {
-    setProgress(100);
     clearTimers();
+    if (!shownRef.current) {
+      // The route changed inside the grace window — nothing was shown, so
+      // nothing to animate. No fake loading chrome.
+      setProgress(0);
+      setVisible(false);
+      return;
+    }
+    shownRef.current = false;
+    setProgress(100);
     if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current);
     cleanupTimeoutRef.current = setTimeout(() => {
       setVisible(false);
@@ -72,20 +90,26 @@ export function NavigationProgressBar() {
     }, FADE_MS);
   }, [clearTimers]);
 
-  /** Start the bar; `href` arms the navigation fallback for that click. */
+  /** Arm progress for a navigation; the bar surfaces only if it takes time. */
   const start = React.useCallback(
     (initial = 25, href?: string) => {
       if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current);
       clearTimers();
-      setVisible(true);
-      setProgress(initial);
-      intervalRef.current = setInterval(() => {
-        setProgress((prev) => {
-          if (prev < 65) return prev + Math.random() * 12 + 6;
-          if (prev < 88) return prev + Math.random() * 4 + 1;
-          return prev;
-        });
-      }, 160);
+      shownRef.current = false;
+
+      showTimerRef.current = setTimeout(() => {
+        showTimerRef.current = null;
+        shownRef.current = true;
+        setVisible(true);
+        setProgress(initial);
+        intervalRef.current = setInterval(() => {
+          setProgress((prev) => {
+            if (prev < 65) return prev + Math.random() * 12 + 6;
+            if (prev < 88) return prev + Math.random() * 4 + 1;
+            return prev;
+          });
+        }, 160);
+      }, SHOW_AFTER_MS);
 
       if (href) {
         pendingHrefRef.current = href;
@@ -124,7 +148,7 @@ export function NavigationProgressBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `visible` is read at change time only
   }, [pathname, searchParams]);
 
-  // Intercept anchor clicks to start progress immediately.
+  // Intercept anchor clicks to arm progress immediately.
   React.useEffect(() => {
     const handleAnchorClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
