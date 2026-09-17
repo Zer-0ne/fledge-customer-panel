@@ -69,6 +69,98 @@ export function formatDateTime(date: string | Date | number | null | undefined):
 }
 
 /**
+ * Chat-grade time helpers. Threads show a compact clock ("6:17 pm") under
+ * message runs and quiet day separators ("Today", "Yesterday", "Mon, 15 Sept").
+ * Everything renders in the viewer's local timezone (en-IN), matching
+ * `formatDate` / `formatDateTime`.
+ */
+
+function startOfLocalDay(value: Date): number {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime();
+}
+
+function dayOffsetStart(reference: Date, days: number): number {
+  return new Date(reference.getFullYear(), reference.getMonth(), reference.getDate() + days).getTime();
+}
+
+/**
+ * Compact clock for chat bubbles and read receipts. Example: "6:17 pm".
+ */
+export function formatChatTime(date: string | Date | number | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('en-IN', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(d);
+}
+
+/**
+ * True when both instants fall on the same local calendar day — the boundary
+ * used for chat day separators and message grouping.
+ */
+export function isSameDay(
+  a: string | Date | number | null | undefined,
+  b: string | Date | number | null | undefined
+): boolean {
+  if (!a || !b) return false;
+  const da = new Date(a);
+  const db = new Date(b);
+  if (isNaN(da.getTime()) || isNaN(db.getTime())) return false;
+  return startOfLocalDay(da) === startOfLocalDay(db);
+}
+
+/**
+ * Day label for chat separators: "Today", "Yesterday", "Mon, 15 Sept" for the
+ * current year, or "Mon, 15 Sept 2025" for older days.
+ */
+export function formatChatDay(date: string | Date | number | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  const now = new Date();
+  const day = startOfLocalDay(d);
+  if (day === startOfLocalDay(now)) return 'Today';
+  if (day === dayOffsetStart(now, -1)) return 'Yesterday';
+  const sameYear = d.getFullYear() === now.getFullYear();
+  return new Intl.DateTimeFormat('en-IN', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' as const }),
+  }).format(d);
+}
+
+/**
+ * Compact stamp for conversation rows: time for today, "Yesterday", the
+ * weekday within the past week, otherwise a short date. `reference` exists for
+ * deterministic tests; callers normally omit it.
+ */
+export function formatConversationStamp(
+  date: string | Date | number | null | undefined,
+  reference: Date = new Date()
+): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  const now = reference;
+  const day = startOfLocalDay(d);
+  if (day === startOfLocalDay(now)) return formatChatTime(d);
+  if (day === dayOffsetStart(now, -1)) return 'Yesterday';
+  if (startOfLocalDay(now) - day < 6 * 86_400_000) {
+    return new Intl.DateTimeFormat('en-IN', { weekday: 'short' }).format(d);
+  }
+  const sameYear = d.getFullYear() === now.getFullYear();
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' as const }),
+  }).format(d);
+}
+
+/**
  * Returns a human-friendly relative time string (e.g. "5 mins ago", "in 2 days", "just now").
  */
 export function formatRelativeTime(date: string | Date | number | null | undefined): string {

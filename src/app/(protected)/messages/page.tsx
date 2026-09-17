@@ -23,7 +23,7 @@ import {
   friendlyNeedNowError,
 } from '@/lib/api/services/neednow';
 import { Conversation, NeedNowResponse } from '@/types';
-import { formatDate } from '@/lib/formatting';
+import { formatConversationStamp, formatDate } from '@/lib/formatting';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +41,7 @@ import {
   ChevronRight,
   User,
   Shield,
+  X,
 } from 'lucide-react';
 
 export default function MessagesPage() {
@@ -354,34 +355,42 @@ export default function MessagesPage() {
 
   if (isLoading) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <Skeleton className="h-9 w-48 rounded-lg" />
-          <Skeleton className="h-10 w-full sm:w-64 rounded-xl" />
+          <Skeleton className="h-10 w-full rounded-xl sm:w-64" />
         </div>
-        <div className="space-y-3">
+        <Skeleton className="h-11 w-full rounded-xl" />
+        <div className="space-y-2.5">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            <div key={i} className="flex items-center gap-3.5 rounded-xl border border-border/60 bg-card/50 p-4">
+              <Skeleton className="size-12 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-4 w-2/5 rounded-md" />
+                <Skeleton className="h-3.5 w-4/5 rounded-md" />
+              </div>
+              <Skeleton className="h-3.5 w-14 shrink-0 rounded-md" />
+            </div>
           ))}
         </div>
-      </main>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <ErrorState
           title="Unable to Load Messages"
           description={error}
           onRetry={loadConversations}
         />
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
@@ -402,65 +411,81 @@ export default function MessagesPage() {
 
         {/* Search bar */}
         <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
           <Input
             type="text"
-            placeholder="Search conversations..."
+            name="conversation-search"
+            placeholder="Search conversations…"
+            aria-label="Search conversations"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 text-xs sm:text-sm rounded-xl"
+            className="rounded-xl pl-9 pr-8 text-xs sm:text-sm"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <X className="size-3.5" aria-hidden="true" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-border text-xs sm:text-sm">
+      <div className="flex items-center gap-2 overflow-x-auto border-b border-border pb-1 text-xs sm:text-sm" role="group" aria-label="Conversation filters">
         <button
           onClick={() => setActiveTab('all')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+          aria-pressed={activeTab === 'all'}
+          className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 font-medium transition-colors ${
             activeTab === 'all'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-accent hover:text-foreground'
           }`}
         >
-          <MessageSquare className="size-4" />
+          <MessageSquare className="size-4" aria-hidden="true" />
           All Threads
-          <span className="ml-1 text-xs opacity-80">({conversations.length})</span>
+          <span className="ml-1 text-xs tabular-nums opacity-80">({conversations.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('listing_interest')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+          aria-pressed={activeTab === 'listing_interest'}
+          className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 font-medium transition-colors ${
             activeTab === 'listing_interest'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-accent hover:text-foreground'
           }`}
         >
-          <Building2 className="size-4" />
+          <Building2 className="size-4" aria-hidden="true" />
           Listings
         </button>
 
         <button
           onClick={() => setActiveTab('roommate_interest')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+          aria-pressed={activeTab === 'roommate_interest'}
+          className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 font-medium transition-colors ${
             activeTab === 'roommate_interest'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-accent hover:text-foreground'
           }`}
         >
-          <Users className="size-4" />
+          <Users className="size-4" aria-hidden="true" />
           Roommates
         </button>
 
         <button
           onClick={() => setActiveTab('requests')}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+          aria-pressed={activeTab === 'requests'}
+          className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 font-medium transition-colors ${
             activeTab === 'requests'
               ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground hover:bg-accent hover:text-foreground'
           }`}
         >
-          <UserPlus className="size-4" />
+          <UserPlus className="size-4" aria-hidden="true" />
           Requests
           {visibleRequestsCount > 0 && (
             <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-[11px] font-semibold text-white">
@@ -565,25 +590,33 @@ export default function MessagesPage() {
             const isLastFromMe = conv.lastMessage?.senderId === user?.id;
             const effectiveUnread = conv.unreadCount || 0;
             const hasUnread = effectiveUnread > 0;
-            const lastMsgContent = conv.lastMessage
-              ? `${isLastFromMe ? 'You: ' : ''}${conv.lastMessage.content}`
-              : 'Conversation started.';
+            const lastMsgBody = conv.lastMessage ? conv.lastMessage.content : 'Conversation started.';
             const msgTime = conv.lastMessage?.createdAt || conv.updatedAt || conv.createdAt;
 
             return (
               <BorderGlow key={conv.id} className='rounded-xl!'>
               <Link
                 href={`/messages/${conv.id}`}
-                className={`group flex items-center justify-between p-4 rounded-xl border transition-all shadow-xs ${
+                className={`group relative flex items-center justify-between overflow-hidden rounded-xl border p-4 transition-all shadow-xs ${
                   hasUnread
-                    ? 'border-primary/40 bg-primary/[0.03] dark:bg-primary/[0.05] hover:border-primary hover:bg-primary/[0.06]'
+                    ? 'border-primary/40 bg-primary/[0.03] hover:border-primary hover:bg-primary/[0.06] dark:bg-primary/[0.05]'
                     : 'border-border bg-card hover:border-primary/40 hover:bg-accent/40'
                 }`}
               >
-                <div className="flex items-center gap-3.5 min-w-0 pr-2">
+                {hasUnread && (
+                  <span
+                    className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-primary"
+                    aria-hidden="true"
+                  />
+                )}
+                <div className="flex min-w-0 items-center gap-3.5 pr-2">
                   {/* User Avatar */}
                   <div className="relative shrink-0">
-                    <div className="size-12 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <div
+                      className={`flex size-12 items-center justify-center overflow-hidden rounded-full border bg-primary/10 ${
+                        hasUnread ? 'border-primary/40 ring-2 ring-primary/20' : 'border-primary/20'
+                      }`}
+                    >
                       {peerAvatar ? (
                         <Image
                           src={peerAvatar}
@@ -593,11 +626,11 @@ export default function MessagesPage() {
                           className="size-full object-cover"
                         />
                       ) : (
-                        <User className="size-6 text-primary" />
+                        <User className="size-6 text-primary" aria-hidden="true" />
                       )}
                     </div>
                     {hasUnread ? (
-                      <span className="absolute -top-1 -right-1 size-5 rounded-full bg-primary text-primary-foreground font-bold text-[10px] flex items-center justify-center border-2 border-background shadow-xs sm:hidden">
+                      <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full border-2 border-background bg-primary text-[10px] font-bold tabular-nums text-primary-foreground shadow-xs sm:hidden">
                         {effectiveUnread > 99 ? '99+' : effectiveUnread}
                       </span>
                     ) : null}
@@ -637,30 +670,33 @@ export default function MessagesPage() {
                       )}
                     </div>
 
-                    <p className={`text-xs sm:text-sm truncate ${
+                    <p className={`truncate text-xs sm:text-sm ${
                       hasUnread
-                        ? 'text-foreground font-semibold'
+                        ? 'font-semibold text-foreground'
                         : 'text-muted-foreground'
                     }`}>
-                      {lastMsgContent}
+                      {isLastFromMe && (
+                        <span className="text-muted-foreground/80">You: </span>
+                      )}
+                      {lastMsgBody}
                     </p>
                   </div>
                 </div>
 
                 {/* Date & WhatsApp-Style Unread Count Badge */}
-                <div className="flex flex-col items-end gap-1.5 shrink-0 pl-2">
-                  <span className={`text-[11px] sm:text-xs ${
-                    hasUnread ? 'text-primary font-bold' : 'text-muted-foreground'
+                <div className="flex shrink-0 flex-col items-end gap-1.5 pl-2">
+                  <span className={`text-[11px] tabular-nums sm:text-xs ${
+                    hasUnread ? 'font-bold text-primary' : 'text-muted-foreground'
                   }`}>
-                    {formatDate(msgTime)}
+                    {formatConversationStamp(msgTime)}
                   </span>
                   <div className="flex items-center gap-2">
                     {hasUnread ? (
-                      <span className="h-5 min-w-5 px-1.5 rounded-full bg-primary text-primary-foreground font-bold text-[11px] flex items-center justify-center shadow-xs">
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold tabular-nums text-primary-foreground shadow-xs">
                         {effectiveUnread > 99 ? '99+' : effectiveUnread}
                       </span>
                     ) : null}
-                    <ChevronRight className="size-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    <ChevronRight className="size-4 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
                   </div>
                 </div>
               </Link>
@@ -679,7 +715,7 @@ export default function MessagesPage() {
           Never transfer funds or share financial details prior to inspecting the property or verifying credentials. Use the Contact Share feature to exchange phone numbers securely.
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 
