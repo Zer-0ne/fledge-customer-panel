@@ -7,8 +7,10 @@ import {
   COLOR_THEME_OPTIONS,
   FONT_SCALE_OPTIONS,
 } from '@/components/providers/theme-provider';
-import { Sun, Moon, Laptop, Check, Palette, Type, Sparkles } from 'lucide-react';
+import { Sun, Moon, Laptop, Check, Palette, Type, Sparkles, AppWindow } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FAVICON_VARIANTS } from '@/lib/brand/favicon-variants';
+import { readFaviconVariant, setFaviconVariant, syncFaviconFromStorage } from '@/lib/brand/favicon';
 
 export default function AppearanceSettingsPage() {
   const {
@@ -20,6 +22,12 @@ export default function AppearanceSettingsPage() {
     setFontScale,
     resolvedTheme,
   } = useTheme();
+
+  const [tabIcon, setTabIcon] = React.useState<string>(FAVICON_VARIANTS[0].id);
+  React.useEffect(() => {
+    setTabIcon(readFaviconVariant());
+    syncFaviconFromStorage();
+  }, []);
 
   const modeOptions: {
     label: string;
@@ -208,6 +216,70 @@ export default function AppearanceSettingsPage() {
             );
           })}
         </div>
+      </div>
+      {/* 4. Browser Tab Icon */}
+      <div className="space-y-3 pt-5 border-t border-border/60">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <AppWindow className="size-4 text-primary" />
+              Browser Tab Icon
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Pick the mark shown in your browser tab — same set as the app&apos;s launcher icon.
+            </p>
+          </div>
+          <span className="capitalize text-xs font-semibold text-primary px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+            {FAVICON_VARIANTS.find((v) => v.id === tabIcon)?.label ?? 'Classic Blue'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {FAVICON_VARIANTS.map((variant) => {
+            const isSelected = tabIcon === variant.id;
+            return (
+              <button
+                key={variant.id}
+                type="button"
+                onClick={() => {
+                  setFaviconVariant(variant.id);
+                  setTabIcon(variant.id);
+                }}
+                className={cn(
+                  'p-3.5 border rounded-2xl flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer',
+                  isSelected
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs scale-[1.02]'
+                    : 'border-border hover:border-muted-foreground/30 hover:bg-muted/30'
+                )}
+                aria-pressed={isSelected}
+              >
+                <div className="relative flex items-center justify-center">
+                  {/* Plain img — static local SVG; next/image adds nothing for vectors */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/icons/variants/${variant.id}.svg`}
+                    alt=""
+                    aria-hidden="true"
+                    width={32}
+                    height={32}
+                    className="size-8 rounded-lg"
+                  />
+                  {isSelected && (
+                    <Check className="size-4 text-white absolute drop-shadow-md" />
+                  )}
+                </div>
+                <span className="text-xs font-medium text-foreground text-center truncate max-w-full">
+                  {variant.shortLabel}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          Applies to this browser instantly. Phone home-screen icons work differently: Android
+          re-reads them when the web app changes, so reinstall the installed app to refresh its
+          icon right away.
+        </p>
       </div>
     </section>
   );

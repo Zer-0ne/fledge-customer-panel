@@ -76,6 +76,19 @@ ICON_PATHS = (
 )
 
 
+# Browser-tab icon variants (Settings → Appearance) — ids/labels/colors MUST
+# stay in sync with src/lib/brand/favicon-variants.ts and the Flutter app
+# pickers (customer + partner tool/generate_app_icons.py).
+VARIANTS: dict[str, tuple[str, str, str]] = {
+    "classic": ("Classic Blue", "#0EA5E9", "#2563EB"),
+    "midnight": ("Midnight", "#334155", "#0F172A"),
+    "emerald": ("Emerald", "#10B981", "#047857"),
+    "sunset": ("Sunset", "#FB923C", "#E11D48"),
+    "purple": ("Violet", "#A855F7", "#6D28D9"),
+    "rose": ("Rose", "#FB7185", "#BE123C"),
+}
+
+
 def _path_elems() -> str:
     return "".join(f'<path d="{d}"/>' for d in ICON_PATHS)
 
@@ -114,7 +127,13 @@ def _mark_transform(fraction: float) -> str:
     return f"translate({tx:.4f} {ty:.4f}) scale({s:.5f})"
 
 
-def svg_doc(*, radius: int = TILE_RADIUS, mark_scale: float = 1.0) -> str:
+def svg_doc(
+    *,
+    radius: int = TILE_RADIUS,
+    mark_scale: float = 1.0,
+    top: str = GRAD_TOP,
+    bottom: str = GRAD_BOT,
+) -> str:
     """Rounded-tile mark (favicon + PWA icons). radius=0 → full-bleed square."""
     icon = (
         f'<g transform="{_mark_transform(MARK_FRACTION * mark_scale)}" fill="#ffffff">'
@@ -123,8 +142,8 @@ def svg_doc(*, radius: int = TILE_RADIUS, mark_scale: float = 1.0) -> str:
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {CANVAS} {CANVAS}">'
         f'<title>Fledge</title><defs><linearGradient id="tile" x1="0" y1="0" x2="0" '
-        f'y2="{CANVAS}" gradientUnits="userSpaceOnUse"><stop stop-color="{GRAD_TOP}"/>'
-        f'<stop offset="1" stop-color="{GRAD_BOT}"/></linearGradient></defs>'
+        f'y2="{CANVAS}" gradientUnits="userSpaceOnUse"><stop stop-color="{top}"/>'
+        f'<stop offset="1" stop-color="{bottom}"/></linearGradient></defs>'
         f'<rect x="0" y="0" width="{CANVAS}" height="{CANVAS}" rx="{radius}" fill="url(#tile)"/>'
         f"{icon}</svg>"
     )
@@ -166,6 +185,15 @@ def main() -> None:
     # Notification badge — see badge_svg_doc.
     raster(badge_svg_doc(), 96).save(ICONS / "badge.png")
     print(f"wrote {(ICONS / 'badge.png').relative_to(ROOT)} (96x96)")
+
+    # Browser-tab icon variants (Settings → Appearance picker).
+    variants_dir = ICONS / "variants"
+    variants_dir.mkdir(parents=True, exist_ok=True)
+    for vid, (_label, top, bottom) in VARIANTS.items():
+        (variants_dir / f"{vid}.svg").write_text(svg_doc(top=top, bottom=bottom))
+        print(f"wrote {(variants_dir / f'{vid}.svg').relative_to(ROOT)}")
+        raster(svg_doc(top=top, bottom=bottom), 32).save(variants_dir / f"{vid}-32.png")
+        print(f"wrote {(variants_dir / f'{vid}-32.png').relative_to(ROOT)} (32x32)")
 
 
 if __name__ == "__main__":

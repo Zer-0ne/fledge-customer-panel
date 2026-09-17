@@ -15,6 +15,7 @@ import { PushBootstrap } from '@/components/push/push-bootstrap';
 import { getFirebaseWebConfig } from '@/lib/push/push-config';
 import { AnnouncementProvider } from '@/components/announcements/announcement-provider';
 import { GlobalAnnouncementBanner } from '@/components/announcements/global-announcement-banner';
+import { FaviconSync } from '@/components/brand/favicon-sync';
 import { Suspense } from 'react';
 import { AnnouncementModal } from '@/components/announcements/announcement-modal';
 import { NavigationProgressBar } from '@/components/providers/navigation-progress-bar';
@@ -93,6 +94,7 @@ export default function RootLayout({
         <ThemeProvider>
           <PushBootstrap firebaseConfig={firebaseConfig} />
           <PushPromptBanner />
+          <FaviconSync />
           <AuthProvider>
             <AnnouncementProvider>
               <ToastProvider>
