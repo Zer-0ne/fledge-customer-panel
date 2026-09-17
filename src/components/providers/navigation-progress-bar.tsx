@@ -2,20 +2,36 @@
 
 /**
  * Navigation Progress Bar — sleek top-of-screen route progress indicator.
- * Provides immediate visual feedback on internal navigation clicks and route changes.
  *
- * Failsafe (2026-09-17): the bar used to STICK at ~88% whenever a click did
- * not actually navigate (click intercepted later in the bubble phase, same
- * route, cancelled navigation, offline). Every start now arms a timeout that
- * completes + fades the bar regardless — the bar can never sit stuck.
+ * Behaviour contract (2026-09-17, user report "click does nothing, the bar
+ * fills and vanishes, I have to click twice"):
+ * 1. Any internal link click starts the bar immediately (capture phase).
+ * 2. The bar completes ONLY when the route actually changes.
+ * 3. If the route has not changed NAV_FALLBACK_MS after the click — stalled
+ *    transition, stale bundle, swallowed click — the click is honoured with a
+ *    real navigation. The user must never have to click twice.
+ * 4. A final failsafe hides the bar so it can never sit on screen forever.
  */
 import * as React from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
+/** How long a click may stay un-navigated before we navigate for real. */
+const NAV_FALLBACK_MS = 5_000;
 /** Hard cap: never let the bar remain visible longer than this. */
-const STUCK_TIMEOUT_MS = 12_000;
+const STUCK_TIMEOUT_MS = 10_000;
 /** How long the completed bar stays at 100% before fading out. */
 const FADE_MS = 300;
+
+/** True when a dialog/sheet/popper owns the click (the app intercepts some
+ *  cards on purpose) — then a pending navigation must NOT be forced. */
+function isOverlayOpen(): boolean {
+  if (typeof document === 'undefined') return false;
+  return Boolean(
+    document.querySelector(
+      '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"], [data-radix-popper-content-wrapper]',
+    ),
+  );
+}
 
 export function NavigationProgressBar() {
   const pathname = usePathname();
@@ -25,6 +41,9 @@ export function NavigationProgressBar() {
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
   const cleanupTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const stuckTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const navFallbackRef = React.useRef<NodeJS.Timeout | null>(null);
+  /** The internal href of the last click that has not navigated yet. */
+  const pendingHrefRef = React.useRef<string | null>(null);
 
   const clearTimers = React.useCallback(() => {
     if (intervalRef.current) {
@@ -35,6 +54,11 @@ export function NavigationProgressBar() {
       clearTimeout(stuckTimeoutRef.current);
       stuckTimeoutRef.current = null;
     }
+    if (navFallbackRef.current) {
+      clearTimeout(navFallbackRef.current);
+      navFallbackRef.current = null;
+    }
+    pendingHrefRef.current = null;
   }, []);
 
   /** Complete the bar (100%) and fade it out. Idempotent. */
@@ -48,9 +72,9 @@ export function NavigationProgressBar() {
     }, FADE_MS);
   }, [clearTimers]);
 
-  /** Start the bar + arm the stuck failsafe. */
+  /** Start the bar; `href` arms the navigation fallback for that click. */
   const start = React.useCallback(
-    (initial = 25) => {
+    (initial = 25, href?: string) => {
       if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current);
       clearTimers();
       setVisible(true);
@@ -62,13 +86,36 @@ export function NavigationProgressBar() {
           return prev;
         });
       }, 160);
-      // Failsafe: if no route change follows, complete instead of sticking.
+
+      if (href) {
+        pendingHrefRef.current = href;
+        navFallbackRef.current = setTimeout(() => {
+          navFallbackRef.current = null;
+          const pending = pendingHrefRef.current;
+          pendingHrefRef.current = null;
+          if (!pending) return;
+          // A dialog/sheet owns the click — leave the user where they are.
+          if (isOverlayOpen()) return;
+          let target: URL;
+          try {
+            target = new URL(pending, window.location.href);
+          } catch {
+            return;
+          }
+          const current = `${window.location.pathname}${window.location.search}`;
+          if (`${target.pathname}${target.search}` === current) return;
+          // The router never moved — honour the click with a real navigation.
+          window.location.assign(target.href);
+        }, NAV_FALLBACK_MS);
+      }
+
+      // Failsafe: the bar itself never sticks.
       stuckTimeoutRef.current = setTimeout(finish, STUCK_TIMEOUT_MS);
     },
     [clearTimers, finish],
   );
 
-  // When pathname or searchParams change, complete the bar and fade out
+  // When pathname or searchParams change, complete the bar and fade out.
   React.useEffect(() => {
     if (visible) finish();
     return () => {
@@ -77,7 +124,7 @@ export function NavigationProgressBar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `visible` is read at change time only
   }, [pathname, searchParams]);
 
-  // Intercept anchor clicks to start progress immediately
+  // Intercept anchor clicks to start progress immediately.
   React.useEffect(() => {
     const handleAnchorClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
@@ -90,7 +137,7 @@ export function NavigationProgressBar() {
       const href = target.getAttribute('href');
       if (!href) return;
 
-      // Skip non-internal or special links
+      // Skip non-internal or special links.
       if (
         href.startsWith('http://') ||
         href.startsWith('https://') ||
@@ -103,7 +150,7 @@ export function NavigationProgressBar() {
         return;
       }
 
-      // Check if target URL matches current URL exactly
+      // Skip a link that points at the page we are already on.
       try {
         const targetUrl = new URL(href, window.location.href);
         if (
@@ -116,7 +163,7 @@ export function NavigationProgressBar() {
         return;
       }
 
-      start();
+      start(25, href);
     };
 
     const handlePopState = () => {
