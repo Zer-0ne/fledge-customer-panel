@@ -60,8 +60,8 @@ export default function MessagesPage() {
 
   const userId = user?.id;
   // Need Now threads: responseId (= housing contextId) → actual peer + location.
-  // enrichConversations listing/roommate interests ko resolve karta hai, housing
-  // ko nahi — isliye list me "Chat Participant"/"Roommate" generic dikhta tha.
+  // enrichConversations resolves listing/roommate interests but not housing,
+  // which is why the list showed the generic "Chat Participant"/"Roommate".
   const [housingMeta, setHousingMeta] = React.useState<Map<string, { peerId?: string; peerName?: string; location?: string; accepted?: boolean }>>(new Map());
   const loadConversations = React.useCallback(async () => {
     setIsLoading(true);
@@ -122,7 +122,7 @@ export default function MessagesPage() {
         }
         setHousingMeta(meta);
       } catch {
-        // Meta na mile to list generic fallback par chalegi — thread nahi tootega.
+        // Missing meta falls back to the generic list entry — the thread still opens.
       }
       // Note: the header/nav unread message badge is driven exclusively by the
       // socket-pushed `user:unread_counts` event via AuthProvider. Do not overwrite
@@ -234,10 +234,10 @@ export default function MessagesPage() {
     }
   }, [loadRequests]);
 
-  // Jisse pehle se hi chat ho rha hai, woh request me nahi jana chahiye:
-  // established threads (listing/roommate/message-request, ya ACCEPTED Need Now)
-  // wale peers ke Need Now PENDING Requests tab me nahi dikhenge — unka thread
-  // inbox me already hai aur accept/decline banner wahin milta hai.
+  // A peer we already chat with must not appear as a new request: established
+  // threads (listing/roommate/message-request, or an ACCEPTED Need Now) stay out
+  // of the Need Now PENDING Requests tab — their thread is already in the inbox
+  // and the accept/decline banner lives there.
   const establishedPeerIds = React.useMemo(() => {
     const set = new Set<string>();
     for (const conv of conversations) {

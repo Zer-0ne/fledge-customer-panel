@@ -220,11 +220,11 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
 
   const rel = request.viewerRelationship;
   const isEditable = ['DRAFT', 'ACTIVE', 'PAUSED'].includes(request.status);
-  // Request bhejne ke baad btn hide na ho: backend `canOfferListing` ko
-  // PENDING/ACCEPTED response ke baad false kar deta hai (alreadyResponded),
-  // isliye visibility sirf uspe depend nahi karegi. Active + not-owner +
-  // not-blocked me button hamesha dikhega — chahe response bhej diya ho.
-  // Duplicate second attempt backend `RESPONSE_DUPLICATE` se friendly error dega.
+  // Keep the button visible after responding: the backend flips
+  // `canOfferListing` to false once a PENDING/ACCEPTED response exists
+  // (alreadyResponded), so visibility must not depend on it. For active,
+  // non-owner, non-blocked pairs the button always shows — even after a response.
+  // A duplicate second attempt gets a friendly RESPONSE_DUPLICATE from the backend.
   const showRespondActions =
     request.status === 'ACTIVE' &&
     !rel.isOwner &&
@@ -755,8 +755,8 @@ function OfferListingDialog({
   const noListingsForFooter = listings !== null && listings.length === 0;
   const noPostsForFooter = !roommatePosts || roommatePosts.length === 0;
   const isMessageOnlyForFooter = noListingsForFooter && noPostsForFooter;
-  // Message-only offer me listing/post nahi hota — sirf message se Send
-  // enable hona chahiye, warna btn dikhega par click kabhi nahi hoga.
+  // A message-only offer has no listing/post — Send must be enabled by the
+  // message alone, otherwise the button shows but can never be clicked.
   const isOfferSubmitDisabled =
     submitting ||
     (!selectedListingId && !selectedPostId && (!isMessageOnlyForFooter || !message.trim()));
@@ -796,8 +796,8 @@ function OfferListingDialog({
       onResponded();
       onOpenChange(false);
     } catch (err) {
-      // Request bhejne ke baad btn hide nahi hota, to double-click / retry par
-      // backend RESPONSE_DUPLICATE dega — usko error nahi, refresh samjho.
+      // The button stays visible after responding, so a double-click / retry
+      // gets RESPONSE_DUPLICATE from the backend — treat that as a refresh, not an error.
       const code = (err as { code?: string })?.code;
       if (code === 'RESPONSE_DUPLICATE' || code === 'HOUSING_REQUEST_RESPONSE_DUPLICATE') {
         showToast({ title: 'Already sent', description: 'Your response is already with the owner.', variant: 'success' });

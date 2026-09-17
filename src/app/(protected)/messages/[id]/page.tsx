@@ -249,7 +249,7 @@ export default function ChatThreadPage() {
           }
         }
       } catch {
-        // Header generic fallback par rahega — thread kaam karta rahega.
+        // Header falls back to the generic entry — the thread keeps working.
       }
     })();
     return () => {

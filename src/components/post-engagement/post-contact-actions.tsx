@@ -14,7 +14,7 @@ import {
 /**
  * Number-on-a-post control.
  *
- * Viewer: "Number dekho" → one reveal slot → the number (never shown in feeds).
+ * Viewer: "View number" → one reveal slot → the number (never shown in feeds).
  * Owner: attach / replace / remove the number, plus the audit of who unlocked
  * it, how many times they opened it, and when.
  *
