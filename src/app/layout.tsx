@@ -34,7 +34,11 @@ export const metadata: Metadata = {
   title: `${env.NEXT_PUBLIC_APP_NAME} - Student Housing & Flat Sharing`,
   description:
     'Find student apartments, room rentals, and compatible roommates near top colleges and university campuses.',
-  manifest: '/manifest.webmanifest',
+  // `?v` MUST be bumped together with the ?v on the manifest's icon URLs:
+  // an installed Android WebAPK (and desktop PWA shortcuts) only re-read their
+  // launcher icon when Chrome sees a CHANGED manifest for the app — bumping
+  // this URL forces that check instead of waiting on Chrome's lazy schedule.
+  manifest: '/manifest.webmanifest?v=3',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

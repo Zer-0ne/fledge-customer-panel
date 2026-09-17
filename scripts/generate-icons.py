@@ -16,9 +16,13 @@ Requires cairosvg:
 Run from the customer-panel root:
     /tmp/pipenv/bin/python scripts/generate-icons.py
 
-When the artwork changes, bump the `?v=` on the manifest icon URLs
-(public/manifest.webmanifest) — an installed Android WebAPK only re-reads its
-launcher icon when the manifest declares a different icon URL.
+When the artwork changes, bump BOTH the `?v=` on the manifest icon URLs
+(public/manifest.webmanifest) AND the `manifest:` href in src/app/layout.tsx —
+an installed Android WebAPK / desktop PWA shortcut only re-reads its launcher
+icon when Chrome sees the manifest change; the URL bump makes that check fire
+on the next launch instead of Chrome's lazy schedule. (There is no API to
+force-update an already-installed PWA icon instantly: reinstall is the
+immediate path, the manifest change lands within ~a day.)
 """
 
 from __future__ import annotations
