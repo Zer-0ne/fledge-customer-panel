@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Link from 'next/link';
-import { Building2 } from 'lucide-react';
+import { FledgeMark } from '@/components/brand/fledge-mark';
 import { FLEDGE_SUPPORT_EMAIL } from '@/lib/public-info';
 
 const PRODUCT_LINKS = [
@@ -30,9 +30,7 @@ export function Footer({ appName = 'Fledge' }: { appName?: string }) {
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div className="flex flex-col items-center text-center md:items-start md:text-left">
             <div className="flex items-center gap-2.5">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Building2 />
-              </div>
+              <FledgeMark className="size-7" />
               <span className="text-base font-bold tracking-tight">{appName}</span>
             </div>
             <p className="mt-2 max-w-sm text-xs text-muted-foreground">

@@ -127,9 +127,13 @@ function applyConfig(config) {
       const body = (rawBody && String(rawBody).trim()) || '';
       const data = payload.data ?? {};
       // OS notification — requireInteraction keeps it in the system tray until dismissed.
+      // `badge` is the Android status-bar glyph (monochrome white mark on a
+      // transparent canvas — the OS masks it); `icon` is the large colour icon.
       self.registration.showNotification(title, {
         body,
         data,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/badge.png',
         tag: data.notificationId ?? `push-${Date.now()}`,
         requireInteraction: false,
         renotify: true,
@@ -173,6 +177,8 @@ async function renderRawPush(event) {
     await self.registration.showNotification(title, {
       body,
       data,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/badge.png',
       tag: data.notificationId ?? `push-${Date.now()}`,
       renotify: true,
     });

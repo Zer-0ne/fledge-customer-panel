@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Link from 'next/link';
-import { Building2, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
+import { FledgeMark } from '@/components/brand/fledge-mark';
 import { env } from '@/lib/env';
 import BorderGlow from '@/components/BorderGlow'
 
@@ -18,9 +19,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             href="/"
             className="flex items-center gap-2.5 transition-transform hover:scale-105 duration-200"
           >
-            <div className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-              <Building2 className="size-6" />
-            </div>
+            <FledgeMark
+              className="size-12 drop-shadow-[0_10px_20px_rgba(37,99,235,0.35)]"
+              title="Fledge"
+            />
           </Link>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             {env.NEXT_PUBLIC_APP_NAME}

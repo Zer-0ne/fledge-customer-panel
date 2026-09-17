@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { FledgeMark } from '@/components/brand/fledge-mark';
 import { PwaInstallButton } from '@/components/pwa/pwa-install-button';
 import { useAuth } from '@/components/providers/auth-provider';
 
@@ -99,9 +100,7 @@ export function Header({
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-1.5 px-3 sm:gap-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex shrink-0 items-center gap-1.5 sm:gap-2 transition-opacity hover:opacity-80">
-          <div className="flex size-7.5 sm:size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-xs">
-            <Building2 className="size-4" />
-          </div>
+          <FledgeMark className="size-7.5 sm:size-8" />
           <div className="flex items-center gap-1 sm:gap-1.5">
             <span className="text-sm sm:text-base font-bold tracking-tight text-foreground">{appName}</span>
             {isBeta && (
