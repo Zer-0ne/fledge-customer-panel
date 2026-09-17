@@ -3,9 +3,19 @@
 /**
  * Navigation Progress Bar — sleek top-of-screen route progress indicator.
  * Provides immediate visual feedback on internal navigation clicks and route changes.
+ *
+ * Failsafe (2026-09-17): the bar used to STICK at ~88% whenever a click did
+ * not actually navigate (click intercepted later in the bubble phase, same
+ * route, cancelled navigation, offline). Every start now arms a timeout that
+ * completes + fades the bar regardless — the bar can never sit stuck.
  */
 import * as React from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+
+/** Hard cap: never let the bar remain visible longer than this. */
+const STUCK_TIMEOUT_MS = 12_000;
+/** How long the completed bar stays at 100% before fading out. */
+const FADE_MS = 300;
 
 export function NavigationProgressBar() {
   const pathname = usePathname();
@@ -14,23 +24,57 @@ export function NavigationProgressBar() {
   const [visible, setVisible] = React.useState(false);
   const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
   const cleanupTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const stuckTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const clearTimers = React.useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (stuckTimeoutRef.current) {
+      clearTimeout(stuckTimeoutRef.current);
+      stuckTimeoutRef.current = null;
+    }
+  }, []);
+
+  /** Complete the bar (100%) and fade it out. Idempotent. */
+  const finish = React.useCallback(() => {
+    setProgress(100);
+    clearTimers();
+    if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current);
+    cleanupTimeoutRef.current = setTimeout(() => {
+      setVisible(false);
+      setProgress(0);
+    }, FADE_MS);
+  }, [clearTimers]);
+
+  /** Start the bar + arm the stuck failsafe. */
+  const start = React.useCallback(
+    (initial = 25) => {
+      if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current);
+      clearTimers();
+      setVisible(true);
+      setProgress(initial);
+      intervalRef.current = setInterval(() => {
+        setProgress((prev) => {
+          if (prev < 65) return prev + Math.random() * 12 + 6;
+          if (prev < 88) return prev + Math.random() * 4 + 1;
+          return prev;
+        });
+      }, 160);
+      // Failsafe: if no route change follows, complete instead of sticking.
+      stuckTimeoutRef.current = setTimeout(finish, STUCK_TIMEOUT_MS);
+    },
+    [clearTimers, finish],
+  );
 
   // When pathname or searchParams change, complete the bar and fade out
   React.useEffect(() => {
-    if (visible) {
-      setProgress(100);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      cleanupTimeoutRef.current = setTimeout(() => {
-        setVisible(false);
-        setProgress(0);
-      }, 300);
-    }
+    if (visible) finish();
     return () => {
       if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `visible` is read at change time only
   }, [pathname, searchParams]);
 
   // Intercept anchor clicks to start progress immediately
@@ -72,25 +116,11 @@ export function NavigationProgressBar() {
         return;
       }
 
-      // Start progress bar
-      if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-
-      setVisible(true);
-      setProgress(25);
-
-      intervalRef.current = setInterval(() => {
-        setProgress((prev) => {
-          if (prev < 65) return prev + Math.random() * 12 + 6;
-          if (prev < 88) return prev + Math.random() * 4 + 1;
-          return prev;
-        });
-      }, 160);
+      start();
     };
 
     const handlePopState = () => {
-      setVisible(true);
-      setProgress(40);
+      start(40);
     };
 
     document.addEventListener('click', handleAnchorClick, { capture: true });
@@ -99,10 +129,10 @@ export function NavigationProgressBar() {
     return () => {
       document.removeEventListener('click', handleAnchorClick, { capture: true });
       window.removeEventListener('popstate', handlePopState);
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      clearTimers();
       if (cleanupTimeoutRef.current) clearTimeout(cleanupTimeoutRef.current);
     };
-  }, []);
+  }, [start, clearTimers]);
 
   if (!visible && progress === 0) return null;
 

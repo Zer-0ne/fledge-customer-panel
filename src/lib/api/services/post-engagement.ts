@@ -1,5 +1,5 @@
 /**
- * Post engagement — reveal-capped post contacts + owner-only "N ne dekha".
+ * Post engagement — reveal-capped post contacts + owner-only "N views".
  *
  * A poster attaches a phone number to their own post (roommate / local service /
  * need-now). The number is never in the feed: a viewer unlocks it with an
@@ -93,9 +93,9 @@ function mapRevealState(raw: unknown, postId: string): PostRevealState {
 export function friendlyPostContactError(error: unknown): string {
   if (error instanceof ApiError) {
     const code = error.code ?? '';
-    if (code === 'REVEAL_LIMIT_REACHED' || error.status === 409) return 'Yeh number ab available nahi — owner ke 5 reveal poore ho gaye.';
-    if (error.status === 403) return 'Aap is post ka number change nahi kar sakte.';
-    if (error.status === 404) return 'Number ya post ab maujood nahi.';
+    if (code === 'REVEAL_LIMIT_REACHED' || error.status === 409) return 'This number is no longer available — all reveal slots have been used.';
+    if (error.status === 403) return 'You cannot change the number on this post.';
+    if (error.status === 404) return 'The number or post no longer exists.';
     return error.message;
   }
   return error instanceof Error ? error.message : 'Try again.';

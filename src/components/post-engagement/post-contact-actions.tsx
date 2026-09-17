@@ -67,7 +67,7 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
         maxReveals: state?.maxReveals ?? null,
       });
     } catch (error) {
-      showToast({ title: 'Number nahi mila', description: friendlyPostContactError(error), variant: 'error' });
+      showToast({ title: 'Could not fetch the number', description: friendlyPostContactError(error), variant: 'error' });
     } finally {
       setBusy(false);
     }
@@ -80,9 +80,9 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
       setAttachOpen(false);
       setPhone('');
       apply({ postId, configured: true, exhausted: false, alreadyRevealed: false, ownedByCaller: true, remainingReveals: result.maxReveals, maxReveals: result.maxReveals });
-      showToast({ title: 'Number attach ho gaya', description: `Sirf ${result.maxReveals} log ise unlock kar sakte hain — aapko har unlock dikhega.`, variant: 'default' });
+      showToast({ title: 'Number attached', description: `Up to ${result.maxReveals} people can unlock it — every unlock is shown to you.`, variant: 'default' });
     } catch (error) {
-      showToast({ title: 'Number attach nahi hua', description: friendlyPostContactError(error), variant: 'error' });
+      showToast({ title: 'Could not attach the number', description: friendlyPostContactError(error), variant: 'error' });
     } finally {
       setBusy(false);
     }
@@ -93,9 +93,9 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
     try {
       await removePostContact(surface, postId);
       apply({ postId, configured: false, exhausted: false, alreadyRevealed: false, ownedByCaller: true, remainingReveals: 0, maxReveals: null });
-      showToast({ title: 'Number hata diya', description: 'Purana audit (kisne dekha tha) record me rahega.', variant: 'default' });
+      showToast({ title: 'Number removed', description: 'The previous audit (who viewed it) is kept in the record.', variant: 'default' });
     } catch (error) {
-      showToast({ title: 'Hata nahi paye', description: friendlyPostContactError(error), variant: 'error' });
+      showToast({ title: 'Could not remove the number', description: friendlyPostContactError(error), variant: 'error' });
     } finally {
       setBusy(false);
     }
@@ -107,7 +107,7 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
     try {
       setAudit(await fetchPostContactAudit(surface, postId));
     } catch (error) {
-      showToast({ title: 'Audit load nahi hua', description: friendlyPostContactError(error), variant: 'error' });
+      showToast({ title: 'Could not load the audit', description: friendlyPostContactError(error), variant: 'error' });
       setAuditOpen(false);
     }
   };
@@ -151,16 +151,16 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
             onClick={() => setAttachOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
           >
-            <Phone className="size-3.5" /> Apna number share karo
+            <Phone className="size-3.5" /> Share your number
           </button>
         )}
 
         <Dialog open={attachOpen} onOpenChange={(open) => { if (!open) setAttachOpen(false); }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Number share karo</DialogTitle>
+              <DialogTitle>Share your number</DialogTitle>
               <DialogDescription>
-                Number feed me kabhi nahi dikhega. Sirf wahi log dekh payenge jo ise unlock karenge — default 5 log, aur har unlock aapko audit me dikhega (kaun, kitni baar, kab).
+                The number is never shown in feeds. Only people who unlock it can see it — 5 by default — and every unlock appears in your audit (who, how many times, when).
               </DialogDescription>
             </DialogHeader>
             <input
@@ -182,15 +182,15 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
         <Dialog open={auditOpen} onOpenChange={(open) => { if (!open) setAuditOpen(false); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2"><Eye className="size-4" /> Kisne number dekha</DialogTitle>
+              <DialogTitle className="flex items-center gap-2"><Eye className="size-4" /> Who viewed the number</DialogTitle>
               <DialogDescription className="text-xs">
-                Sirf aapko dikhta hai. Har unlock ke saath: kitni baar khola aur kab.
+                Only you can see this. Every unlock shows how many times it was opened and when.
               </DialogDescription>
             </DialogHeader>
             {audit === null ? (
               <p className="py-6 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto mb-2 size-4 animate-spin" /> Loading…</p>
             ) : audit.viewers.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Abhi tak kisi ne aapka number unlock nahi kiya.</p>
+              <p className="py-6 text-center text-sm text-muted-foreground">Nobody has unlocked your number yet.</p>
             ) : (
               <div className="max-h-80 space-y-2 overflow-y-auto">
                 {audit.viewers.map((viewer) => (
@@ -201,14 +201,14 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">{viewer.displayName}</p>
                       <p className="text-[11px] text-muted-foreground">
-                        {viewer.viewCount > 1 ? `${viewer.viewCount} baar khola` : 'Ek baar dekha'} · pehli baar {formatSeenAt(viewer.firstViewedAt)}
+                        {viewer.viewCount > 1 ? `opened ${viewer.viewCount} times` : 'Opened once'} · first {formatSeenAt(viewer.firstViewedAt)}
                         {viewer.lastViewedAt !== viewer.firstViewedAt ? ` · last ${formatSeenAt(viewer.lastViewedAt)}` : ''}
                       </p>
                     </div>
                   </div>
                 ))}
                 <p className="pt-1 text-center text-[11px] text-muted-foreground">
-                  {audit.totalReveals}/{audit.maxReveals ?? 5} reveal use ho gaye
+                  {audit.totalReveals}/{audit.maxReveals ?? 5} reveals used
                 </p>
               </div>
             )}
@@ -223,7 +223,7 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
   if (state.exhausted && !state.alreadyRevealed) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground">
-        <ShieldOff className="size-3.5" /> Number ab available nahi
+        <ShieldOff className="size-3.5" /> Number no longer available
       </span>
     );
   }
@@ -237,7 +237,7 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
         className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
       >
         {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Phone className="size-3.5" />}
-        {state.alreadyRevealed ? 'Number dobara dekho' : 'Number dekho'}
+        {state.alreadyRevealed ? 'View number again' : 'View number'}
       </button>
 
       <Dialog open={revealed !== null} onOpenChange={(open) => { if (!open) setRevealed(null); }}>
@@ -246,8 +246,8 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
             <DialogTitle className="flex items-center gap-2"><Phone className="size-4" /> Number</DialogTitle>
             <DialogDescription className="text-xs">
               {state.remainingReveals > 0
-                ? `Ab ${state.remainingReveals} reveal bache hain.`
-                : 'Yeh aakhri available reveal tha.'}
+                ? `You have ${state.remainingReveals} reveals left.`
+                : 'This was the last available reveal.'}
             </DialogDescription>
           </DialogHeader>
           <p className="text-2xl font-semibold tracking-wide">{revealed}</p>

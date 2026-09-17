@@ -685,13 +685,13 @@ function mapRawViewer(item: unknown): NeedNowViewer {
   };
 }
 
-/** Formats lastSeenAt to relative time, e.g. "2h ago", "abhi". */
+/** Formats lastSeenAt to relative time, e.g. "2h ago", "just now". */
 export function formatViewerSeenAt(iso: string | null | undefined): string {
   if (!iso) return '';
   const then = new Date(iso).getTime();
   if (!Number.isFinite(then)) return '';
   const diffMs = Date.now() - then;
-  if (diffMs < 45_000) return 'abhi';
+  if (diffMs < 45_000) return 'just now';
   const mins = Math.floor(diffMs / 60_000);
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
