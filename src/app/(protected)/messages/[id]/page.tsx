@@ -75,7 +75,10 @@ function receiptLabel(msg: ChatMessage): string {
     const when = msg.readAt ? formatDateTime(msg.readAt) : '';
     return when ? ` · Read ${when}` : ' · Read';
   }
-  if (status === 'delivered') return ' · Delivered';
+  if (status === 'delivered') {
+    const when = msg.deliveredAt ? formatDateTime(msg.deliveredAt) : '';
+    return when ? ` · Delivered ${when}` : ' · Delivered';
+  }
   return ' · Sent';
 }
 
