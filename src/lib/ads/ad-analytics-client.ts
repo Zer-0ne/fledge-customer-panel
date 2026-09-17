@@ -55,13 +55,26 @@ export async function initializeAdAnalytics(): Promise<void> {
     void flushAdAnalytics();
   });
   window.addEventListener('online', () => {
-    void flushAdAnalytics();
+    scheduleBackgroundAdFlush();
   });
   flushTimer = setInterval(() => {
-    void flushAdAnalytics();
+    scheduleBackgroundAdFlush();
   }, FLUSH_INTERVAL_MS);
-  // Drain previous session
-  void flushAdAnalytics();
+  // Drain previous session in the background (never on the render path).
+  scheduleBackgroundAdFlush();
+}
+
+/** Queue an ad flush off the critical path (idle callback, timeout fallback). */
+function scheduleBackgroundAdFlush(): void {
+  if (typeof window === 'undefined') return;
+  const idle = (window as Window & {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+  }).requestIdleCallback;
+  if (typeof idle === 'function') {
+    idle(() => { void flushAdAnalytics(); }, { timeout: 5_000 });
+    return;
+  }
+  setTimeout(() => { void flushAdAnalytics(); }, 1_000);
 }
 
 export async function trackAdEventLocal(token: string, type: 'impression' | 'click' | 'viewable'): Promise<void> {
@@ -78,8 +91,9 @@ export async function trackAdEventLocal(token: string, type: 'impression' | 'cli
     createdAt: new Date().toISOString(),
   };
   await queue.insert(ev);
-  const len = await queue.length();
-  if (len >= MAX_BATCH) void flushAdAnalytics();
+  // No threshold flush: ad tokens queue in IndexedDB and leave on the hourly
+  // background flush (or a hidden/pagehide drain) — user actions never trigger
+  // network work.
 }
 
 export async function flushAdAnalytics(): Promise<void> {

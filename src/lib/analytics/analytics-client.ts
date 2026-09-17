@@ -63,6 +63,8 @@ let authFailureStrikes = 0;
 let suspended = false;
 /** Burst guard: the last flush attempt time (see TELEMETRY_MIN_FLUSH_GAP_MS). */
 let lastFlushAttemptAt = 0;
+/** Pending steady-drain timer for a backlog left after a flush. */
+let backlogTimer: ReturnType<typeof setTimeout> | null = null;
 /** Most batches drained by one flush — a big backlog drains slowly, never as a burst. */
 const MAX_BATCHES_PER_FLUSH = 2;
 
@@ -144,12 +146,12 @@ export async function initializeAnalytics(): Promise<void> {
 
   // Listen for online.
   window.addEventListener('online', () => {
-    unawaited(flush());
+    scheduleBackgroundFlush();
   });
 
-  // Periodic flush.
+  // Periodic flush — hourly background batch (never on user action).
   flushTimer = setInterval(() => {
-    unawaited(flush());
+    scheduleBackgroundFlush();
   }, FLUSH_INTERVAL_MS);
 
   // Start session.
@@ -211,8 +213,11 @@ export function track(
 
   queue.insert(event).then(async (inserted) => {
     if (inserted) {
-      const len = await queue!.length();
-      if (len >= MAX_BATCH_SIZE) unawaited(flush());
+      // NOTE: no threshold flush here. A burst of user actions must NEVER
+      // trigger a network call — events stay in IndexedDB until the hourly
+      // background flush (or a hidden/unload drain). Server load stays flat and
+      // the UI never waits on analytics.
+      void inserted;
     }
   }).catch(() => {});
 }
@@ -260,6 +265,9 @@ export async function flush(): Promise<void> {
       const batch = pending.slice(i, i + MAX_BATCH_SIZE);
       await sendBatch(batch);
     }
+    // Steady drain: anything left (big backlog) is sent on the next background
+    // pass after the minimum gap — never as one burst.
+    if (pending.length > drainLimit) scheduleBacklogFlush();
   } catch {
   } finally {
     flushing = false;
@@ -285,6 +293,8 @@ async function sendBatch(batch: QueuedEvent[]): Promise<void> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
+      // keepalive so a flush started while the page hides/unloads still lands.
+      keepalive: true,
       body: JSON.stringify({
         batchId: generateId(),
         platform: 'next_web',
@@ -371,8 +381,35 @@ function scheduleCooldownFlush(): void {
   const wait = Math.max(0, nextFlushAllowedAt - Date.now());
   shedFlushTimer = setTimeout(() => {
     shedFlushTimer = null;
-    unawaited(flush());
+    scheduleBackgroundFlush();
   }, wait);
+}
+
+/**
+ * Queue a flush OFF the critical path. Analytics must never compete with UI
+ * work, block a render, or make the user wait: the browser's idle callback runs
+ * it when the main thread is free, with a plain timeout as fallback.
+ */
+export function scheduleBackgroundFlush(): void {
+  if (typeof window === 'undefined') return;
+  const idle = (window as Window & {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+  }).requestIdleCallback;
+  if (typeof idle === 'function') {
+    idle(() => { unawaited(flush()); }, { timeout: 5_000 });
+    return;
+  }
+  setTimeout(() => { unawaited(flush()); }, 1_000);
+}
+
+/** Steady backlog drain: if a flush left events behind, come back after the
+ * minimum gap instead of sending everything in one burst. */
+function scheduleBacklogFlush(): void {
+  if (backlogTimer) return;
+  backlogTimer = setTimeout(() => {
+    backlogTimer = null;
+    scheduleBackgroundFlush();
+  }, TELEMETRY_MIN_FLUSH_GAP_MS);
 }
 
 /** Cleanup old events from the queue. */
@@ -391,6 +428,10 @@ export function disposeAnalytics(): void {
   if (shedFlushTimer) {
     clearTimeout(shedFlushTimer);
     shedFlushTimer = null;
+  }
+  if (backlogTimer) {
+    clearTimeout(backlogTimer);
+    backlogTimer = null;
   }
   const ended = endSession();
   if (ended?.isValid) {
