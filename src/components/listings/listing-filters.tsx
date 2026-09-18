@@ -7,7 +7,7 @@ import { paiseToRupees } from '@/lib/listings/filters';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { Search, RotateCcw, SlidersHorizontal, MapPin } from 'lucide-react';
 import { LocationSearchField, type PlaceResult } from '@/components/ui/location-search-field';
 
 export interface ListingFiltersProps {
@@ -224,14 +224,15 @@ export function ListingFilters({
             }
           />
           {filters.latitude && filters.longitude && (
-            <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-1.5 text-[10px]">
-              <span className="font-mono text-primary/70">
-                {filters.latitude.toFixed(4)}, {filters.longitude.toFixed(4)}
+            <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
+                <MapPin className="size-3.5" aria-hidden="true" />
+                Pin dropped on the map
               </span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-4 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
+                className="h-6 px-2 text-xs text-destructive hover:bg-destructive/10"
                 onClick={() => onFilterChange({ latitude: undefined, longitude: undefined })}
               >
                 Clear
