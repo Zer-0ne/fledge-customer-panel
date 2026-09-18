@@ -58,9 +58,9 @@ function LoginContent() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-xl font-bold tracking-tight text-foreground">Welcome back</h2>
-        <p className="text-xs text-muted-foreground">
-          Continue with your Google account to access your account.
+        <h2 className="text-xl font-bold tracking-tight text-foreground">Sign in to Fledge</h2>
+        <p className="text-sm text-muted-foreground">
+          New here? Google creates your account. Coming back? It signs you straight in.
         </p>
       </div>
 
@@ -73,10 +73,9 @@ function LoginContent() {
       <GoogleSignInButton returnUrl={returnUrl} onError={handleGoogleError} suppressAutoSignIn={loggedOut} />
 
       <div className="rounded-xl border border-border/70 bg-muted/40 p-3 text-left">
-        <p className="text-[11px] leading-relaxed text-muted-foreground">
-          Tapping Continue with Google sends a Google identity token to Fledge so the API can create or
-          resume your account and session. Fledge receives your verified Google account identity;
-          it never receives your Google password.
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          We use Google to verify it&apos;s you. Fledge gets your name, email and photo — never your
+          Google password.
         </p>
       </div>
 

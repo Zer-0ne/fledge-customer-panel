@@ -31,12 +31,12 @@ export interface HeaderProps {
 }
 
 const NAV_LINKS = [
-  { href: '/', label: 'Explore', icon: Home },
+  { href: '/', label: 'Home', icon: Home },
   { href: '/search', label: 'Flats', icon: Search },
   { href: '/roommates', label: 'Roommates', icon: Users },
   { href: '/need-now', label: 'Need Now', icon: Timer },
   // Community bridge: paste a group post, get a structured post back.
-  { href: '/import', label: 'Post from group', icon: Wand2 },
+  { href: '/import', label: 'Paste a post', icon: Wand2 },
   // Non-housing surfaces (daily utility board, weekly services, seasonal resale)
   { href: '/neighbourhood', label: 'Neighbourhood', icon: Building2 },
   { href: '/donate', label: 'Donate', icon: HeartHandshake },

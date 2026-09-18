@@ -12,13 +12,13 @@ export interface MobileNavProps {
 }
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Explore', icon: Home },
+  { href: '/', label: 'Home', icon: Home },
   { href: '/search', label: 'Flats', icon: Search },
   { href: '/roommates', label: 'Roommates', icon: Users },
   { href: '/need-now', label: 'Need Now', icon: Timer },
   // Community bridge surfaces (resale · services · utility) — without this
   // entry they were only reachable from the desktop pill nav or a URL.
-  { href: '/neighbourhood', label: 'Community', icon: Building2 },
+  { href: '/neighbourhood', label: 'Neighbourhood', icon: Building2 },
   { href: '/dashboard', label: 'Account', icon: User },
 ] as const;
 

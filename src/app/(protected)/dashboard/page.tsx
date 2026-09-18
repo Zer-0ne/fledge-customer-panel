@@ -27,6 +27,8 @@ import {
   Sliders,
   Bell,
   Settings,
+  Bookmark,
+  Wrench,
 } from 'lucide-react';
 
 interface DashboardCounts {
@@ -169,6 +171,24 @@ export default function DashboardPage() {
       count: counts?.unreadNotifications,
       countLabel: 'unread',
       badge: (counts?.unreadNotifications || unreadNotificationCount) > 0,
+    },
+    {
+      href: '/saved-searches',
+      title: 'Saved Searches',
+      description: 'Re-run your filters and get alerts for new matches',
+      icon: Bookmark,
+      color: 'bg-cyan-500/10 text-cyan-600',
+      count: undefined,
+      countLabel: '',
+    },
+    {
+      href: '/maintenance',
+      title: 'Maintenance Requests',
+      description: 'Raise and track repairs for your rented place',
+      icon: Wrench,
+      color: 'bg-orange-500/10 text-orange-500',
+      count: undefined,
+      countLabel: '',
     },
     {
       href: '/settings/profile',

@@ -4,9 +4,10 @@ import { FledgeMark } from '@/components/brand/fledge-mark';
 import { FLEDGE_SUPPORT_EMAIL } from '@/lib/public-info';
 
 const PRODUCT_LINKS = [
-  { href: '/', label: 'Explore Colleges' },
-  { href: '/search', label: 'Browse Flats' },
-  { href: '/roommates', label: 'Find Roommates' },
+  { href: '/', label: 'Home' },
+  { href: '/search', label: 'Flats' },
+  { href: '/roommates', label: 'Roommates' },
+  { href: '/need-now', label: 'Need Now' },
   { href: '/donate', label: 'Donate' },
 ];
 

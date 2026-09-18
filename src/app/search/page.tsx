@@ -15,9 +15,11 @@ import { fetchListingInterests } from '@/lib/api/services/interests';
 import { useAuth } from '@/components/providers/auth-provider';
 import { LocationMap } from '@/components/map/location-map';
 import { resolveLocation } from '@/lib/location';
-import { Building2, LayoutGrid, Map as MapIcon, Columns } from 'lucide-react';
+import { Building2, LayoutGrid, Map as MapIcon, Columns, Bookmark } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SponsoredAd } from '@/components/ads/sponsored-ad';
+import { SaveSearchDialog } from '@/components/listings/save-search-dialog';
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -32,6 +34,7 @@ function SearchContent() {
   // View Mode: 'grid' | 'map' | 'split'
   const [viewMode, setViewMode] = React.useState<'grid' | 'map' | 'split'>('grid');
   const [selectedListingId, setSelectedListingId] = React.useState<string | null>(null);
+  const [saveSearchOpen, setSaveSearchOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
@@ -172,34 +175,51 @@ function SearchContent() {
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center rounded-xl border border-border bg-card p-1 shadow-xs self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           <Button
-            variant={viewMode === 'grid' ? 'default' : 'ghost'}
+            variant="outline"
             size="sm"
-            onClick={() => setViewMode('grid')}
+            onClick={() => setSaveSearchOpen(true)}
             className="h-8 gap-1 text-xs"
           >
-            <LayoutGrid className="size-3.5" />
-            Grid View
+            <Bookmark className="size-3.5" />
+            Save this search
           </Button>
-          <Button
-            variant={viewMode === 'split' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('split')}
-            className="h-8 gap-1 text-xs hidden md:flex"
+          <Link
+            href="/saved-searches"
+            className="text-xs font-medium text-muted-foreground hover:text-foreground"
           >
-            <Columns className="size-3.5" />
-            Split View
-          </Button>
-          <Button
-            variant={viewMode === 'map' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setViewMode('map')}
-            className="h-8 gap-1 text-xs"
-          >
-            <MapIcon className="size-3.5" />
-            Map View
-          </Button>
+            Saved searches
+          </Link>
+          <div className="flex items-center rounded-xl border border-border bg-card p-1 shadow-xs">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+              className="h-8 gap-1 text-xs"
+            >
+              <LayoutGrid className="size-3.5" />
+              Grid View
+            </Button>
+            <Button
+              variant={viewMode === 'split' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('split')}
+              className="h-8 gap-1 text-xs hidden md:flex"
+            >
+              <Columns className="size-3.5" />
+              Split View
+            </Button>
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('map')}
+              className="h-8 gap-1 text-xs"
+            >
+              <MapIcon className="size-3.5" />
+              Map View
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -294,6 +314,13 @@ function SearchContent() {
             setExpressedInterestListingIds((prev) => new Set([...prev, selectedListingForInterest.id]));
           }
         }}
+      />
+
+      {/* Save this search — feeds the Saved Searches page + new-match alerts */}
+      <SaveSearchDialog
+        open={saveSearchOpen}
+        onOpenChange={setSaveSearchOpen}
+        filters={filters}
       />
     </div>
   );
