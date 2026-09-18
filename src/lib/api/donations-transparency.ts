@@ -26,6 +26,8 @@ export interface SupporterEntry {
   amountPaise: number | null;
   currency: string | null;
   isFoundingSupporter: boolean;
+  /** True when the donor currently holds a partner account (badge on the wall). */
+  donorIsPartner: boolean;
   paidAt: string;
 }
 
@@ -79,6 +81,7 @@ export function normalizeSupportersPage(raw: unknown): SupportersPage {
         amountPaise: typeof e.amountPaise === 'number' ? e.amountPaise : null,
         currency: typeof e.currency === 'string' ? e.currency : null,
         isFoundingSupporter: e.isFoundingSupporter === true,
+        donorIsPartner: e.donorIsPartner === true,
         paidAt: typeof e.paidAt === 'string' ? e.paidAt : '',
       };
     }),

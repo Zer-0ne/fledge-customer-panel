@@ -321,6 +321,11 @@ export default function DonatePage() {
                 <li key={`${entry.paidAt}-${i}`} className="flex items-center justify-between px-4 py-2.5 text-sm">
                   <span className="font-medium">
                     {entry.displayName}
+                    {entry.donorIsPartner && (
+                      <span className="ml-1.5 rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 align-middle text-[10px] font-medium text-primary">
+                        Partner
+                      </span>
+                    )}
                     {entry.isFoundingSupporter && <span className="ml-1.5 text-xs text-primary">Founding ❤️</span>}
                   </span>
                   <span className="text-muted-foreground">
