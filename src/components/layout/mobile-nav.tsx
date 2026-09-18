@@ -69,7 +69,7 @@ export function MobileNav({ unreadMessagesCount: propUnreadMessages }: MobileNav
               className={cn(
                 // min-w-0 keeps the label truncation from forcing the row wider
                 // than the viewport (6 tabs on a 320px phone).
-                'relative flex min-w-0 flex-1 flex-col items-center justify-center px-0.5 py-1 text-[9px] font-medium transition-colors sm:text-[10px]',
+                'relative flex min-w-0 flex-1 flex-col items-center justify-center px-0.5 py-1 text-xs font-medium transition-colors sm:text-xs',
                 isActive ? 'text-primary font-semibold' : 'text-muted-foreground hover:text-foreground'
               )}
             >

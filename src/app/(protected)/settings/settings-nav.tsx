@@ -49,7 +49,7 @@ export default function SettingsNav() {
       <div className="flex md:flex-col gap-4 overflow-x-auto pb-1 md:pb-0">
         {SETTINGS_GROUPS.map((group) => (
           <div key={group.title} className="flex md:flex-col gap-1">
-            <p className="hidden md:block px-3 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="hidden md:block px-3 pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {group.title}
             </p>
             <ul className="flex md:flex-col gap-1">

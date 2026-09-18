@@ -50,7 +50,7 @@ export default function VerificationExplainer() {
               <Icon className={`size-5 shrink-0 mt-0.5 ${path.color}`} />
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground">{path.title}</p>
-                <p className={`text-[11px] font-bold mt-0.5 ${path.color}`}>Badge: {path.badge}</p>
+                <p className={`text-xs font-bold mt-0.5 ${path.color}`}>Badge: {path.badge}</p>
                 <p className="text-xs text-muted-foreground leading-relaxed mt-1">{path.body}</p>
               </div>
             </div>
@@ -58,11 +58,11 @@ export default function VerificationExplainer() {
         })}
       </div>
       <div className="rounded-xl bg-muted/60 p-3 space-y-1.5">
-        <p className="text-[11px] text-muted-foreground leading-relaxed flex gap-1.5">
+        <p className="text-xs text-muted-foreground leading-relaxed flex gap-1.5">
           <Clock className="size-3.5 shrink-0 mt-0.5" />
           Have both? The stronger badge shows. A faculty member with a verified college email still shows Verified Faculty.
         </p>
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
+        <p className="text-xs text-muted-foreground leading-relaxed">
           College email must be your official address — Gmail, Yahoo, Outlook and other public providers are not accepted. Documents are never stored; only extracted text (name, college, roll no.) is saved.
         </p>
       </div>

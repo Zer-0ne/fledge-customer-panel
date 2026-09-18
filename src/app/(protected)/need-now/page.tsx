@@ -180,7 +180,7 @@ export default function MyNeedNowPage() {
                   >
                     <Inbox className="size-3.5" />
                     Received
-                    <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary font-bold">
+                    <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-xs text-primary font-bold">
                       {responses.received.length}
                     </span>
                   </button>
@@ -197,7 +197,7 @@ export default function MyNeedNowPage() {
                   >
                     <Send className="size-3.5" />
                     Sent
-                    <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary font-bold">
+                    <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-xs text-primary font-bold">
                       {responses.sent.length}
                     </span>
                   </button>

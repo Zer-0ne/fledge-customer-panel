@@ -80,7 +80,7 @@ function LoginContent() {
       </div>
 
       <div className="pt-1 text-center">
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
+        <p className="text-xs text-muted-foreground leading-relaxed">
           By continuing, you agree to the{' '}
           <Link href="/terms" className="font-medium text-primary hover:underline">
             Terms of Service

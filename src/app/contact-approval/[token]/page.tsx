@@ -181,11 +181,11 @@ export default function ContactApprovalPage() {
           </div>
 
           {context.tokenExpiresAt && (
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
+            <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
               <span className="flex items-center gap-1">
                 <Clock className="size-3" /> Token Expires
               </span>
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="text-xs">
                 {new Date(context.tokenExpiresAt).toLocaleString()}
               </Badge>
             </div>

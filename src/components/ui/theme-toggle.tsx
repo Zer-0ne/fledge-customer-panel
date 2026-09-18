@@ -99,14 +99,14 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
               <Palette className="size-3.5 text-primary" />
               <span>Theme & Display</span>
             </div>
-            <span className="text-[11px] text-muted-foreground capitalize">
+            <span className="text-xs text-muted-foreground capitalize">
               {resolvedTheme} • {fontScale}
             </span>
           </div>
 
           {/* 1. Mode Selector */}
           <div className="space-y-1.5 mb-3">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Mode
             </label>
             <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted/50 p-1 border border-border/50">
@@ -134,9 +134,9 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
 
           {/* 2. Color Themes */}
           <div className="space-y-1.5 mb-3">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center justify-between">
               <span>Accent Palette</span>
-              <span className="capitalize text-foreground font-semibold text-[10px]">
+              <span className="capitalize text-foreground font-semibold text-xs">
                 {colorTheme}
               </span>
             </label>
@@ -168,7 +168,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
 
           {/* 3. Text Size / Font Scaling */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
               <Type className="size-3 text-primary" />
               <span>Text Size & Scaling</span>
             </label>
@@ -187,7 +187,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
                         : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                     )}
                   >
-                    <span className="font-bold text-[11px] text-primary">{sizeLabel}</span>
+                    <span className="font-bold text-xs text-primary">{sizeLabel}</span>
                     <span>{label}</span>
                   </button>
                 );

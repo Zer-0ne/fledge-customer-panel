@@ -161,7 +161,7 @@ export function TrustBadge({
               onError={() => setMissing(true)}
             />
             <span className="mt-1.5 block text-sm font-bold text-foreground">{info.label}</span>
-            <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">{info.description}</span>
+            <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">{info.description}</span>
           </motion.span>,
           document.body,
         ) : null}

@@ -126,7 +126,7 @@ export function ViewersSheet({ requestId, open, onOpenChange }: ViewersSheetProp
         </div>
 
         <div className="flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-5 py-3">
-          <p className="text-[11px] text-muted-foreground">Tap outside to close</p>
+          <p className="text-xs text-muted-foreground">Tap outside to close</p>
           <Button size="sm" variant="ghost" onClick={() => void fetchViewers()} disabled={loading} className="gap-1.5 rounded-xl text-xs">
             <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh

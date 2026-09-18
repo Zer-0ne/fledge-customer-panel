@@ -334,7 +334,7 @@ export function LeafletMapInner({
               >
                 <Popup className="leaflet-custom-popup">
                   <div className="p-1 min-w-[220px]">
-                    <span className="inline-block rounded bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    <span className="inline-block rounded bg-primary/10 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider text-primary">
                       {listing.property?.type || 'Rental Flat'}
                     </span>
                     <h4 className="font-bold text-sm text-slate-900 line-clamp-1 mt-1">
@@ -397,7 +397,7 @@ export function LeafletMapInner({
         </div>
 
         {interactive && onLocationSelect && (
-          <div className="absolute top-3 left-3 z-[400] hidden sm:flex items-center gap-1.5 rounded-lg border border-border/80 bg-card/90 px-3 py-1 text-[11px] font-medium text-muted-foreground backdrop-blur shadow-sm">
+          <div className="absolute top-3 left-3 z-[400] hidden sm:flex items-center gap-1.5 rounded-lg border border-border/80 bg-card/90 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur shadow-sm">
             <MapPin className="size-3 text-primary" />
             Click anywhere on the map to set radius center
           </div>
@@ -421,7 +421,7 @@ export function LeafletMapInner({
             <span className="flex items-center gap-1">Radius: {(radiusMeters / 1000).toFixed(1)} km</span>
           )}
         </div>
-        <div className="text-[11px] text-muted-foreground/70">Map data © Fledge</div>
+        <div className="text-xs text-muted-foreground/70">Map data © Fledge</div>
       </div>
     </div>
   );

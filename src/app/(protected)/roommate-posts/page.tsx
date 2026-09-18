@@ -221,7 +221,7 @@ function RestrictionList({ restrictions }: { restrictions: CapabilityRestriction
               <p className="text-xs text-muted-foreground">{restriction.reason}</p>
             )}
             {restriction.expiresAt && (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Until {new Date(restriction.expiresAt).toLocaleDateString()}
               </p>
             )}

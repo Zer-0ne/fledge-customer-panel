@@ -107,7 +107,7 @@ export function AvailabilityConfirmationCard({
           </p>
         </div>
         {expiresAt && (
-          <Badge variant="outline" className="text-[10px] bg-muted/20">
+          <Badge variant="outline" className="text-xs bg-muted/20">
             Expires: {new Date(expiresAt).toLocaleDateString()}
           </Badge>
         )}
@@ -131,7 +131,7 @@ export function AvailabilityConfirmationCard({
           <CheckCircle2 className="size-4 text-emerald-600 shrink-0 mr-2" />
           <div>
             <span className="font-semibold block text-foreground">Still Available</span>
-            <span className="text-[11px] text-muted-foreground font-normal">Extend availability period</span>
+            <span className="text-xs text-muted-foreground font-normal">Extend availability period</span>
           </div>
         </Button>
 
@@ -144,7 +144,7 @@ export function AvailabilityConfirmationCard({
           <FileEdit className="size-4 text-amber-600 shrink-0 mr-2" />
           <div>
             <span className="font-semibold block text-foreground">Details Changed</span>
-            <span className="text-[11px] text-muted-foreground font-normal">Extend & flag edit required</span>
+            <span className="text-xs text-muted-foreground font-normal">Extend & flag edit required</span>
           </div>
         </Button>
 
@@ -157,7 +157,7 @@ export function AvailabilityConfirmationCard({
           <XCircle className="size-4 text-rose-600 shrink-0 mr-2" />
           <div>
             <span className="font-semibold block text-foreground">No Longer Available</span>
-            <span className="text-[11px] text-muted-foreground font-normal">Archive post & cancel requests</span>
+            <span className="text-xs text-muted-foreground font-normal">Archive post & cancel requests</span>
           </div>
         </Button>
 
@@ -170,7 +170,7 @@ export function AvailabilityConfirmationCard({
           <UserCheck className="size-4 text-blue-600 shrink-0 mr-2" />
           <div>
             <span className="font-semibold block text-foreground">Moved Out (Use Fallback)</span>
-            <span className="text-[11px] text-muted-foreground font-normal">Route inquiries to backup contact</span>
+            <span className="text-xs text-muted-foreground font-normal">Route inquiries to backup contact</span>
           </div>
         </Button>
       </div>

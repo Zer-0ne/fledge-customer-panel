@@ -37,7 +37,7 @@ export function NeedNowFeedCard({ request, onClick }: NeedNowFeedCardProps) {
           <p className="text-sm font-semibold text-foreground truncate">
             {request.owner.displayName}
           </p>
-          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          <p className="flex items-center gap-1 text-xs text-muted-foreground">
             <Timer className="size-3 text-primary/70" />
             <span className={request.status === 'ACTIVE' ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
               {timeLabel}

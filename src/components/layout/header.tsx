@@ -104,7 +104,7 @@ export function Header({
           <div className="flex items-center gap-1 sm:gap-1.5">
             <span className="text-sm sm:text-base font-bold tracking-tight text-foreground">{appName}</span>
             {isBeta && (
-              <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold tracking-wide text-primary ring-1 ring-inset ring-primary/20">
+              <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-xs sm:text-xs font-semibold tracking-wide text-primary ring-1 ring-inset ring-primary/20">
                 Beta
               </span>
             )}
@@ -124,6 +124,7 @@ export function Header({
                 key={link.href}
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
+                title={link.label}
                 className={cn(
                   'relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors',
                   active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'
@@ -173,7 +174,7 @@ export function Header({
               >
                 <MessageSquare className="size-4 sm:size-[18px] text-muted-foreground" />
                 {unreadMessagesCount > 0 && (
-                  <span className="absolute right-0.5 top-0.5 sm:right-1 sm:top-1 flex h-3.5 sm:h-4 min-w-3.5 sm:min-w-4 items-center justify-center rounded-full bg-primary px-0.5 sm:px-1 text-[9px] sm:text-[10px] font-bold text-primary-foreground">
+                  <span className="absolute right-0.5 top-0.5 sm:right-1 sm:top-1 flex h-3.5 sm:h-4 min-w-3.5 sm:min-w-4 items-center justify-center rounded-full bg-primary px-0.5 sm:px-1 text-xs sm:text-xs font-bold text-primary-foreground">
                     {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
                   </span>
                 )}
@@ -210,7 +211,7 @@ export function Header({
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <span className="flex size-6 sm:size-7 items-center justify-center rounded-full bg-primary/10 text-[11px] sm:text-xs font-semibold text-primary">
+                  <span className="flex size-6 sm:size-7 items-center justify-center rounded-full bg-primary/10 text-xs sm:text-xs font-semibold text-primary">
                     {user.displayName.charAt(0).toUpperCase()}
                   </span>
                 )}

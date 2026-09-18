@@ -105,13 +105,13 @@ export function RoommateCard({ post, onInterestClick, isOwner = false, hasExpres
 
           <div className="flex flex-col items-end gap-1">
             {showRoommateBadge && (
-              <Badge variant="outline" className="gap-1 border-primary/30 bg-primary/10 text-primary font-medium text-[11px] px-2 py-0.5">
+              <Badge variant="outline" className="gap-1 border-primary/30 bg-primary/10 text-primary font-medium text-xs px-2 py-0.5">
                 <Users className="size-3" />
                 Roommate
               </Badge>
             )}
             {post.shadowPublished && (
-              <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium text-[11px] px-2 py-0.5">
+              <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium text-xs px-2 py-0.5">
                 <Clock className="size-3" />
                 Under review
               </Badge>
@@ -171,22 +171,22 @@ export function RoommateCard({ post, onInterestClick, isOwner = false, hasExpres
         {/* Preference Tags */}
         <div className="flex flex-wrap gap-1.5 pt-1">
           {(prefs.vegetarian || prefs.vegetarianOnly) && (
-            <Badge variant="outline" className="text-[11px] font-normal border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20">
+            <Badge variant="outline" className="text-xs font-normal border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/20">
               Vegetarian
             </Badge>
           )}
           {prefs.studentOnly && (
-            <Badge variant="outline" className="text-[11px] font-normal border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20">
+            <Badge variant="outline" className="text-xs font-normal border-blue-500/30 text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20">
               Students Only
             </Badge>
           )}
           {prefs.nonSmokerOnly && (
-            <Badge variant="outline" className="text-[11px] font-normal border-purple-500/30 text-purple-700 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/20">
+            <Badge variant="outline" className="text-xs font-normal border-purple-500/30 text-purple-700 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/20">
               Non-Smoker
             </Badge>
           )}
           {prefs.gender && prefs.gender !== 'any' && (
-            <Badge variant="outline" className="capitalize text-[11px] font-normal">
+            <Badge variant="outline" className="capitalize text-xs font-normal">
               {prefs.gender} Only
             </Badge>
           )}

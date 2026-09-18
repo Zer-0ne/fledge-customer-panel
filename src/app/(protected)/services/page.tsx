@@ -116,7 +116,7 @@ export default function ServicesPage() {
               <li key={enquiry.id} className="rounded-2xl border p-3 text-sm">
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate">{enquiry.message}</span>
-                  <span className={`rounded-full border px-2 py-0.5 text-[11px] ${enquiry.status === 'pending' ? 'text-amber-600' : 'text-emerald-600'}`}>{enquiry.status}</span>
+                  <span className={`rounded-full border px-2 py-0.5 text-xs ${enquiry.status === 'pending' ? 'text-amber-600' : 'text-emerald-600'}`}>{enquiry.status}</span>
                 </div>
               </li>
             ))}
@@ -150,9 +150,9 @@ export default function ServicesPage() {
                 return (
                   <>
                     <div className="flex items-start justify-between gap-2">
-                      <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">{LABEL.get(provider.category) ?? provider.category}</span>
+                      <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">{LABEL.get(provider.category) ?? provider.category}</span>
                       {provider.verifiedAt && (
-                        <span className="flex items-center gap-1 text-[11px] text-emerald-600"><BadgeCheck className="h-3.5 w-3.5" /> Verified</span>
+                        <span className="flex items-center gap-1 text-xs text-emerald-600"><BadgeCheck className="h-3.5 w-3.5" /> Verified</span>
                       )}
                     </div>
                     <h3 className="mt-2 text-sm font-semibold">{provider.displayName}</h3>

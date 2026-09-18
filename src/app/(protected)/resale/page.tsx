@@ -134,7 +134,7 @@ export default function ResalePage() {
             {interests.map((interest) => (
               <li key={interest.id} className="flex items-center justify-between gap-3 rounded-2xl border p-3 text-sm">
                 <span className="truncate">{interest.postTitle}</span>
-                <span className={`rounded-full border px-2 py-0.5 text-[11px] ${interest.status === 'pending' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                <span className={`rounded-full border px-2 py-0.5 text-xs ${interest.status === 'pending' ? 'text-amber-600' : 'text-emerald-600'}`}>
                   {interest.status}
                 </span>
               </li>
@@ -175,13 +175,13 @@ export default function ResalePage() {
                   <RoommatePostMedia mediaIds={post.mediaIds} alt={post.title} className="mb-3" />
                 )}
                 <div className="flex items-start justify-between gap-2">
-                  <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">{CATEGORY_LABEL.get(post.category) ?? post.category}</span>
+                  <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">{CATEGORY_LABEL.get(post.category) ?? post.category}</span>
                   {post.mediaState === 'pending' ? (
-                    <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-600" title="Photos are being checked — only you can see this item right now.">
+                    <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-600" title="Photos are being checked — only you can see this item right now.">
                       Under review
                     </span>
                   ) : post.status !== 'active' && (
-                    <span className="rounded-full border px-2 py-0.5 text-[11px] text-emerald-600">{post.status}</span>
+                    <span className="rounded-full border px-2 py-0.5 text-xs text-emerald-600">{post.status}</span>
                   )}
                 </div>
                 <h3 className="mt-2 line-clamp-2 text-sm font-semibold">{post.title}</h3>
@@ -313,7 +313,7 @@ function ComposeResaleDialog({ open, busy, onClose, onSubmit }: {
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">Photos (up to 5)</p>
             <MediaPicker value={images} onChange={setImages} maxCount={5} onUploadingChange={setMediaChecking} />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Every photo is checked as you add it. Promotional artwork, broker flyers, QR codes and
               images with contact details are removed right away — real photos of the item only.
             </p>

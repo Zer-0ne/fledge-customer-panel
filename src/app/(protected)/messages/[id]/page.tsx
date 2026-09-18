@@ -104,7 +104,7 @@ function DaySeparator({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 pb-1 pt-4" role="separator" aria-label={label}>
       <span className="h-px flex-1 bg-border/70" aria-hidden="true" />
-      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">
+      <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground/80">
         {label}
       </span>
       <span className="h-px flex-1 bg-border/70" aria-hidden="true" />
@@ -901,7 +901,7 @@ export default function ChatThreadPage() {
               {conversation?.contextType === 'housing_request_response' ? (
                 <Badge
                   variant="outline"
-                  className="text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[200px] sm:max-w-[300px] truncate border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[200px] sm:max-w-[300px] truncate border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
                   title={housingContext ? `${housingContext.title}${housingContext.location ? ` · ${housingContext.location}` : ''}` : 'Need Now'}
                 >
                   Need Now{housingContext?.location ? `: ${housingContext.location}` : ''}
@@ -909,7 +909,7 @@ export default function ChatThreadPage() {
               ) : conversation?.contextType && (
                 <Badge
                   variant="outline"
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[200px] sm:max-w-[300px] truncate ${
+                  className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 max-w-[200px] sm:max-w-[300px] truncate ${
                     conversation.contextType === 'listing_interest'
                       ? 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                       : 'border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400'
@@ -927,14 +927,14 @@ export default function ChatThreadPage() {
               {chatClosed && (
                 <Badge
                   variant="warning"
-                  className="text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0"
+                  className="text-xs px-2 py-0.5 rounded-full font-medium shrink-0"
                 >
                   Post expired
                 </Badge>
               )}
               {socketStatus === 'connected' && (
                 <span
-                  className="inline-flex shrink-0 items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400"
+                  className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400"
                   title="Realtime connected — messages arrive instantly"
                 >
                   <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
@@ -942,7 +942,7 @@ export default function ChatThreadPage() {
                 </span>
               )}
             </div>
-            {peer?.bio && <p className="text-[11px] text-muted-foreground truncate">{peer.bio}</p>}
+            {peer?.bio && <p className="text-xs text-muted-foreground truncate">{peer.bio}</p>}
           </div>
         </div>
 
@@ -1007,11 +1007,11 @@ export default function ChatThreadPage() {
               <div className="flex min-w-0 items-center gap-2.5">
                 {isRoommate ? <Users className="size-4 shrink-0 text-purple-500" /> : <Home className="size-4 shrink-0 text-primary" />}
                 <div className="min-w-0">
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Related {isRoommate ? 'roommate post' : 'listing'}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Related {isRoommate ? 'roommate post' : 'listing'}</p>
                   <p className="truncate text-xs font-semibold text-foreground">{title}</p>
                 </div>
               </div>
-              <Link href={isRoommate ? (postId ? `/roommate-interests?tab=incoming&postId=${postId}` : '/roommate-interests') : postId ? `/listings/${postId}` : '/listings'} className="shrink-0 text-[11px] font-medium text-primary hover:underline">
+              <Link href={isRoommate ? (postId ? `/roommate-interests?tab=incoming&postId=${postId}` : '/roommate-interests') : postId ? `/listings/${postId}` : '/listings'} className="shrink-0 text-xs font-medium text-primary hover:underline">
                 View post
               </Link>
             </div>
@@ -1024,7 +1024,7 @@ export default function ChatThreadPage() {
             <div className="flex min-w-0 items-center gap-2.5">
               <Timer className="size-4 shrink-0 text-amber-500" />
               <div className="min-w-0">
-                <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Related Need Now requirement</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Related Need Now requirement</p>
                 <p className="truncate text-xs font-semibold text-foreground">
                   {housingContext.title}
                   {housingContext.location ? <span className="font-normal text-muted-foreground"> · {housingContext.location}</span> : null}
@@ -1032,7 +1032,7 @@ export default function ChatThreadPage() {
                 </p>
               </div>
             </div>
-            <Link href={`/need-now/${housingContext.requestId}`} className="shrink-0 text-[11px] font-medium text-primary hover:underline">
+            <Link href={`/need-now/${housingContext.requestId}`} className="shrink-0 text-xs font-medium text-primary hover:underline">
               View requirement
             </Link>
           </div>
@@ -1050,7 +1050,7 @@ export default function ChatThreadPage() {
           aria-live="polite"
         >
         {realtimeNotice && socketStatus !== 'connected' && (
-          <div className="rounded-xl border border-border bg-muted/40 px-3 py-2 text-[11px] text-muted-foreground flex items-center justify-between gap-2">
+          <div className="rounded-xl border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground flex items-center justify-between gap-2">
             <span>{realtimeNotice}</span>
             <button
               type="button"
@@ -1131,7 +1131,7 @@ export default function ChatThreadPage() {
                     </div>
 
                     {isLastOfRun && (
-                      <div className="mt-1 flex items-center gap-1 px-1.5 text-[10px] text-muted-foreground">
+                      <div className="mt-1 flex items-center gap-1 px-1.5 text-xs text-muted-foreground">
                         <time dateTime={msg.createdAt} className="tabular-nums">
                           {formatChatTime(msg.createdAt)}
                         </time>
@@ -1189,7 +1189,7 @@ export default function ChatThreadPage() {
           <button
             type="button"
             onClick={jumpToLatest}
-            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-background/95 px-3.5 py-1.5 text-[11px] font-medium text-foreground shadow-lg transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-background/95 px-3.5 py-1.5 text-xs font-medium text-foreground shadow-lg transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={hasNewBelow ? 'New messages — jump to latest' : 'Jump to latest messages'}
           >
             {hasNewBelow && <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />}
@@ -1250,7 +1250,7 @@ export default function ChatThreadPage() {
               </Button>
             </div>
             <div
-              className={`mt-1.5 flex items-center justify-between px-1 text-[10px] text-muted-foreground transition-opacity ${
+              className={`mt-1.5 flex items-center justify-between px-1 text-xs text-muted-foreground transition-opacity ${
                 composerFocused ? 'opacity-100' : 'opacity-0'
               }`}
               aria-hidden={!composerFocused}

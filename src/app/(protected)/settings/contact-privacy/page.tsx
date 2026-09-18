@@ -146,7 +146,7 @@ export default function ContactPrivacyPage() {
 
         {/* Default Mode section */}
         <div className="space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
             Default Mode
           </p>
           <div className="rounded-2xl border border-border/60 bg-card divide-y divide-border/40">
@@ -158,7 +158,7 @@ export default function ContactPrivacyPage() {
 
         {/* Safety section */}
         <div className="space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
             Safety
           </p>
           <div className="rounded-2xl border border-border/60 bg-card divide-y divide-border/40">
@@ -171,7 +171,7 @@ export default function ContactPrivacyPage() {
         {/* Info note */}
         <div className="rounded-2xl border border-border/60 bg-card p-4 flex items-start gap-3">
           <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-          <p className="text-[11px] text-muted-foreground leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             Every listing and roommate post has its own contact mode — set it from the post
             screen (Contact settings) when you own the post.
           </p>

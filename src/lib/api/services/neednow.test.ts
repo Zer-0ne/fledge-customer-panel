@@ -230,9 +230,9 @@ describe('createDraft', () => {
 });
 
 describe('seen-by: formatViewerSeenAt', () => {
-  it('returns abhi for <45s', async () => {
+  it('returns just now for <45s', async () => {
     const { formatViewerSeenAt } = await import('./neednow');
-    expect(formatViewerSeenAt(new Date(Date.now() - 20_000).toISOString())).toBe('abhi');
+    expect(formatViewerSeenAt(new Date(Date.now() - 20_000).toISOString())).toBe('just now');
   });
   it('returns minutes ago', async () => {
     const { formatViewerSeenAt } = await import('./neednow');

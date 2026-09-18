@@ -135,7 +135,7 @@ export function CircularCarousel({ items, className }: CircularCarouselProps) {
                 zIndex: 10 - abs,
               }}
             >
-              <p className="text-[11px] font-medium tracking-[0.18em] text-muted-foreground uppercase">
+              <p className="text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase">
                 {item.tag}
               </p>
               <h3 className="mt-3 text-xl font-semibold tracking-tight text-card-foreground">

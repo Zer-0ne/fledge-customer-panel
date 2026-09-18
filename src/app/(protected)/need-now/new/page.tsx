@@ -416,7 +416,7 @@ function NewNeedNowPageInner() {
                   }`}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
-                  <span className="flex size-4 items-center justify-center rounded-full bg-background/20 text-[10px]">
+                  <span className="flex size-4 items-center justify-center rounded-full bg-background/20 text-xs">
                     {isDone ? <Check className="size-3" /> : stepNumber}
                   </span>
                   <span className="hidden sm:inline">{label}</span>
@@ -761,7 +761,7 @@ function NewNeedNowPageInner() {
               <div className="flex items-center justify-between rounded-xl border border-border/50 p-3">
                 <span className="text-xs font-medium text-foreground">
                   Allow offers from verified partners
-                  <span className="block text-[11px] font-normal text-muted-foreground">
+                  <span className="block text-xs font-normal text-muted-foreground">
                     Let verified property partners offer you listings
                   </span>
                 </span>
@@ -809,7 +809,7 @@ function NewNeedNowPageInner() {
                     <p className="text-sm font-bold text-foreground">
                       {draft.intentType ? INTENT_OPTIONS.find((o) => o.value === draft.intentType)?.label : 'Intent'}
                     </p>
-                    <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">24h left</span>
+                    <span className="text-xs font-medium text-amber-600 dark:text-amber-400">24h left</span>
                   </div>
                   <p className="flex items-center gap-1 text-xs text-muted-foreground">
                     <MapPin className="size-3 text-primary/70" />
@@ -871,7 +871,7 @@ function NewNeedNowPageInner() {
           </div>
         </div>
 
-        <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Building2 className="size-3.5" />
           Every requirement expires automatically after 24 hours. You can pause, renew, or remove it anytime.
         </p>

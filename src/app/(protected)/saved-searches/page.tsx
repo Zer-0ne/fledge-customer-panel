@@ -195,12 +195,12 @@ export default function SavedSearchesPage() {
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-2">{FiltersSummary(saved)}</p>
                     {saved.lastMatchedAt && (
-                      <p className="text-[11px] text-muted-foreground/70">
+                      <p className="text-xs text-muted-foreground/70">
                         Last matched {formatRelativeTime(saved.lastMatchedAt)}
                       </p>
                     )}
                   </div>
-                  <span className="text-[11px] text-muted-foreground/70 whitespace-nowrap">
+                  <span className="text-xs text-muted-foreground/70 whitespace-nowrap">
                     Saved {formatRelativeTime(saved.createdAt)}
                   </span>
                 </div>

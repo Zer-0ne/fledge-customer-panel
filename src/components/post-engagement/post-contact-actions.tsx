@@ -200,14 +200,14 @@ export function PostContactActions({ surface, postId, isOwner, onStateChange }: 
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">{viewer.displayName}</p>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {viewer.viewCount > 1 ? `opened ${viewer.viewCount} times` : 'Opened once'} · first {formatSeenAt(viewer.firstViewedAt)}
                         {viewer.lastViewedAt !== viewer.firstViewedAt ? ` · last ${formatSeenAt(viewer.lastViewedAt)}` : ''}
                       </p>
                     </div>
                   </div>
                 ))}
-                <p className="pt-1 text-center text-[11px] text-muted-foreground">
+                <p className="pt-1 text-center text-xs text-muted-foreground">
                   {audit.totalReveals}/{audit.maxReveals ?? 5} reveals used
                 </p>
               </div>

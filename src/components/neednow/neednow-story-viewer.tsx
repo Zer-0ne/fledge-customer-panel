@@ -352,11 +352,11 @@ export function NeedNowStoryViewer({
             <p className="truncate text-sm font-bold text-foreground">
               {current.owner.displayName}
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {NEED_NOW_INTENT_LABELS[current.intentType]}
             </p>
           </div>
-          <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-foreground">
+          <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-foreground">
             {remaining}
           </span>
         </div>

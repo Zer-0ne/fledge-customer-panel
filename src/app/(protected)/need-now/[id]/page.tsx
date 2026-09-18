@@ -267,7 +267,7 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
             <p className={`text-sm font-bold ${request.status === 'ACTIVE' ? 'text-amber-600 dark:text-amber-400' : 'text-foreground'}`}>
               {timeLabel}
             </p>
-            <p className="text-[11px] text-muted-foreground">{NEED_NOW_VISIBILITY_LABELS[request.visibility]}</p>
+            <p className="text-xs text-muted-foreground">{NEED_NOW_VISIBILITY_LABELS[request.visibility]}</p>
           </div>
         </div>
 
@@ -459,7 +459,7 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
                     {formatDistanceMeters(request.location.distanceMeters)}
                   </span>
                 )}
-                <span className="block text-[11px] font-normal text-muted-foreground">
+                <span className="block text-xs font-normal text-muted-foreground">
                   Search radius: {request.radiusMeters >= 1000 ? `${(request.radiusMeters / 1000).toFixed(0)} km` : `${request.radiusMeters} m`}
                 </span>
               </dd>
@@ -497,7 +497,7 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
           {request.preferredRoomTypes.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {request.preferredRoomTypes.map((type) => (
-                <Badge key={type} variant="secondary" className="text-[11px]">
+                <Badge key={type} variant="secondary" className="text-xs">
                   {PREFERRED_ROOM_TYPE_LABELS[type]}
                 </Badge>
               ))}
@@ -507,26 +507,26 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
           {request.preferences && (
             <div className="flex flex-wrap gap-1.5">
               {request.preferences.furnishing && request.preferences.furnishing !== 'ANY' && (
-                <Badge variant="outline" className="text-[11px]">{FURNISHING_LABELS[request.preferences.furnishing]}</Badge>
+                <Badge variant="outline" className="text-xs">{FURNISHING_LABELS[request.preferences.furnishing]}</Badge>
               )}
               {request.preferences.occupancy && request.preferences.occupancy !== 'ANY' && (
-                <Badge variant="outline" className="text-[11px]">{OCCUPANCY_LABELS[request.preferences.occupancy]}</Badge>
+                <Badge variant="outline" className="text-xs">{OCCUPANCY_LABELS[request.preferences.occupancy]}</Badge>
               )}
               {request.preferences.studentOrProfessional && request.preferences.studentOrProfessional !== 'ANY' && (
-                <Badge variant="outline" className="text-[11px]">{STUDENT_WORKING_LABELS[request.preferences.studentOrProfessional]}</Badge>
+                <Badge variant="outline" className="text-xs">{STUDENT_WORKING_LABELS[request.preferences.studentOrProfessional]}</Badge>
               )}
               {request.preferences.foodPreference && request.preferences.foodPreference !== 'ANY' && (
-                <Badge variant="outline" className="text-[11px]">{FOOD_PREFERENCE_LABELS[request.preferences.foodPreference]}</Badge>
+                <Badge variant="outline" className="text-xs">{FOOD_PREFERENCE_LABELS[request.preferences.foodPreference]}</Badge>
               )}
               {request.preferences.sleepSchedule && (
-                <Badge variant="outline" className="text-[11px]">Sleep: {SLEEP_SCHEDULE_LABELS[request.preferences.sleepSchedule]}</Badge>
+                <Badge variant="outline" className="text-xs">Sleep: {SLEEP_SCHEDULE_LABELS[request.preferences.sleepSchedule]}</Badge>
               )}
               {request.preferences.cleanliness && (
-                <Badge variant="outline" className="text-[11px]">Cleanliness: {CLEANLINESS_LABELS[request.preferences.cleanliness]}</Badge>
+                <Badge variant="outline" className="text-xs">Cleanliness: {CLEANLINESS_LABELS[request.preferences.cleanliness]}</Badge>
               )}
-              {request.preferences.smokingOk && <Badge variant="outline" className="text-[11px]">Non-smoker home</Badge>}
-              {request.preferences.petsOk && <Badge variant="outline" className="text-[11px]">Pets allowed</Badge>}
-              {request.preferences.visitorsOk && <Badge variant="outline" className="text-[11px]">Visitors allowed</Badge>}
+              {request.preferences.smokingOk && <Badge variant="outline" className="text-xs">Non-smoker home</Badge>}
+              {request.preferences.petsOk && <Badge variant="outline" className="text-xs">Pets allowed</Badge>}
+              {request.preferences.visitorsOk && <Badge variant="outline" className="text-xs">Visitors allowed</Badge>}
             </div>
           )}
 
@@ -543,7 +543,7 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
               <ul className="flex flex-wrap gap-1.5">
                 {request.areas.map((area) => (
                   <li key={area.id}>
-                    <Badge variant="outline" className="text-[11px]">{area.locationName}</Badge>
+                    <Badge variant="outline" className="text-xs">{area.locationName}</Badge>
                   </li>
                 ))}
               </ul>
@@ -578,13 +578,13 @@ export default function NeedNowDetailPage({ params }: { params: Promise<{ id: st
         {!rel.isOwner && rel.existingResponseId && (
           <div className="rounded-2xl border border-border/60 bg-card p-4 space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Your response
               </span>
               {myResponse && (
                 <Badge
                   variant={myResponse.status === 'ACCEPTED' ? 'success' : myResponse.status === 'DECLINED' ? 'destructive' : myResponse.status === 'WITHDRAWN' || myResponse.status === 'EXPIRED' ? 'outline' : 'secondary'}
-                  className="text-[10px]"
+                  className="text-xs"
                 >
                   {myResponse.status.charAt(0) + myResponse.status.slice(1).toLowerCase()}
                 </Badge>

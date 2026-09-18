@@ -260,7 +260,7 @@ export default function VerifyPostPage({ params }: { params: Promise<{ id: strin
           <div className="rounded-3xl border border-border/60 bg-card p-6 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">Complete verification</h2>
-              <span className="text-[11px] text-muted-foreground">Tenant verification in progress</span>
+              <span className="text-xs text-muted-foreground">Tenant verification in progress</span>
             </div>
 
             {liveCode && (
@@ -353,7 +353,7 @@ export default function VerifyPostPage({ params }: { params: Promise<{ id: strin
                 <code className="block rounded-lg bg-muted px-3 py-2 text-xs text-foreground select-all">
                   {verificationId}
                 </code>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Verification stays pending until they confirm.
                 </p>
               </div>

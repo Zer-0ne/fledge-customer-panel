@@ -92,7 +92,7 @@ export function PostSeenByEntry({ surface, postId }: { surface: SeenSurface; pos
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{viewer.displayName}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       pehli baar {formatSeenAt(viewer.firstSeenAt)}
                       {viewer.lastSeenAt !== viewer.firstSeenAt ? ` · last ${formatSeenAt(viewer.lastSeenAt)}` : ''}
                     </p>

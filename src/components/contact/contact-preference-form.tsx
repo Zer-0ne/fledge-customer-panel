@@ -217,7 +217,7 @@ export function ContactPreferenceForm({ entityType, entityId, onSaved }: Contact
             <span className="font-semibold text-foreground flex items-center gap-1.5">
               <MessageSquare className="size-3.5 text-primary" /> In-App Chat Only
             </span>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Keep communication strictly within the secure chat platform. Phone numbers are never revealed.
             </p>
           </div>
@@ -243,7 +243,7 @@ export function ContactPreferenceForm({ entityType, entityId, onSaved }: Contact
             <span className="font-semibold text-foreground flex items-center gap-1.5">
               <Lock className="size-3.5 text-primary" /> Request Required
             </span>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Requesters must ask before revealing your number. You manually approve or decline each request.
             </p>
           </div>
@@ -269,7 +269,7 @@ export function ContactPreferenceForm({ entityType, entityId, onSaved }: Contact
             <span className="font-semibold text-foreground flex items-center gap-1.5">
               <Clock className="size-3.5 text-primary" /> Verified Users After Delay
             </span>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Automatically grant bounded contact access to verified users after a specified conversation delay.
             </p>
           </div>
@@ -295,7 +295,7 @@ export function ContactPreferenceForm({ entityType, entityId, onSaved }: Contact
             <span className="font-semibold text-foreground flex items-center gap-1.5">
               <UserCheck className="size-3.5 text-primary" /> Use Verified Backup Contact
             </span>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Direct contact requests to a verified backup contact (property manager, roommate, or family).
             </p>
           </div>
@@ -327,7 +327,7 @@ export function ContactPreferenceForm({ entityType, entityId, onSaved }: Contact
                 value={autoRevealAfterMinutes}
                 onChange={(e) => setAutoRevealAfterMinutes(Number(e.target.value))}
               />
-              <span className="text-[10px] text-muted-foreground">Range: 1 to 20160 min</span>
+              <span className="text-xs text-muted-foreground">Range: 1 to 20160 min</span>
             </div>
             <div>
               <label className="font-semibold block mb-1">Grant Duration (Minutes)</label>
@@ -338,7 +338,7 @@ export function ContactPreferenceForm({ entityType, entityId, onSaved }: Contact
                 value={revealDurationMinutes}
                 onChange={(e) => setRevealDurationMinutes(Number(e.target.value))}
               />
-              <span className="text-[10px] text-muted-foreground">Range: 1 to 43200 min</span>
+              <span className="text-xs text-muted-foreground">Range: 1 to 43200 min</span>
             </div>
             <div>
               <label className="font-semibold block mb-1">Daily Reveal Limit</label>
@@ -349,7 +349,7 @@ export function ContactPreferenceForm({ entityType, entityId, onSaved }: Contact
                 value={dailyRevealLimit}
                 onChange={(e) => setDailyRevealLimit(Number(e.target.value))}
               />
-              <span className="text-[10px] text-muted-foreground">Range: 1 to 100 per day</span>
+              <span className="text-xs text-muted-foreground">Range: 1 to 100 per day</span>
             </div>
           </div>
 
@@ -360,7 +360,7 @@ export function ContactPreferenceForm({ entityType, entityId, onSaved }: Contact
                 onChange={(e) => setConsentConfirmed(e.target.checked)}
                 className="mt-0.5"
               />
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 I explicitly confirm consent to automatically reveal my phone number after the specified delay to eligible verified users.
               </span>
             </label>
@@ -411,7 +411,7 @@ export function ContactPreferenceForm({ entityType, entityId, onSaved }: Contact
                 onChange={(e) => setConsentConfirmed(e.target.checked)}
                 className="mt-0.5"
               />
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 I explicitly activate and consent to using the selected verified backup contact for contact fallback.
               </span>
             </label>

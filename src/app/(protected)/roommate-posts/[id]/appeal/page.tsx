@@ -175,7 +175,7 @@ export default function AppealPostPage({ params }: { params: Promise<{ id: strin
               <div key={appeal.id} className="rounded-2xl border border-border/60 bg-card p-4 space-y-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-medium text-foreground">{appealStatusLabel(appeal.status)}</span>
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {new Date(appeal.createdAt).toLocaleDateString()}
                   </span>
                 </div>

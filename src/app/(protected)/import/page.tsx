@@ -240,7 +240,7 @@ export default function ImportFromCommunityPage() {
                   active ? 'border-primary bg-primary/10 text-primary' : done ? 'border-emerald-500/40 text-emerald-600' : 'text-muted-foreground'
                 }`}
               >
-                <span className="flex h-4 w-4 items-center justify-center rounded-full border text-[10px]">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full border text-xs">
                   {done ? <Check className="h-3 w-3" /> : index + 1}
                 </span>
                 {item.label}
@@ -319,11 +319,11 @@ export default function ImportFromCommunityPage() {
             <div className="flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-4">
               <BadgeCheck className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">{INTENT_LABEL[parsed.intent]}</span>
-              <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+              <span className="rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
                 {parsed.confidence} confidence
               </span>
               {parsed.fieldsFound.length > 0 && (
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   read: {parsed.fieldsFound.join(' · ')}
                 </span>
               )}
@@ -413,7 +413,7 @@ export default function ImportFromCommunityPage() {
                   <div className="mt-2 space-y-3">
                     {grouped.map(([category, items]) => (
                       <div key={category}>
-                        <p className="mb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">{category}</p>
+                        <p className="mb-1.5 text-xs uppercase tracking-wide text-muted-foreground">{category}</p>
                         <div className="flex flex-wrap gap-1.5">
                           {items.map((item) => {
                             const active = codes.includes(item.code);
@@ -422,7 +422,7 @@ export default function ImportFromCommunityPage() {
                                 key={item.code}
                                 type="button"
                                 onClick={() => setCodes((prev) => active ? prev.filter((c) => c !== item.code) : [...prev, item.code])}
-                                className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                                className={`rounded-full border px-2.5 py-1 text-xs transition ${
                                   active ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-accent'
                                 }`}
                                 aria-pressed={active}

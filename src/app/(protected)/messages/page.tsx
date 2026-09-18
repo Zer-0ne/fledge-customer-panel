@@ -488,7 +488,7 @@ export default function MessagesPage() {
           <UserPlus className="size-4" aria-hidden="true" />
           Requests
           {visibleRequestsCount > 0 && (
-            <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-[11px] font-semibold text-white">
+            <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs font-semibold text-white">
               {visibleRequestsCount}
             </span>
           )}
@@ -630,7 +630,7 @@ export default function MessagesPage() {
                       )}
                     </div>
                     {hasUnread ? (
-                      <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full border-2 border-background bg-primary text-[10px] font-bold tabular-nums text-primary-foreground shadow-xs sm:hidden">
+                      <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full border-2 border-background bg-primary text-xs font-bold tabular-nums text-primary-foreground shadow-xs sm:hidden">
                         {effectiveUnread > 99 ? '99+' : effectiveUnread}
                       </span>
                     ) : null}
@@ -650,7 +650,7 @@ export default function MessagesPage() {
                       <Badge
                         variant="outline"
                         title={listingLabel}
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium max-w-[150px] truncate ${
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium max-w-[150px] truncate ${
                           conv.contextType === 'listing_interest'
                             ? 'border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400'
                             : isHousing
@@ -663,7 +663,7 @@ export default function MessagesPage() {
                       {conv.contextState === 'expired' && (
                         <Badge
                           variant="warning"
-                          className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                          className="text-xs px-2 py-0.5 rounded-full font-medium"
                         >
                           Post expired
                         </Badge>
@@ -685,14 +685,14 @@ export default function MessagesPage() {
 
                 {/* Date & WhatsApp-Style Unread Count Badge */}
                 <div className="flex shrink-0 flex-col items-end gap-1.5 pl-2">
-                  <span className={`text-[11px] tabular-nums sm:text-xs ${
+                  <span className={`text-xs tabular-nums sm:text-xs ${
                     hasUnread ? 'font-bold text-primary' : 'text-muted-foreground'
                   }`}>
                     {formatConversationStamp(msgTime)}
                   </span>
                   <div className="flex items-center gap-2">
                     {hasUnread ? (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold tabular-nums text-primary-foreground shadow-xs">
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold tabular-nums text-primary-foreground shadow-xs">
                         {effectiveUnread > 99 ? '99+' : effectiveUnread}
                       </span>
                     ) : null}
@@ -808,7 +808,7 @@ function RequestsPanel({
                     <span className="text-sm font-semibold text-foreground truncate">
                       {r.responder.displayName}
                     </span>
-                    <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
                       {responseKindLabel(r)}
                     </Badge>
                   </div>
@@ -817,7 +817,7 @@ function RequestsPanel({
                       {r.message}
                     </p>
                   ) : null}
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {formatDate(r.createdAt)}
                   </p>
                 </div>
@@ -863,14 +863,14 @@ function RequestsPanel({
                     <span className="text-sm font-semibold text-foreground truncate">
                       {m.sender?.displayName || 'User'}
                     </span>
-                    <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400">
                       Message request
                     </Badge>
                   </div>
                   <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                     {msgRequestSubtitle(m)}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {formatDate(m.createdAt)}
                   </p>
                 </div>

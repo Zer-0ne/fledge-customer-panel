@@ -202,11 +202,11 @@ export function NeedNowRequestCard({ request, onChanged }: NeedNowRequestCardPro
       {request.preferredRoomTypes && request.preferredRoomTypes.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {request.preferredRoomTypes.map((type) => (
-            <Badge key={type} variant="secondary" className="text-[11px]">
+            <Badge key={type} variant="secondary" className="text-xs">
               {PREFERRED_ROOM_TYPE_LABELS[type]}
             </Badge>
           ))}
-          <Badge variant="secondary" className="text-[11px]">
+          <Badge variant="secondary" className="text-xs">
             {STAY_DURATION_LABELS[request.stayDurationType]}
           </Badge>
         </div>

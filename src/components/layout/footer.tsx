@@ -68,13 +68,13 @@ function FooterColumn({
   links: { href: string; label: string }[];
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1">
       <p className="font-medium text-foreground">{title}</p>
       {links.map((link) => (
         <Link
           key={link.href}
           href={link.href}
-          className="text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex min-h-6 items-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         >
           {link.label}
         </Link>

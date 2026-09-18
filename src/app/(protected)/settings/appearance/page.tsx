@@ -275,7 +275,7 @@ export default function AppearanceSettingsPage() {
             );
           })}
         </div>
-        <p className="text-[11px] leading-relaxed text-muted-foreground">
+        <p className="text-xs leading-relaxed text-muted-foreground">
           Applies to this browser instantly. Installed app note: the phone home-screen icon
           refreshes on its own — Android re-reads it after the web app changes and you relaunch
           the installed app (usually within a day). Reinstalling is only for getting the new icon

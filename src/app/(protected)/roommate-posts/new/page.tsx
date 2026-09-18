@@ -350,7 +350,7 @@ function CreateRoommatePostPageInner() {
                   </option>
                 ))}
               </Select>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Pick your college <span className="italic">or</span> set a locality below.
               </p>
             </div>

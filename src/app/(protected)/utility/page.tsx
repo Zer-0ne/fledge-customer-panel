@@ -150,12 +150,12 @@ export default function UtilityBoardPage() {
                     <div className="flex items-center gap-2">
                       <span className={`h-2 w-2 rounded-full ${meta.tone}`} aria-hidden />
                       <span className="text-sm font-semibold">{meta.label}</span>
-                      <span className={`rounded-full border px-2 py-0.5 text-[11px] ${STATUS_TONE[report.status] ?? ''}`}>{statusLabel}</span>
+                      <span className={`rounded-full border px-2 py-0.5 text-xs ${STATUS_TONE[report.status] ?? ''}`}>{statusLabel}</span>
                     </div>
-                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground"><Clock className="h-3 w-3" /> {timeLeft(report.expiresAt)}</span>
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="h-3 w-3" /> {timeLeft(report.expiresAt)}</span>
                   </div>
                   {report.note && <p className="mt-2 text-xs text-muted-foreground">{report.note}</p>}
-                  <p className="mt-1 text-[11px] text-muted-foreground">{report.locality ?? 'area not set'}{report.streetLabel ? ` · ${report.streetLabel}` : ''}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{report.locality ?? 'area not set'}{report.streetLabel ? ` · ${report.streetLabel}` : ''}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={() => { void vote(report, 'confirm'); }} disabled={busy === report.id}>
                       {busy === report.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <ThumbsUp className="mr-1.5 h-3.5 w-3.5" />} Confirm ({report.confirmations})

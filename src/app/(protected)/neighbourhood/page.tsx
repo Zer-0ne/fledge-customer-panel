@@ -94,7 +94,7 @@ export default function NeighbourhoodPage() {
                   <span className="font-medium">{UTILITY_KINDS.find((item) => item.code === report.kind)?.label ?? report.kind}</span>
                   <span className="truncate text-muted-foreground">{report.locality ?? ''}</span>
                 </span>
-                <span className="shrink-0 text-[11px] text-muted-foreground">{timeLeft(report.expiresAt)}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">{timeLeft(report.expiresAt)}</span>
               </li>
             ))}
           </ul>

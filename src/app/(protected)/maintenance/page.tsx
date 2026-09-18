@@ -135,7 +135,7 @@ export default function MaintenancePage() {
                       {CATEGORY_LABELS[req.category] ?? req.category}
                     </p>
                   </div>
-                  <span className="text-[11px] text-muted-foreground/70 whitespace-nowrap">
+                  <span className="text-xs text-muted-foreground/70 whitespace-nowrap">
                     Raised {formatRelativeTime(req.createdAt)}
                   </span>
                 </div>

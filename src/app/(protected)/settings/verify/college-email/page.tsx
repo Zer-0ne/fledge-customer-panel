@@ -161,7 +161,7 @@ export default function CollegeEmailVerifyPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-xl border border-border/60 bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-primary/50"
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Use your official college address. Gmail, Yahoo, Outlook etc. are not accepted.
               </p>
             </div>
