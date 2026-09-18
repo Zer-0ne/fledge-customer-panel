@@ -7,7 +7,10 @@ import { Heart, Shield, BookOpen, ExternalLink } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: `About — ${env.NEXT_PUBLIC_APP_NAME}`,
-  description: 'Student housing discovery for verified listings, roommates, and campus-near flats.',
+  description:
+    'Fledge is student housing discovery for India: verified listings, compatible roommates, and flats and PG accommodation near your campus.',
+  alternates: { canonical: '/about' },
+  openGraph: { title: `About — ${env.NEXT_PUBLIC_APP_NAME}`, url: '/about' },
 };
 
 function InfoCard({ icon: Icon, title, body }: { icon: typeof Heart; title: string; body: string }) {

@@ -34,6 +34,14 @@ describe("decideProxyAction — customer panel route protection", () => {
       expect(decideProxyAction({ pathname: "/donate", isAuthenticated: false })).toEqual({ type: "pass" });
       expect(decideProxyAction({ pathname: "/donate", isAuthenticated: true })).toEqual({ type: "pass" });
     });
+
+    it("passes SEO/AI files so crawlers can read robots, sitemap, llms and pricing", () => {
+      expect(decideProxyAction({ pathname: "/robots.txt", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/sitemap.xml", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/llms.txt", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/llms-full.txt", isAuthenticated: false })).toEqual({ type: "pass" });
+      expect(decideProxyAction({ pathname: "/pricing.md", isAuthenticated: false })).toEqual({ type: "pass" });
+    });
   });
 
   describe("protected paths", () => {

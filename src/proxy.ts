@@ -23,7 +23,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/auth/cookies";
 
 const PUBLIC_PATH_PATTERN =
-  /^\/(login|signup|contact-approval|ad-style-preview|offline|about|faq|contact|privacy|terms|pricing|refunds|donate)(\/|$)/;
+  /^\/(login|signup|contact-approval|ad-style-preview|offline|about|faq|contact|privacy|terms|pricing|refunds|donate|robots\.txt|sitemap\.xml|llms\.txt|llms-full\.txt|pricing\.md)(\/|$)/;
 
 export type ProxyDecision =
   | { type: "pass" }
@@ -74,6 +74,9 @@ export function proxy(request: NextRequest): NextResponse | undefined {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff2?)$).*)",
+    // Everything is gated except Next internals, API routes, PWA assets, and
+    // the SEO/AI files (robots.txt, sitemap.xml, llms*.txt, pricing.md) — a
+    // redirect on those would hide the site from crawlers entirely.
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|robots\\.txt|sitemap\\.xml|llms\\.txt|llms-full\\.txt|pricing\\.md|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|xml|txt|md|woff2?)$).*)",
   ],
 };

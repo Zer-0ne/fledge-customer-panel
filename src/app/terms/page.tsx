@@ -7,6 +7,8 @@ import { FLEDGE_SUPPORT_EMAIL, POLICY_LAST_UPDATED } from '@/lib/public-info';
 export const metadata: Metadata = {
   title: `Terms of Service — ${env.NEXT_PUBLIC_APP_NAME}`,
   description: 'Terms for using Fledge housing discovery, matching, chat, and payment features.',
+  alternates: { canonical: '/terms' },
+  openGraph: { title: `Terms of Service — ${env.NEXT_PUBLIC_APP_NAME}`, url: '/terms' },
 };
 
 export default function TermsPage() {

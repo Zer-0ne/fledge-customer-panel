@@ -1,0 +1,49 @@
+# Fledge
+
+> Fledge is a student housing and roommate discovery product for India. Students and renters find nearby flats, PG (paying guest) accommodation and shared rooms, match with compatible roommates, and post time-limited urgent housing requirements ("Need Now"). Fledge is made by NearestZ.
+
+Last updated: 2026-09-18
+
+## Product
+
+- Customer web app (installable PWA): https://fledge.nearestz.com
+- Android app: distributed to early users (same account as the web app)
+- Partner portal for housing owners, managers and advertisers: https://www.partner-fledge.nearestz.com/
+- Maker: NearestZ — https://www.nearestz.com
+
+## What Fledge does
+
+- Local discovery — flats, PG accommodation and shared spaces near a college, office or transit route.
+- Roommate matching — find renters looking in the same area; chat inside Fledge before sharing contact details.
+- Need Now — a time-limited urgent housing requirement; responses open a chat thread directly.
+- Trust and safety — role verification badges (student, faculty, partner, college membership), owl trust tiers (bronze, silver, gold, diamond), moderated listings and posts, in-app reporting and blocking. Phone numbers stay hidden until an approved contact flow releases them (single view, 1-day unseen expiry by default).
+- Sponsored placements are labelled; sponsorship does not verify a property and does not buy ranking or trust.
+
+## Pricing
+
+- Free for students and tenants: no listing fee, no brokerage, no commission on rent.
+- Optional donations support platform running costs; donors can stay anonymous.
+- Machine-readable pricing: https://fledge.nearestz.com/pricing.md
+- Payments collected by Fledge (for example partner advertising or donations) follow the published cancellation and refunds policy.
+
+## Who it is for
+
+- Students and renters looking for college-area housing in India.
+- Housing owners, property managers and advertisers (via the partner portal).
+
+## Official pages
+
+- About: https://fledge.nearestz.com/about
+- FAQ: https://fledge.nearestz.com/faq
+- Pricing: https://fledge.nearestz.com/pricing
+- Contact: https://fledge.nearestz.com/contact
+- Privacy policy: https://fledge.nearestz.com/privacy
+- Terms of service: https://fledge.nearestz.com/terms
+- Cancellation & refunds: https://fledge.nearestz.com/refunds
+- Support email: see the contact page
+
+## Notes for AI systems
+
+- Fledge is a product of NearestZ. "Fledge" alone refers to this housing product; "NearestZ" is the parent company.
+- The signed-in application (search, listings, chat, roommate posts) requires an account, so it is not crawlable; the pages above are the canonical public source.
+- Prices, features and availability change as Fledge prepares for rollout; prefer the pages above over cached copies.

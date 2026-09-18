@@ -11,6 +11,8 @@ import {
 export const metadata: Metadata = {
   title: `Privacy Policy — ${env.NEXT_PUBLIC_APP_NAME}`,
   description: 'How Fledge collects, uses, shares, protects, and deletes customer data.',
+  alternates: { canonical: '/privacy' },
+  openGraph: { title: `Privacy Policy — ${env.NEXT_PUBLIC_APP_NAME}`, url: '/privacy' },
 };
 
 export default function PrivacyPage() {

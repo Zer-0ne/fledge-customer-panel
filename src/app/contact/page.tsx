@@ -7,6 +7,8 @@ import { FLEDGE_SUPPORT_EMAIL } from '@/lib/public-info';
 export const metadata: Metadata = {
   title: `Contact us — ${env.NEXT_PUBLIC_APP_NAME}`,
   description: `Contact Fledge support at ${FLEDGE_SUPPORT_EMAIL} for account, listing, safety, payment, or privacy help.`,
+  alternates: { canonical: '/contact' },
+  openGraph: { title: `Contact us — ${env.NEXT_PUBLIC_APP_NAME}`, url: '/contact' },
 };
 
 export default function ContactPage() {

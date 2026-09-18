@@ -1,3 +1,11 @@
+import type { Metadata } from 'next';
+
+/** Offline fallback — a PWA utility page, never indexed. */
+export const metadata: Metadata = {
+  title: 'Offline',
+  robots: { index: false, follow: false },
+};
+
 export default function OfflinePage() {
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 text-center">

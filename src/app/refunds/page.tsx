@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: `Cancellation & Refunds — ${env.NEXT_PUBLIC_APP_NAME}`,
   description:
     'How cancellations, refunds, and duplicate or failed payments are handled for payments collected by Fledge.',
+  alternates: { canonical: '/refunds' },
+  openGraph: { title: `Cancellation & Refunds — ${env.NEXT_PUBLIC_APP_NAME}`, url: '/refunds' },
 };
 
 export default function RefundsPage() {

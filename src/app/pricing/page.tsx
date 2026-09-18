@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: `Pricing — ${env.NEXT_PUBLIC_APP_NAME}`,
   description:
     'Fledge is free for students and tenants — no listing fees, no brokerage, and no commission on rent. Optional donations support platform running costs.',
+  alternates: { canonical: '/pricing' },
+  openGraph: { title: `Pricing — ${env.NEXT_PUBLIC_APP_NAME}`, url: '/pricing' },
 };
 
 export default function PricingPage() {

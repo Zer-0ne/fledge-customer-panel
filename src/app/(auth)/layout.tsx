@@ -1,9 +1,15 @@
 import * as React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ShieldCheck } from 'lucide-react';
 import { FledgeMark } from '@/components/brand/fledge-mark';
 import { env } from '@/lib/env';
 import BorderGlow from '@/components/BorderGlow'
+
+/** Auth screens are utility pages — reachable for users, never indexed. */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (

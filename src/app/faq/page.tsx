@@ -2,11 +2,19 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SitePage } from '@/components/layout/site-page';
 import { FaqList } from './faq-list';
+import { JsonLd } from '@/components/seo/json-ld';
 import { env } from '@/lib/env';
 
 export const metadata: Metadata = {
   title: `FAQ — ${env.NEXT_PUBLIC_APP_NAME}`,
-  description: 'Answers about listings, roommates, Need Now, chat, and your data.',
+  description:
+    'Answers about listings, roommates, Need Now, verification badges, contact privacy, sponsorships, and your data on Fledge.',
+  alternates: { canonical: '/faq' },
+  openGraph: {
+    title: `FAQ — ${env.NEXT_PUBLIC_APP_NAME}`,
+    description: 'How Fledge works: search, roommates, Need Now, verification, privacy and data.',
+    url: '/faq',
+  },
 };
 
 const FAQS: { q: string; a: string }[] = [
@@ -93,6 +101,18 @@ export default function FaqPage() {
         </Link>
         .
       </p>
+      <JsonLd
+        id="faq-jsonld"
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: FAQS.map((item) => ({
+            '@type': 'Question',
+            name: item.q,
+            acceptedAnswer: { '@type': 'Answer', text: item.a },
+          })),
+        }}
+      />
     </SitePage>
   );
 }
