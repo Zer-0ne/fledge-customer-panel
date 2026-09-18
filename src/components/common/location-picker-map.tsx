@@ -6,6 +6,7 @@ import { Moon, Sun, RefreshCw } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { BASEMAP_TILES } from '@/lib/map/basemaps';
 
 const defaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -18,19 +19,6 @@ const defaultIcon = L.icon({
 });
 
 L.Marker.prototype.options.icon = defaultIcon;
-
-const TILE_LAYERS = {
-  light: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
-  dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
-} as const;
 
 export type MapThemeMode = 'sync' | 'light' | 'dark';
 
@@ -45,7 +33,7 @@ function resolveMapDark(mode: MapThemeMode): boolean {
 }
 
 function createBasemap(isDark: boolean): L.TileLayer {
-  const config = isDark ? TILE_LAYERS.dark : TILE_LAYERS.light;
+  const config = isDark ? BASEMAP_TILES.dark : BASEMAP_TILES.light;
   return L.tileLayer(config.url, {
     attribution: config.attribution,
     maxZoom: 20,
@@ -122,7 +110,7 @@ export function LocationPickerMap({
       center: [initialLat, initialLng],
       zoom,
       zoomControl: true,
-      attributionControl: false,
+      attributionControl: true,
       dragging: interactive,
       doubleClickZoom: interactive,
       scrollWheelZoom: true,

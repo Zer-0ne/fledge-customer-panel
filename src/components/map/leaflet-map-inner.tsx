@@ -7,6 +7,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Listing } from '@/types';
 import { formatPaiseToINR } from '@/lib/formatting';
+import { BASEMAP_TILES } from '@/lib/map/basemaps';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Navigation, Compass, ZoomIn, ZoomOut, ExternalLink, Bed, AlertCircle, MapPin } from 'lucide-react';
 
@@ -121,14 +122,14 @@ export function LeafletMapInner({
 
   const tileUrls = {
     osm: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    cartoLight: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    cartoDark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    cartoLight: BASEMAP_TILES.light.url,
+    cartoDark: BASEMAP_TILES.dark.url,
   } as const;
 
   const tileAttributions = {
     osm: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    cartoLight: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
-    cartoDark: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
+    cartoLight: BASEMAP_TILES.light.attribution,
+    cartoDark: BASEMAP_TILES.dark.attribution,
   } as const;
 
   const createPriceIcon = (pricePaise: number, isSelected: boolean) => {
@@ -268,7 +269,7 @@ export function LeafletMapInner({
           maxZoom={MAX_ZOOM}
           scrollWheelZoom={true}
           zoomControl={false}
-          attributionControl={false}
+          attributionControl={true}
           className="h-full w-full isolate z-0"
         >
           <MapInstanceBridge onReady={handleMapReady} />
