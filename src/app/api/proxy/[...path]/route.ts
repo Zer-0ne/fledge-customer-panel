@@ -2,13 +2,20 @@
  * API Proxy Route Handler
  * BFF Proxy route forwarding customer API requests to backend while enforcing security allowlist.
  * Browser → same-origin `/api/proxy/*` (no CORS) → Nest API at BACKEND_API_BASE_URL.
+ *
+ * Also owns the 15-minute access token's silent renewal: a parked tab comes
+ * back with an expired JWT, so the first upstream 401 triggers one rotation
+ * (single-flight) and the request is replayed — the user never sees a
+ * "session expired" wall while the refresh cookie is still valid.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import {
   isAllowedCustomerEndpoint,
   resolveProxyBackendPath,
 } from '@/lib/api/allowlist';
+import { rotateRefreshTokenSingleFlight } from '@/lib/auth/rotate';
 import { env } from '@/lib/env';
 
 async function handleProxy(req: NextRequest, props: { params: Promise<{ path: string[] }> }) {
@@ -34,8 +41,12 @@ async function handleProxy(req: NextRequest, props: { params: Promise<{ path: st
   headers.delete('origin');
   headers.delete('referer');
 
+  const cookieStore = await cookies();
+  const readCookie = (name: string) =>
+    req.cookies.get(name)?.value ?? cookieStore.get(name)?.value;
+
   // Attach session access token cookie if present
-  const accessToken = req.cookies.get('cp_access_token')?.value;
+  const accessToken = readCookie('cp_access_token');
   if (accessToken && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
@@ -46,12 +57,26 @@ async function handleProxy(req: NextRequest, props: { params: Promise<{ path: st
       body = await req.text();
     }
 
-    const response = await fetch(targetUrl.toString(), {
-      method: req.method,
-      headers,
-      body,
-      redirect: 'manual',
-    });
+    const send = () =>
+      fetch(targetUrl.toString(), {
+        method: req.method,
+        headers,
+        body,
+        redirect: 'manual',
+      });
+
+    let response = await send();
+
+    if (response.status === 401 && accessToken) {
+      const refreshToken = readCookie('cp_refresh_token');
+      if (refreshToken) {
+        const rotated = await rotateRefreshTokenSingleFlight(cookieStore, refreshToken);
+        if (rotated) {
+          headers.set('Authorization', `Bearer ${rotated}`);
+          response = await send();
+        }
+      }
+    }
 
     const isNullBodyStatus = [204, 205, 304].includes(response.status);
     const responseData = isNullBodyStatus ? null : await response.text();

@@ -10,54 +10,21 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { apiFetch } from '@/lib/api/client';
-import { extractAuthTokens } from '@/lib/auth/tokens';
 import {
-  setAuthCookies,
   clearAuthCookies,
   getAuthCookies,
   isLoggedOutMarked,
   ACCESS_TOKEN_MAX_AGE,
 } from '@/lib/auth/cookies';
 import { expiresInFromJwt } from '@/lib/auth/jwt';
+import {
+  probeAccessToken,
+  rotateRefreshTokenSingleFlight,
+} from '@/lib/auth/rotate';
 import { env } from '@/lib/env';
 
-async function probeAccessToken(accessToken: string): Promise<boolean> {
-  try {
-    await apiFetch({
-      method: 'GET',
-      path: '/api/v1/auth/bootstrap',
-      accessToken,
-      baseUrl: env.BACKEND_API_BASE_URL,
-      timeoutMs: 8_000,
-    });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function rotate(
-  cookieStore: Awaited<ReturnType<typeof cookies>>,
-  refreshToken: string
-): Promise<string | null> {
-  try {
-    const backendRes = await apiFetch<Record<string, unknown>>({
-      method: 'POST',
-      path: '/api/v1/auth/refresh',
-      body: { refreshToken },
-      baseUrl: env.BACKEND_API_BASE_URL,
-    });
-    const tokens = extractAuthTokens(backendRes);
-    if (!tokens?.accessToken) return null;
-    setAuthCookies(cookieStore, {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken || refreshToken,
-    });
-    return tokens.accessToken;
-  } catch {
-    return null;
-  }
-}
+// Rotation + probe live in `@/lib/auth/rotate` so the socket bridge, the
+// keep-alive ping and the API proxy all share one implementation.
 
 export async function POST() {
   const cookieStore = await cookies();
@@ -92,7 +59,7 @@ export async function POST() {
         { status: 401, headers: { 'Cache-Control': 'no-store' } }
       );
     }
-    const rotated = await rotate(cookieStore, refreshToken);
+    const rotated = await rotateRefreshTokenSingleFlight(cookieStore, refreshToken);
     if (!rotated) {
       clearAuthCookies(cookieStore);
       return NextResponse.json(

@@ -9,6 +9,7 @@ import {
 import { fetchConversations } from '@/lib/api/services/chat';
 import { showToast } from '@/components/ui/toast';
 import { beginLogout, endLogout } from '@/lib/auth/logout-guard';
+import { keepAlive } from '@/lib/auth/keep-alive';
 
 export interface AuthContextType {
   user: User | null;
@@ -59,7 +60,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshSession = React.useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/bootstrap');
+      let res = await fetch('/api/auth/bootstrap', { cache: 'no-store', credentials: 'include' });
+      if (res.status === 401) {
+        // The access JWT aged out while the tab was parked. Rotate the session
+        // once and retry before treating this as signed-out — the refresh
+        // cookie is usually still valid for weeks.
+        const recovered = await keepAlive(true);
+        if (recovered) {
+          res = await fetch('/api/auth/bootstrap', { cache: 'no-store', credentials: 'include' });
+        }
+      }
       if (res.ok) {
         const json = await res.json();
         const payload: BootstrapResponse = json.data || json;
@@ -96,6 +106,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshSession();
   }, [refreshSession]);
+
+  // Silent keep-alive — the 15-minute access token must never be the reason a
+  // returning user sees an error. Refresh on the way back in (tab becomes
+  // visible, window focus, network returns) and on a timer while visible;
+  // `keepAlive` itself throttles, single-flights and coordinates across tabs.
+  React.useEffect(() => {
+    if (!user?.id) return;
+
+    let timer: number | undefined;
+    const schedule = () => {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        void keepAlive(true).then((usable) => {
+          if (usable) void refreshSession();
+          schedule();
+        });
+      }, 12 * 60 * 1000);
+    };
+
+    const onResume = () => {
+      if (document.visibilityState !== 'visible') return;
+      void keepAlive().then((usable) => {
+        if (usable) void refreshSession();
+        schedule();
+      });
+    };
+    const onOnline = () => {
+      void keepAlive(true).then((usable) => {
+        if (usable) void refreshSession();
+      });
+    };
+
+    document.addEventListener('visibilitychange', onResume);
+    window.addEventListener('focus', onResume);
+    window.addEventListener('online', onOnline);
+    schedule();
+
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onResume);
+      window.removeEventListener('focus', onResume);
+      window.removeEventListener('online', onOnline);
+    };
+  }, [user?.id, refreshSession]);
 
   // Global socket listener for realtime user events (unread counts, live notifications, conversation updates)
   React.useEffect(() => {
