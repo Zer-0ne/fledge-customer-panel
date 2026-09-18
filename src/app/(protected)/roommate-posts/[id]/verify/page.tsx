@@ -260,7 +260,7 @@ export default function VerifyPostPage({ params }: { params: Promise<{ id: strin
           <div className="rounded-3xl border border-border/60 bg-card p-6 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">Complete verification</h2>
-              <span className="text-[11px] text-muted-foreground">Reference: {verificationId.slice(0, 8)}…</span>
+              <span className="text-[11px] text-muted-foreground">Tenant verification in progress</span>
             </div>
 
             {liveCode && (

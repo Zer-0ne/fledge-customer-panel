@@ -281,7 +281,7 @@ export default function RoommateInterestsPage() {
                   </div>
 
                   <h3 className="font-bold text-foreground text-base line-clamp-1 group-hover:text-primary transition-colors">
-                    {post?.title || `Roommate Request #${interest.id.slice(0, 8)}`}
+                    {post?.title || 'Roommate request'}
                   </h3>
 
                   {post && (

@@ -290,7 +290,7 @@ export default function InterestsPage() {
                     </div>
 
                     <h3 className="font-semibold text-foreground text-base line-clamp-1 group-hover:text-primary transition-colors">
-                      {listing?.title || `Listing Inquiry #${interest.id.slice(0, 8)}`}
+                      {listing?.title || 'Listing inquiry'}
                     </h3>
 
                     {listing && (
