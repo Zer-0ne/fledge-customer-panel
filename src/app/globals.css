@@ -501,16 +501,16 @@ html[data-font-scale="large"] {
 /* Map attribution — must stay visible: condition of the CARTO free-tier key
    (and the OpenStreetMap licence). */
 .leaflet-control-attribution {
-  background: rgba(255, 255, 255, 0.82) !important;
-  color: #52525b;
-  font-size: 11px;
-  line-height: 1.4;
-  padding: 1px 6px;
-  border-radius: 6px 0 0 0;
+  background: transparent !important;
+  color: rgba(82, 82, 91, 0.7);
+  font-size: 10px;
+  line-height: 1.3;
+  padding: 0 4px;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.65);
 }
 .dark .leaflet-control-attribution {
-  background: rgba(9, 9, 11, 0.72) !important;
-  color: #a1a1aa;
+  color: rgba(228, 228, 231, 0.5);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
 }
 .leaflet-control-attribution a {
   color: inherit !important;

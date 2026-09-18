@@ -107,6 +107,9 @@ export function LeafletMapInner({
 
   const handleMapReady = React.useCallback((map: L.Map) => {
     mapRef.current = map;
+    // Attribution must stay on the map (CARTO free tier + OSM licence); the
+    // optional "Leaflet |" prefix is dropped so only "© OpenStreetMap © CARTO" shows.
+    map.attributionControl.setPrefix(false);
   }, []);
 
   // When app theme changes, drop manual override so map stays in sync

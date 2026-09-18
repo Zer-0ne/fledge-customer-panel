@@ -120,6 +120,9 @@ export function LocationPickerMap({
       maxZoom: 20,
       minZoom: 3,
     });
+    // Attribution must stay on the map (CARTO free tier + OSM licence); the
+    // optional "Leaflet |" prefix is dropped so only "© OpenStreetMap © CARTO" shows.
+    map.attributionControl.setPrefix(false);
 
     const initialDark = resolveMapDark(themeModeRef.current);
     const tiles = createBasemap(initialDark);
