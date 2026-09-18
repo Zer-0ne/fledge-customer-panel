@@ -17,12 +17,14 @@ import { getFirebaseWebConfig } from '@/lib/push/push-config';
 import { AnnouncementProvider } from '@/components/announcements/announcement-provider';
 import { GlobalAnnouncementBanner } from '@/components/announcements/global-announcement-banner';
 import { FaviconSync } from '@/components/brand/favicon-sync';
+import { ICON_VERSION } from '@/lib/brand/icon-version';
 import { Suspense } from 'react';
 import { DomSelfHeal } from '@/components/providers/dom-self-heal';
 import { AnnouncementModal } from '@/components/announcements/announcement-modal';
 // Navigation progress bar — disabled on request (see usage note in the tree below).
 // import { NavigationProgressBar } from '@/components/providers/navigation-progress-bar';
 import { PushPromptBanner } from '@/components/push/push-prompt-banner';
+import { JsonLd } from '@/components/seo/json-ld';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -35,14 +37,50 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: `${env.NEXT_PUBLIC_APP_NAME} - Student Housing & Flat Sharing`,
+  metadataBase: new URL('https://fledge.nearestz.com'),
+  title: `${env.NEXT_PUBLIC_APP_NAME} — Student Housing, PG & Flat Sharing`,
   description:
-    'Find student apartments, room rentals, and compatible roommates near top colleges and university campuses.',
-  // `?v` MUST be bumped together with the ?v on the manifest's icon URLs:
-  // an installed Android WebAPK (and desktop PWA shortcuts) only re-read their
-  // launcher icon when Chrome sees a CHANGED manifest for the app — bumping
-  // this URL forces that check instead of waiting on Chrome's lazy schedule.
-  manifest: '/manifest.webmanifest?v=3',
+    'Find student apartments, PG accommodation, shared flats and compatible roommates near top colleges and university campuses across India. Chat first — contact details stay private until you approve.',
+  applicationName: 'Fledge',
+  keywords: [
+    'student housing',
+    'PG near college',
+    'flat sharing',
+    'roommate finder India',
+    'student apartments',
+    'paying guest accommodation',
+    'college area rentals',
+    'urgent housing requirement',
+  ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'Fledge',
+    url: '/',
+    title: 'Fledge — Student Housing, PG & Flat Sharing',
+    description:
+      'Discover flats, PG accommodation and compatible roommates near your college, and post urgent housing requirements with Need Now.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Fledge — Student Housing, PG & Flat Sharing',
+    description:
+      'Find student housing and roommates near your college on Fledge — free for students and tenants.',
+  },
+  // NOTE: the manifest link is rendered MANUALLY in <head> below — Next's
+  // metadata.manifest normalises the URL and drops the `?v=` content hash,
+  // which is exactly the part the browser needs to see change. See
+  // src/lib/brand/icon-version.ts.
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -53,7 +91,7 @@ export const metadata: Metadata = {
       { url: '/icons/favicon.svg', type: 'image/svg+xml' },
       { url: '/icons/favicon-32.png', sizes: '32x32', type: 'image/png' },
     ],
-    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: `/icons/apple-touch-icon.png?v=${ICON_VERSION}`, sizes: '180x180', type: 'image/png' }],
   },
 };
 
@@ -101,8 +139,53 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* Versioned manifest link — see the note on `metadata` above. */}
+        <link rel="manifest" href={`/manifest.webmanifest?v=${ICON_VERSION}`} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-200 overflow-x-hidden">
+        {/* Site-wide structured data — Organization + WebSite + app (schema.org). */}
+        <JsonLd
+          id="site-jsonld"
+          data={{
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'Organization',
+                '@id': 'https://fledge.nearestz.com/#organization',
+                name: 'Fledge',
+                alternateName: 'Fledge by NearestZ',
+                url: 'https://fledge.nearestz.com',
+                logo: 'https://fledge.nearestz.com/icons/favicon.svg',
+                parentOrganization: {
+                  '@type': 'Organization',
+                  name: 'NearestZ',
+                  url: 'https://www.nearestz.com',
+                },
+                areaServed: 'IN',
+              },
+              {
+                '@type': 'WebSite',
+                '@id': 'https://fledge.nearestz.com/#website',
+                name: 'Fledge',
+                url: 'https://fledge.nearestz.com',
+                publisher: { '@id': 'https://fledge.nearestz.com/#organization' },
+                inLanguage: 'en-IN',
+              },
+              {
+                '@type': 'SoftwareApplication',
+                '@id': 'https://fledge.nearestz.com/#app',
+                name: 'Fledge',
+                applicationCategory: 'LifestyleApplication',
+                operatingSystem: 'Web, Android',
+                url: 'https://fledge.nearestz.com',
+                description:
+                  'Fledge — student housing and roommate discovery for India: nearby flats and PG accommodation, compatible roommates, and urgent housing requirements.',
+                publisher: { '@id': 'https://fledge.nearestz.com/#organization' },
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+              },
+            ],
+          }}
+        />
         <AnalyticsInit />
         <ServiceWorkerRegister />
         <ThemeProvider>

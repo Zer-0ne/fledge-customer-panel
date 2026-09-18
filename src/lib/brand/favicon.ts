@@ -9,8 +9,11 @@
  *
  * NOTE — what this CANNOT do: change the home-screen icon of an ALREADY
  * INSTALLED PWA. Browsers only re-read installed icons when the web app
- * manifest changes (see scripts/generate-icons.py for the ?v= bump rule);
- * reinstalling is the only instant path. The tab icon is fully ours though.
+ * manifest changes — the manifest's icon URLs carry a content hash of the art
+ * (src/lib/brand/icon-version.ts) so that change fires by itself after a
+ * rebuild; reinstalling is the only instant path. iOS caches its home-screen
+ * icon regardless and needs a remove + re-add. The tab icon is fully ours
+ * though.
  */
 import {
   DEFAULT_FAVICON_VARIANT,

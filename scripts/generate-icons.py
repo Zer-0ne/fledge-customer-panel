@@ -16,13 +16,15 @@ Requires cairosvg:
 Run from the customer-panel root:
     /tmp/pipenv/bin/python scripts/generate-icons.py
 
-When the artwork changes, bump BOTH the `?v=` on the manifest icon URLs
-(public/manifest.webmanifest) AND the `manifest:` href in src/app/layout.tsx —
-an installed Android WebAPK / desktop PWA shortcut only re-reads its launcher
-icon when Chrome sees the manifest change; the URL bump makes that check fire
-on the next launch instead of Chrome's lazy schedule. (There is no API to
-force-update an already-installed PWA icon instantly: reinstall is the
-immediate path, the manifest change lands within ~a day.)
+When the artwork changes, NOTHING needs bumping: the manifest and the icon URLs
+carry a content hash of these files (src/lib/brand/icon-version.ts), so a new
+build always looks "changed" to the browser. That matters because an installed
+Android WebAPK / desktop PWA shortcut only re-reads its launcher icon when
+Chrome sees the manifest change — the hash makes that check fire on the next
+launch instead of Chrome's lazy schedule. (There is no API to force-update an
+already-installed PWA icon instantly: reinstall is the immediate path, the
+manifest change lands within ~a day. iOS home-screen icons never refresh on
+their own — remove + re-add the app.)
 """
 
 from __future__ import annotations
