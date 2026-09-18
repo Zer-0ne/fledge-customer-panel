@@ -11,6 +11,7 @@ import { MobileNav } from '@/components/layout/mobile-nav';
 import { Footer } from '@/components/layout/footer';
 import { AnalyticsInit } from '@/components/providers/analytics-init';
 import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register';
+import { AppUpdatePrompt } from '@/components/pwa/app-update-prompt';
 import { PushBootstrap } from '@/components/push/push-bootstrap';
 import { getFirebaseWebConfig } from '@/lib/push/push-config';
 import { AnnouncementProvider } from '@/components/announcements/announcement-provider';
@@ -130,6 +131,7 @@ export default function RootLayout({
                 </main>
                 <Footer appName={env.NEXT_PUBLIC_APP_NAME} />
                 <MobileNav />
+                <AppUpdatePrompt />
                 <AnnouncementModal />
               </ToastProvider>
             </AnnouncementProvider>

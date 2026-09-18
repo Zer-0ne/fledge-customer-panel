@@ -36,3 +36,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   /* no-op on purpose */
 });
+
+// The page asks the new worker to take over the moment the user taps Update in
+// the in-app prompt (install-time skipWaiting() only covers the first install).
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
